@@ -13,6 +13,7 @@ export interface GruposTypeModel {
   id: number;
   nombre: string;
   permisos: Aplicativo[];
+  aplicativos: Aplicativo[];
 }
 
 export interface PermisoModel {

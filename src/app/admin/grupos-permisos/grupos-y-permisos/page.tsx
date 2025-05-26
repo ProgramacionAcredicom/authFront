@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
 import { useSearchParams, Outlet } from "react-router-dom";
 import { useQueryPermisos } from "@/hooks/permisos/useQueryPermisos";
+import { Result } from "@/interfaces/permisos.interfaces";
 
 export const GruposPage = () => {
   const [selectedGroups, setSelectedGroups] = useState<GruposTypeModel[]>([]);
@@ -27,7 +28,7 @@ export const GruposPage = () => {
     <>
       <section className="grid grid-cols-2 gap-8">
         <AsignacionGruposTable columns={columnsPage} setSelectedRows={setSelectedGroups} />
-        <AsignacionPermisosTable columns={cols} data={data} isLoading={isLoading} />
+        <AsignacionPermisosTable columns={cols} data={data as unknown as Result[]} isLoading={isLoading} />
       </section>
       <Outlet />
     </>
