@@ -109,7 +109,6 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
       toast.error("Debe seleccionar al menos un grupo");
       return;
     }
-
     // 1. Construir FormData
     const formData = new FormData();
     formData.append("name", data.name);
@@ -131,7 +130,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     }
     // Grupos
     selectedGroups.forEach((g) => {
-      formData.append("grup[]", String(g.id));
+      formData.append("grup", String(g.id));
     });
     // Imagen
     if (data.picture instanceof File) {
