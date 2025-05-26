@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,6 +19,24 @@ export const columns: ColumnDef<Result>[] = [
   {
     accessorKey: "id",
     header: "No.",
+  },
+  {
+    accessorKey: "picture",
+    header: "Foto",
+    cell: ({ row }) => {
+      const { picture } = row.original;
+      return (
+        <Avatar>
+          {picture ? (
+            <AvatarImage src={picture} alt="Foto" />
+          ) : (
+            <AvatarFallback>
+              <UserRound className="size-4" />
+            </AvatarFallback>
+          )}
+        </Avatar>
+      );
+    },
   },
   {
     accessorKey: "name",
