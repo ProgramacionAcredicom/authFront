@@ -27,11 +27,10 @@ export const ModalEditarGrupo = () => {
       navigate("..", { replace: true });
     }
   };
-  console.log(form.formState.errors);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="md:max-w-6xl">
         <DialogHeader>
           <DialogTitle className="text-custom-gray font-bold">Editar grupo</DialogTitle>
           <DialogDescription className="sr-only">Edita un grupo</DialogDescription>

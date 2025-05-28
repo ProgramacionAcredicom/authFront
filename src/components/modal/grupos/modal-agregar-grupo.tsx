@@ -15,7 +15,7 @@ export const ModalAgregarGrupo = () => {
           <Plus /> Agregar
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-6xl">
         <DialogHeader>
           <DialogTitle className="text-custom-gray font-bold">Agregar Grupo</DialogTitle>
           <DialogDescription className="sr-only">Asigna un grupo a un usuario</DialogDescription>
