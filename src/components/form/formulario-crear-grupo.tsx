@@ -1,19 +1,34 @@
 import { useEffect, useState } from "react";
-import { Loader2, Search, Trash2, Users2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Search, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { CrearGrupoSchema } from "@/schemas/grupos/grupos.schema";
 import { useQueryPermisos } from "@/hooks/permisos/useQueryPermisos";
 import { useInView } from "react-intersection-observer";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent, useDroppable } from "@dnd-kit/core";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { SortableItem } from "./sortable-item";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn<CrearGrupoSchema>; onSubmit: (data: CrearGrupoSchema) => void }) {
   const [searchNombre, setSearchNombre] = useState("");
   const { useInfinitePermisos } = useQueryPermisos(undefined, searchNombre);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinitePermisos;
   const { ref, inView } = useInView();
+
+  const [availablePermissions, setAvailablePermissions] = useState<any[]>([]);
+  const [selectedPermissions, setSelectedPermissions] = useState<any[]>([]);
+  const { setNodeRef: setAvailableRef } = useDroppable({ id: "available-container" });
+  const { setNodeRef: setSelectedRef } = useDroppable({ id: "selected-container" });
+  // Set up DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -21,109 +36,196 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
     }
   }, [inView, hasNextPage, fetchNextPage]);
 
-  const toggleSeleccionarTodos = () => {
-    const allIds = data?.pages.flatMap((page) => page.results).map((permiso) => permiso.id) ?? [];
-    form.setValue("permisos", allIds, { shouldValidate: true });
+  // Update available permissions when data changes
+  useEffect(() => {
+    if (data) {
+      const allPermisos = data.pages.flatMap((page) => page.results);
+      const selectedIds = form.getValues("permisos") || [];
+
+      const selected = allPermisos.filter((permiso) => selectedIds.includes(permiso.id));
+      const available = allPermisos.filter((permiso) => !selectedIds.includes(permiso.id));
+
+      setSelectedPermissions(selected);
+      setAvailablePermissions(available);
+    }
+  }, [data, form]);
+
+  // Update form value when selected permissions change
+  useEffect(() => {
+    const selectedIds = selectedPermissions.map((p) => p.id);
+    form.setValue("permisos", selectedIds, { shouldValidate: true });
+  }, [selectedPermissions, form]);
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over) return;
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
+
+    // ¿Arrastrando desde DISPONIBLES?
+    if (availablePermissions.some((p) => p.id.toString() === activeId)) {
+      // soltar sobre contenedor o sobre un ítem ya seleccionado
+      if (overId === "selected-container" || selectedPermissions.some((p) => p.id.toString() === overId)) {
+        const permiso = availablePermissions.find((p) => p.id.toString() === activeId)!;
+        setSelectedPermissions((prev) => [...prev, permiso]);
+        setAvailablePermissions((prev) => prev.filter((p) => p.id.toString() !== activeId));
+      }
+    }
+
+    // ¿Arrastrando desde SELECCIONADOS?
+    if (selectedPermissions.some((p) => p.id.toString() === activeId)) {
+      if (overId === "available-container" || availablePermissions.some((p) => p.id.toString() === overId)) {
+        const permiso = selectedPermissions.find((p) => p.id.toString() === activeId)!;
+        setAvailablePermissions((prev) => [...prev, permiso]);
+        setSelectedPermissions((prev) => prev.filter((p) => p.id.toString() !== activeId));
+      }
+    }
   };
 
-  const eliminarSeleccionados = () => {
-    form.setValue("permisos", [], { shouldValidate: true });
+  const moveToSelected = (permiso: any) => {
+    setSelectedPermissions((prev) => [...prev, permiso]);
+    setAvailablePermissions((prev) => prev.filter((p) => p.id !== permiso.id));
+  };
+
+  const moveToAvailable = (permiso: any) => {
+    setAvailablePermissions((prev) => [...prev, permiso]);
+    setSelectedPermissions((prev) => prev.filter((p) => p.id !== permiso.id));
+  };
+
+  const moveAllToSelected = () => {
+    setSelectedPermissions((prev) => [...prev, ...availablePermissions]);
+    setAvailablePermissions([]);
+  };
+
+  const moveAllToAvailable = () => {
+    setAvailablePermissions((prev) => [...prev, ...selectedPermissions]);
+    setSelectedPermissions([]);
   };
 
   return (
-    <div className="w-full max-w-md rounded-lg">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} id="permisos-form">
-          <header className="flex flex-col gap-2">
-            <FormField
-              control={form.control}
-              name="nombre"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nombre del grupo</FormLabel>
-                  <FormControl>
-                    <Input type="text" {...field} startContent={<Users2 />} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} id="permisos-form" className="max-w-6xl">
+        <header className="mb-4 flex flex-col gap-2">
+          <FormField
+            control={form.control}
+            name="nombre"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nombre del grupo</FormLabel>
+                <FormControl>
+                  <Input type="text" {...field} className="max-w-md" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div>
+            <Label>Permisos</Label>
+            <Input
+              className="max-w-md"
+              startContent={<Search className="h-4 w-4 text-gray-500" />}
+              type="text"
+              placeholder="Buscar permiso"
+              value={searchNombre}
+              onChange={(e) => setSearchNombre(e.target.value)}
             />
-            <div>
-              <Label>Permisos</Label>
-              <Input
-                className="max-w-3xs"
-                startContent={<Search />}
-                type="text"
-                placeholder="Buscar permiso"
-                value={searchNombre}
-                onChange={(e) => setSearchNombre(e.target.value)}
-              />
-            </div>
-          </header>
-          <div className="flex items-center justify-between pt-2">
-            <Button variant="ghost" onClick={toggleSeleccionarTodos} type="button" className="text-custom-gray">
-              Seleccionar todos
-            </Button>
-            <Button variant="ghost" size="icon" onClick={eliminarSeleccionados} type="button" className="text-custom-gray">
-              <Trash2 className="h-5 w-5" />
-            </Button>
           </div>
-          <div className="mt-2 h-96 space-y-1.5 overflow-y-auto rounded-3xl bg-gray-50 p-4">
-            <FormField
-              name="permisos"
-              control={form.control}
-              render={({ field }) => (
-                <div>
-                  {data?.pages.map((page) =>
-                    page.results.length > 0 ? (
-                      page.results.map((item) => (
-                        <div key={item.id}>
-                          <FormItem
-                            key={item.id}
-                            className="flex items-center rounded-lg border-b border-gray-100 px-4 py-2 last:border-b-0 odd:bg-gray-100 even:bg-gray-50"
-                          >
-                            <FormControl className="mr-3">
-                              <Checkbox
-                                checked={field.value.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                  const newValue = checked ? [...field.value, item.id] : field.value.filter((id) => id !== item.id);
-                                  field.onChange(newValue);
-                                }}
-                                id={item.id.toString()}
-                              />
-                            </FormControl>
-                            <div className="flex-1">
-                              <FormLabel className="text-custom-gray z-10 w-full font-bold" htmlFor={item.id.toString()}>
-                                {item.nombre}
-                              </FormLabel>
-                              <FormDescription className="text-custom-gray/80 text-sm font-normal">{item?.descripcion}</FormDescription>
+        </header>
+
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Left Column - Available Permissions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>Permisos disponibles</span>
+                  <Button variant="ghost" size="sm" onClick={moveAllToSelected} type="button" className="text-custom-gray">
+                    <ArrowRight className="mr-1 h-4 w-4" />
+                    Mover todos
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="-mt-5">
+                <div id="available-container" ref={setAvailableRef} className="h-96 overflow-y-auto rounded-md bg-gray-50">
+                  <SortableContext items={availablePermissions.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                    {availablePermissions.length > 0 ? (
+                      availablePermissions.map((permiso) => (
+                        <div key={permiso.id} className="mb-2">
+                          <SortableItem id={permiso.id}>
+                            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                              <div className="flex-1">
+                                <p className="font-medium">{permiso.aplicativo.nombre}</p>
+                                <p className="text-sm text-gray-500">{permiso.descripcion}</p>
+                              </div>
+                              <Button variant="ghost" size="icon" onClick={() => moveToSelected(permiso)} className="h-8 w-8" type="button">
+                                <ArrowRight className="h-4 w-4" />
+                              </Button>
                             </div>
-                          </FormItem>
+                          </SortableItem>
                         </div>
                       ))
                     ) : (
-                      <div key="no-results" className="flex items-center justify-center">
-                        <span className="text-custom-gray/80 text-sm font-normal">No se encontraron resultados</span>
+                      <div className="flex h-full items-center justify-center">
+                        <span className="text-gray-500">No hay permisos disponibles</span>
                       </div>
-                    ),
-                  )}
+                    )}
+                    {isFetchingNextPage && (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <span className="text-sm">Cargando más...</span>
+                      </div>
+                    )}
+                    <div ref={ref} className="h-1" />
+                  </SortableContext>
                 </div>
-              )}
-            />
-            <div ref={ref} className="py-4">
-              {isFetchingNextPage && (
-                <div className="flex items-center justify-center">
-                  <Loader2 className="animate-spin" />
-                  <span className="ml-2">Cargando más...</span>
+              </CardContent>
+            </Card>
+
+            {/* Right Column - Selected Permissions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>Permisos seleccionados ({selectedPermissions.length})</span>
+                  <Button variant="ghost" size="sm" onClick={moveAllToAvailable} type="button" className="text-custom-gray">
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Eliminar todos
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="-mt-5">
+                <div id="selected-container" ref={setSelectedRef} className="h-96 overflow-y-auto rounded-md bg-gray-50">
+                  <SortableContext items={selectedPermissions.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                    {selectedPermissions.length > 0 ? (
+                      selectedPermissions.map((permiso) => (
+                        <div key={permiso.id} className="mb-2">
+                          <SortableItem id={permiso.id}>
+                            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                              <div className="flex-1">
+                                <p className="font-medium">{permiso.nombre}</p>
+                                <p className="text-sm text-gray-500">{permiso.descripcion}</p>
+                              </div>
+                              <Button variant="ghost" size="icon" onClick={() => moveToAvailable(permiso)} className="h-8 w-8" type="button">
+                                <ArrowLeft className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </SortableItem>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <span className="text-gray-500">No hay permisos seleccionados</span>
+                      </div>
+                    )}
+                  </SortableContext>
                 </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
           </div>
-          {form.formState.errors.permisos?.message && (
-            <p className="text-destructive py-2 text-[0.8rem] font-medium">{form.formState.errors.permisos.message?.toString()}</p>
-          )}
-        </form>
-      </Form>
-    </div>
+        </DndContext>
+
+        {form.formState.errors.permisos?.message && (
+          <p className="text-destructive py-2 text-[0.8rem] font-medium">{form.formState.errors.permisos.message?.toString()}</p>
+        )}
+      </form>
+    </Form>
   );
 }
