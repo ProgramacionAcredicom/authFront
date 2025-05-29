@@ -30,7 +30,7 @@ export const ModalEditarGrupo = () => {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="md:max-w-6xl">
+      <DialogContent className="md:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-custom-gray font-bold">Editar grupo</DialogTitle>
           <DialogDescription className="sr-only">Edita un grupo</DialogDescription>
