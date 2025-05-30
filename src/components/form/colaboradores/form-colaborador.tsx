@@ -6,7 +6,7 @@ import { colaboradorSchema } from "@/schemas/colaboradores/colaborador.schema";
 import { Input } from "@/components/ui/input";
 import { Check, ChevronsUpDown, Eye, EyeOff, IdCard, Loader2, LockKeyhole, Mail, Save, Upload, User, UserCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
 import { useQueryAgencias } from "@/hooks/agencias/useQueryAgencias";
 import { Switch } from "@/components/ui/switch";
@@ -48,58 +48,9 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     mode: "onChange",
   });
 
-  const name = form.watch("name");
-
-  useEffect(() => {
-    if (name) {
-      const username = generateUsername(name);
-      form.setValue("username", username);
-      const email = generateEmail(name);
-      form.setValue("email", email);
-    }
-  }, [name, form]);
-
   const { queryAgencias } = useQueryAgencias();
   const { queryRoles } = useQueryRoles();
-  // Función para generar el username
-  const generateUsername = (fullName: string) => {
-    const names = fullName
-      .trim()
-      .toUpperCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .split(" ");
 
-    if (names.length < 2) return "";
-
-    const firstInitial = names[0]?.charAt(0) || "";
-    const secondInitial = names[1]?.charAt(0) || "";
-    const lastName = names.find((name, index) => index > 1 && name.length > 3) || "";
-
-    // Elimina caracteres no alfabéticos del apellido
-    const cleanLastName = lastName.replace(/[^A-Z]/g, "");
-
-    return `MC${firstInitial}${secondInitial}${cleanLastName}`;
-  };
-
-  const generateEmail = (fullName: string) => {
-    const names = fullName
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .split(" ");
-
-    if (names.length < 2) return "";
-
-    const firstInitial = names[0]?.charAt(0) || "";
-    const secondInitial = names[1]?.charAt(0) || "";
-    const lastName = names.find((name, index) => index > 1 && name.length > 3) || "";
-
-    const cleanLastName = lastName.replace(/[^a-z]/g, "");
-
-    return `${firstInitial}${secondInitial}${cleanLastName}@acredicom.com.gt`;
-  };
   const queryClient = useQueryClient();
   const route = useNavigate();
   const { mutation } = useMutationUpdateColaborador();
