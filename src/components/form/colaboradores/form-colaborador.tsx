@@ -54,8 +54,8 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
   const queryClient = useQueryClient();
   const route = useNavigate();
   const { mutation } = useMutationUpdateColaborador();
-
   const onSubmit = async (data: ColaboradorSchema) => {
+    console.log(data);
     if (selectedGroups.length < 1) {
       toast.error("Debe seleccionar al menos un grupo");
       return;
@@ -86,6 +86,14 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     // Imagen
     if (data.picture instanceof File) {
       formData.append("picture", data.picture);
+    } else if (data.picture === null) {
+      // Esto depende de tu API. Por ejemplo, si tu backend entiende:
+      //   “picture” vacío o string especial para que lo quite
+      // Puedes hacer:
+      formData.append("picture", ""); 
+      // o  
+      // formData.append("remove_picture", "true");
+      // Si tu API espera un campo distinto para borrar la imagen, úsalo aquí.
     }
 
     try {
@@ -176,7 +184,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           className="absolute top-2 right-5 cursor-pointer rounded-full bg-red-500 p-1 transition-colors hover:bg-red-600"
                           onClick={(e) => {
                             e.stopPropagation(); // Prevent opening file dialog
-                            form.setValue("picture", "");
+                            form.setValue("picture", null);
                           }}
                         >
                           <X className="h-4 w-4 text-white" />
