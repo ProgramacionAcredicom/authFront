@@ -13,6 +13,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 // columnsAllPermisos.ts
 export const columnsAplicativos: ColumnDef<AplicativosTypeModel>[] = [
   {
@@ -29,6 +30,18 @@ export const columnsAplicativos: ColumnDef<AplicativosTypeModel>[] = [
     cell: ({ row }) => {
       const data = row.original;
       return <TypographyP text={data.descripcion} />;
+    },
+  },
+  {
+    accessorKey: "state",
+    header: "Estado",
+    cell: ({ row }) => {
+      const data = row.original;
+      console.log(data);
+      if (data.state) {
+        return <Checkbox checked={true} />;
+      }
+      return <Checkbox checked={false} />;
     },
   },
   {
