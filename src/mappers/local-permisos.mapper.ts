@@ -7,7 +7,12 @@ export const localPermisosMapper = (permisos: PermisosTypeModel) => {
     page: permisos.page,
     page_size: permisos.page_size,
     total_pages: permisos.total_pages,
-    results: permisos.results,
+    results: permisos.results.map((result) => ({
+      id: result.id,
+      permiso: result.nombre,
+      descripcion: result.descripcion,
+      aplicativo: result.aplicativo,
+    })),
   });
 };
 
