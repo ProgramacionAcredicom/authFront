@@ -1,5 +1,5 @@
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
-import { createGrupo, updateGrupo } from "@/services/grupos/grupos.services";
+import { createGrupo, deleteGrupo, updateGrupo } from "@/services/grupos/grupos.services";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
@@ -80,4 +80,28 @@ export const useMutationUpdateGrupo = () => {
     },
   });
   return { mutationUpdateGrupo, isLoading: mutationUpdateGrupo.isPending };
+};
+
+export const useMutationEliminarGrupo = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const mutationEliminarGrupo = useMutation({
+    mutationFn: (data: { id: string }) => deleteGrupo(data.id),
+    onMutate: async (grupo) => {
+      await queryClient.cancelQueries({ queryKey: ["grupos"] });
+      const previousGrupos = queryClient.getQueryData<GruposTypeModel[]>(["grupos"]);
+      queryClient.setQueryData<GruposTypeModel[]>(["grupos"], (old) => old?.filter((g) => g.id !== Number(grupo.id)));
+      return { previousGrupos };
+    },
+    onError: (error: AxiosError<ErrorResponse>, newGrupo, context) => {
+      toast.error(error.response?.data.error || "Error al desactivar el grupo");
+      queryClient.setQueryData<GruposTypeModel[]>(["grupos"], context?.previousGrupos);
+    },
+    onSuccess: (data: { message: string }) => {
+      queryClient.invalidateQueries({ queryKey: ["grupos"] });
+      toast.success(data.message || "Grupo desactivado correctamente");
+      navigate("..", { replace: true });
+    },
+  });
+  return { mutationEliminarGrupo, isLoading: mutationEliminarGrupo.isPending };
 };

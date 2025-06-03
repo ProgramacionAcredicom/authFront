@@ -27,3 +27,8 @@ export const updateGrupo = async (id: string, data: CreateGrupoDTO) => {
   const res = await apiServices.put(`/grupos/${id}/`, data);
   return res.data;
 };
+
+export const deleteGrupo = async (id: string) => {
+  const res = await apiServices.delete(`/grupos/${id}/`);
+  return res.data;
+};

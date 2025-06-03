@@ -18,7 +18,9 @@ export const ModalEditarGrupo = () => {
     id: id!,
     nombre: grupo?.nombre,
     permisos: permisos.map((permiso: Aplicativo) => permiso.id),
+    state: grupo?.state,
   };
+
   const { form, onSubmit } = useFormGrupos(setOpen, dataGrupoEditar);
   /** ----- 4. cerrar con la X o backdrop ----- */
   const handleOpenChange = (value: boolean) => {
@@ -41,7 +43,8 @@ export const ModalEditarGrupo = () => {
             type="button"
             variant="outline"
             onClick={() => {
-              // setOpen(false);
+              setOpen(false);
+              navigate("..", { replace: true });
               form.reset();
             }}
           >

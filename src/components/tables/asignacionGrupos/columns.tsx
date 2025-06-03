@@ -72,6 +72,17 @@ export const columnsPage: ColumnDef<GruposTypeModel>[] = [
     },
   },
   {
+    accessorKey: "state",
+    header: "Estado",
+    cell: ({ row }) => {
+      const { state } = row.original;
+      if (state) {
+        return <Checkbox checked={true} />;
+      }
+      return <Checkbox checked={false} />;
+    },
+  },
+  {
     id: "status",
     header: "Acciones",
     cell: ({ row }) => {
