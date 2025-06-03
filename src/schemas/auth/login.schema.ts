@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  username: z.string().refine((value) => value.startsWith("mc"), {
-    message: "El usuario debe comenzar con mc",
+  username: z.string().min(1, {
+    message: "El usuario es requerido",
   }),
   password: z.string().min(4, {
     message: "La contraseña debe tener al menos 8 caracteres",

@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Loader2, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQueryColaboradores } from "@/hooks/colaboradores/useQueryColaboradores";
 import { Result } from "@/interfaces/colaboradores.interfaces";
 
@@ -37,7 +37,7 @@ export function DataTable({ columns }: DataTableProps) {
       globalFilter,
     },
   });
-
+  const navigate = useNavigate();
   return (
     <>
       <header className="flex items-center justify-between">
@@ -68,7 +68,7 @@ export function DataTable({ columns }: DataTableProps) {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow key={row.id} onClick={() => navigate(`/colaboradores/editar/${row.original.id}`)} className="cursor-pointer">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}

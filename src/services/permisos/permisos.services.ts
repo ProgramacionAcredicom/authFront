@@ -1,17 +1,21 @@
-import { PermisosCreateType, PermisosTypeModel, Result, PermisosByIDType, AplicativoModel } from "@/interfaces/permisos.interfaces";
+import { PermisosCreateType, Result, PermisosByIDType, AplicativoModel } from "@/interfaces/permisos.interfaces";
 import apiServices from "@/services/configAxios";
 import { localPermisosMapper, localPermisosByIdMapper } from "@/mappers/local-permisos.mapper";
+import { PermisosModel } from "@/models/permisos.model";
 
-export const getAllPermisos = async (pagination: { pageIndex: number; pageSize: number }, globalFilter?: string): Promise<PermisosTypeModel> => {
-  const params: Record<string, string | number> = globalFilter
-    ? { search: globalFilter }
-    : {
-        page: pagination.pageIndex + 1,
-        page_size: pagination.pageSize,
-      };
+export const getAllPermisos = async (
+  { pageIndex, pageSize }: { pageIndex: number; pageSize: number },
+  globalFilter?: string,
+): Promise<PermisosModel> => {
+  const params: Record<string, any> = {
+    page: pageIndex + 1,
+    page_size: pageSize,
+  };
+  if (globalFilter?.trim().length) {
+    params.search = globalFilter.trim();
+  }
   const res = await apiServices.get("/permisos/", { params });
-  const permisos = localPermisosMapper(res.data);
-  return permisos;
+  return localPermisosMapper(res.data);
 };
 
 export interface PermisosByIdResponse {

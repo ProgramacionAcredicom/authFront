@@ -1,4 +1,4 @@
-import { getAllGrupos } from "@/services/grupos/grupos.services";
+import { getAllGrupos, getGrupoById } from "@/services/grupos/grupos.services";
 import { useQuery } from "@tanstack/react-query";
 
 export const useQueryGrupos = () => {
@@ -8,5 +8,15 @@ export const useQueryGrupos = () => {
   });
   return {
     queryGrupos,
+  };
+};
+
+export const useQueryGruposById = (id: string) => {
+  const queryGruposById = useQuery({
+    queryKey: ["grupos", id],
+    queryFn: () => getGrupoById(id),
+  });
+  return {
+    queryGruposById,
   };
 };

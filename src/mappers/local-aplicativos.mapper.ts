@@ -7,5 +7,6 @@ export const localAplicativosMapper = (aplicativo: AplicativosTypeModel) => {
     nombre: aplicativo.nombre,
     descripcion: aplicativo.descripcion,
     configuracion: aplicativo.configuracion,
+    state: aplicativo.state,
   });
 };

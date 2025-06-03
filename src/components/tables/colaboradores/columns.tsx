@@ -100,7 +100,11 @@ export const columns: ColumnDef<Result>[] = [
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+              >
                 <Edit className="size-4" />
                 <Link to={`/colaboradores/editar/${id}`} className="w-full">
                   Editar

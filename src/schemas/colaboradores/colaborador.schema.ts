@@ -64,7 +64,7 @@ export const colaboradorSchema = z
         message: "El correo debe ser válido",
       })
       .trim(),
-    picture: z.union([z.string().url(), z.instanceof(File), z.null()]),
+    picture: z.union([z.string().url().nullable(), z.instanceof(File), z.null()]).optional().nullable(),
     agency: z
       .string({
         required_error: "La agencia es requerida",

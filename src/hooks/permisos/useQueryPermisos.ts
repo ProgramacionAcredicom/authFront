@@ -15,11 +15,19 @@ export const useQueryPermisos = (id?: string, globalFilter?: string) => {
 
   const useInfinitePermisos = useInfiniteQuery({
     queryKey: ["permisos-infinite", globalFilter],
-    queryFn: ({ pageParam = 0 }) => getAllPermisos({ pageIndex: pageParam, pageSize: 5 }, globalFilter),
+    queryFn: ({ pageParam = 0 }) => getAllPermisos({ pageIndex: pageParam, pageSize: 220 }, globalFilter),
     initialPageParam: 0,
-    getNextPageParam: (lastPage) => {
-      const nextPage = lastPage.page < lastPage.total_pages ? lastPage.page : undefined;
-      return nextPage;
+    getNextPageParam: (lastPage, allPages, lastPageParam) => {
+      if (lastPage.results.length === 0) {
+        return undefined;
+      }
+      return lastPageParam + 1;
+    },
+    getPreviousPageParam: (firstPage, allPages, firstPageParam) => {
+      if (firstPageParam <= 1) {
+        return undefined;
+      }
+      return firstPageParam - 1;
     },
   });
 

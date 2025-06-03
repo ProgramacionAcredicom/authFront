@@ -34,7 +34,6 @@ export const ModalAsignarPermiso = () => {
         });
       }, 0);
     } else {
-      console.log(data);
       if (data.aplicativo === "") return form.setError("aplicativo", { message: "El aplicativo es requerido" });
       if (data.nombre === "") return form.setError("nombre", { message: "El nombre es requerido" });
       if (data.descripcion === "") return form.setError("descripcion", { message: "La descripción es requerida" });

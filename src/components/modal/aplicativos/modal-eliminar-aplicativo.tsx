@@ -59,9 +59,11 @@ export const ModalEliminarAplicativo = () => {
             <p>
               <span className="font-bold">Descripción:</span> {data?.descripcion}
             </p>
-            <p>
-              <span className="font-bold">Configuración:</span> {JSON.stringify(data?.configuracion)}
-            </p>
+            {data?.configuracion && (
+              <p className="break-all">
+                <span className="font-bold">Configuración:</span> {JSON.stringify(data?.configuracion)}
+              </p>
+            )}
           </div>
         )}
 
