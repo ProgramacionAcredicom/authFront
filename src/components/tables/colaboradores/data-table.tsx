@@ -6,14 +6,21 @@ import { useDataTable } from "@/hooks/use-data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { parseAsInteger, useQueryState } from "nuqs";
 
-interface ColaboradoresTableParams<TData, TValue> {
+interface ColaboradoresTableParams<TData extends { id: string | number }, TValue> {
   data: TData[];
   totalItems: number;
   columns: ColumnDef<TData, TValue>[];
   onSearch: (value: string) => void;
+  isLoading?: boolean;
 }
 
-export function ColaboradoresTable<TData, TValue>({ data, totalItems, columns, onSearch }: ColaboradoresTableParams<TData, TValue>) {
+export function ColaboradoresTable<TData extends { id: string | number }, TValue>({
+  data,
+  totalItems,
+  columns,
+  onSearch,
+  isLoading,
+}: ColaboradoresTableParams<TData, TValue>) {
   const [pageSize] = useQueryState("perPage", parseAsInteger.withDefault(10));
   const pageCount = Math.ceil(totalItems / pageSize);
   const { table } = useDataTable({
@@ -25,7 +32,7 @@ export function ColaboradoresTable<TData, TValue>({ data, totalItems, columns, o
     onGlobalFilterChange: onSearch,
   });
   return (
-    <DataTable table={table}>
+    <DataTable table={table} isLoading={isLoading}>
       <DataTableToolbar table={table} />
     </DataTable>
   );
