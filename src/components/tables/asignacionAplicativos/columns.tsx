@@ -2,7 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TypographyMuted, TypographyP } from "@/components/ui/typography";
 import { AplicativosTypeModel } from "@/interfaces/aplicativos.interfaces";
 import { ActionCell } from "./ActionCell";
-// columnsAllPermisos.ts
+import { Checkbox } from "@/components/ui/checkbox";
 export const columnsAplicativos: ColumnDef<AplicativosTypeModel>[] = [
   {
     accessorKey: "nombre",
@@ -18,6 +18,14 @@ export const columnsAplicativos: ColumnDef<AplicativosTypeModel>[] = [
     cell: ({ row }) => {
       const data = row.original;
       return <TypographyP text={data.descripcion} />;
+    },
+  },
+  {
+    accessorKey: "state",
+    header: "Estado",
+    cell: ({ row }) => {
+      const data = row.original;
+      return <Checkbox checked={data.state} />;
     },
   },
   {
