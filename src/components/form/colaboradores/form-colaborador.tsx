@@ -23,10 +23,12 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from "@/lib/utils";
 import { useMutationUpdateColaborador } from "@/hooks/colaboradores/useMutationColaboradores";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQueryListAreas } from "@/hooks/areas/useQueryAreas";
 export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: GruposTypeModel[]; user?: ColaboradorIDType }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const isEdit = Boolean(user);
+
   const form = useForm<ColaboradorSchema>({
     resolver: zodResolver(colaboradorSchema),
     defaultValues: {
@@ -40,22 +42,25 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
       confirm_password: isEdit ? "" : "Acredicom2025.",
       picture: user?.picture ?? null,
       grup: [],
-      user_type: user?.user_type.toUpperCase() as UserType,
+      user_type: user?.user_type.toUpperCase() === "USER_TYPES" ? "" : user?.user_type.toUpperCase(),
       is_active: user?.is_active ?? true,
-      executive_number: null,
       dpi: user?.dpi ?? "",
+      area: user?.area?.id.toString() ?? "",
+      executive_number: user?.executive_number ?? null,
     },
     mode: "onChange",
   });
 
   const { queryAgencias } = useQueryAgencias();
   const { queryRoles } = useQueryRoles();
-
+  const { queryAreas } = useQueryListAreas();
   const queryClient = useQueryClient();
   const route = useNavigate();
   const { mutation } = useMutationUpdateColaborador();
+
   const onSubmit = async (data: ColaboradorSchema) => {
     console.log(data);
+
     if (selectedGroups.length < 1) {
       toast.error("Debe seleccionar al menos un grupo");
       return;
@@ -71,6 +76,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     formData.append("role", data.role);
     formData.append("user_type", data.user_type);
     formData.append("is_active", String(data.is_active));
+    formData.append("area", data.area);
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
@@ -90,8 +96,8 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
       // Esto depende de tu API. Por ejemplo, si tu backend entiende:
       //   “picture” vacío o string especial para que lo quite
       // Puedes hacer:
-      formData.append("picture", ""); 
-      // o  
+      formData.append("picture", "");
+      // o
       // formData.append("remove_picture", "true");
       // Si tu API espera un campo distinto para borrar la imagen, úsalo aquí.
     }
@@ -317,7 +323,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                             {queryAgencias.data?.map((agencia) => (
                               <CommandItem
                                 key={agencia.id}
-                                value={agencia.name}
+                                value={agencia.id.toString()}
                                 onSelect={() => {
                                   form.setValue("agency", agencia.id.toString());
                                 }}
@@ -335,79 +341,12 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                 </FormItem>
               )}
             />
-          </div>
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Puesto</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
-                      >
-                        {field.value ? queryRoles.data?.find((r) => r.id.toString() === field.value)?.role : "Selecciona un puesto"}
-                        <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-
-                  <PopoverContent className="w-full p-0" side="bottom" align="start">
-                    <Command>
-                      <CommandInput placeholder="Buscar puesto…" className="h-9" />
-                      <CommandList>
-                        <CommandEmpty>Sin resultados.</CommandEmpty>
-                        <CommandGroup>
-                          {queryRoles.data?.map((role) => (
-                            <CommandItem
-                              key={role.id}
-                              value={role.role}
-                              onSelect={() => {
-                                form.setValue("role", role.id.toString());
-                              }}
-                            >
-                              {role.role}
-                              <Check className={cn("ml-auto size-4", role.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Estado</FormLabel>
-                    <FormDescription> {field.value ? "Activo" : "Inactivo"} </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="user_type"
+              name="role"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <div className="space-y-0.5">
-                    <FormLabel>Tipo de usuario</FormLabel>
-                  </div>
+                  <FormLabel>Puesto</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -416,7 +355,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           role="combobox"
                           className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? field.value : "Selecciona un puesto"}
+                          {field.value ? queryRoles.data?.find((r) => r.id.toString() === field.value)?.role : "Selecciona un puesto"}
                           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -428,16 +367,16 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                         <CommandList>
                           <CommandEmpty>Sin resultados.</CommandEmpty>
                           <CommandGroup>
-                            {Object.values(UserType).map((role) => (
+                            {queryRoles.data?.map((role) => (
                               <CommandItem
-                                key={role}
-                                value={role}
+                                key={role.id}
+                                value={role.role}
                                 onSelect={() => {
-                                  form.setValue("user_type", role);
+                                  form.setValue("role", role.id.toString());
                                 }}
                               >
-                                {role}
-                                <Check className={cn("ml-auto size-4", role === field.value ? "opacity-100" : "opacity-0")} />
+                                {role.role}
+                                <Check className={cn("ml-auto size-4", role.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -449,6 +388,148 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="executive_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Numero de ejecutivo</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      startContent={<IdCard />}
+                      pattern="[0-9]*"
+                      inputMode="numeric"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          field.onChange(value);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="is_active"
+              render={({ field }) => (
+                <FormItem className="flex h-fit flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Estado</FormLabel>
+                    <FormDescription> {field.value ? "Activo" : "Inactivo"} </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex flex-col gap-4">
+              <FormField
+                control={form.control}
+                name="user_type"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="space-y-0.5">
+                      <FormLabel>Tipo de usuario</FormLabel>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value ? field.value : "Selecciona un tipo de usuario"}
+                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="w-full p-0" side="bottom" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar tipo de usuario…" className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>Sin resultados.</CommandEmpty>
+                            <CommandGroup>
+                              {Object.values(UserType).map((role) => (
+                                <CommandItem
+                                  key={role}
+                                  value={role}
+                                  onSelect={() => {
+                                    form.setValue("user_type", role);
+                                  }}
+                                >
+                                  {role}
+                                  <Check className={cn("ml-auto size-4", role === field.value ? "opacity-100" : "opacity-0")} />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="area"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="space-y-0.5">
+                      <FormLabel>Area</FormLabel>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value ? queryAreas.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona un area"}
+                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="w-full p-0" side="bottom" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar area…" className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>Sin resultados.</CommandEmpty>
+                            <CommandGroup>
+                              {queryAreas.data?.map((area) => (
+                                <CommandItem
+                                  key={area.id}
+                                  value={area.id.toString()}
+                                  onSelect={() => {
+                                    form.setValue("area", area.id.toString());
+                                  }}
+                                >
+                                  {area.name}
+                                  <Check className={cn("ml-auto size-4", area.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           <FormField
