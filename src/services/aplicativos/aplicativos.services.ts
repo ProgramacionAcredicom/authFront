@@ -23,7 +23,7 @@ export const updateAplicativo = async (id: string, aplicativo: Omit<AplicativosT
   return localAplicativosMapper(res.data);
 };
 
-export const deleteAplicativo = async (id: string): Promise<void> => {
+export const deleteAplicativo = async (id: string): Promise<{ message: string }> => {
   const res = await apiServices.delete(`/aplicativos/${id}`);
   return res.data;
 };

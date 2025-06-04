@@ -85,21 +85,21 @@ export const useMutationUpdateAplicativo = () => {
     },
   });
 
-  return { mutation };
+  return { mutation, isLoading: mutation.isPending };
 };
 
 export const useMutationDeleteAplicativo = () => {
   const queryClient = useQueryClient();
-  const mutation = useMutation({
+  const mutation = useMutation<{ message: string }, Error, { id: string }>({
     mutationFn: ({ id }: { id: string }) => deleteAplicativo(id),
-    onSuccess: () => {
+    onSuccess: (data: { message: string }) => {
       queryClient.invalidateQueries({ queryKey: ["aplicativos"] });
-      toast.success("Aplicativo eliminado correctamente");
+      toast.success(data.message || "Aplicativo desactivado correctamente");
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
-  return { mutation };
+  return { mutation, isLoading: mutation.isPending };
 };

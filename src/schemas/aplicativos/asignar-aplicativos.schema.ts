@@ -23,6 +23,7 @@ export const asignarAplicativosSchema = z.object({
       if (val.trim() === "") return null;
       return JSON.parse(val);
     }),
+  state: z.boolean(),
 });
 
 export type AsignarAplicativosSchema = z.infer<typeof asignarAplicativosSchema>;

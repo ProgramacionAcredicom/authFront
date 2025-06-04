@@ -2,26 +2,36 @@ import { useMutationAplicativos, useMutationUpdateAplicativo } from "@/hooks/apl
 import { AplicativosTypeModel } from "@/interfaces/aplicativos.interfaces";
 import { asignarAplicativosSchema, AsignarAplicativosSchema } from "@/schemas/aplicativos/asignar-aplicativos.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 export const useFormAplicativos = (data: AplicativosTypeModel, setOpen: (open: boolean) => void, isEdit: boolean, id: string) => {
-  console.log(data);
   const form = useForm<AsignarAplicativosSchema>({
     resolver: zodResolver(asignarAplicativosSchema),
     defaultValues: {
       nombre: data?.nombre || "",
       descripcion: data?.descripcion || "",
       configuracion: data?.configuracion ? JSON.stringify(data.configuracion, null, 2) : "{}",
+      state: data?.state || false,
     },
     mode: "onChange",
   });
 
+  useEffect(() => {
+    form.reset({
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      configuracion: data.configuracion ? JSON.stringify(data.configuracion, null, 2) : "{}",
+      state: data.state,
+    });
+  }, [data, form]);
+
   const { mutationAplicativos, isLoading } = useMutationAplicativos();
-  const { mutation } = useMutationUpdateAplicativo();
+  const { mutation, isLoading: isLoadingUpdate } = useMutationUpdateAplicativo();
 
   const onSubmit = async (formData: AsignarAplicativosSchema) => {
     // formData.configuracion es un string. Lo parseamos:
-    let parsedConfig: Record<string, any>;
+    let parsedConfig: Record<string, unknown>;
     try {
       parsedConfig = JSON.parse(formData.configuracion);
     } catch (e) {
@@ -32,8 +42,8 @@ export const useFormAplicativos = (data: AplicativosTypeModel, setOpen: (open: b
     const payload: Omit<AplicativosTypeModel, "id"> = {
       nombre: formData.nombre,
       descripcion: formData.descripcion,
-      // Envío como objeto, no como string
       configuracion: parsedConfig,
+      state: formData.state,
     };
 
     if (isEdit) {
@@ -41,10 +51,9 @@ export const useFormAplicativos = (data: AplicativosTypeModel, setOpen: (open: b
     } else {
       await mutationAplicativos.mutateAsync(payload);
     }
-
     setOpen(false);
     form.reset();
   };
 
-  return { form, onSubmit, isLoading };
+  return { form, onSubmit, isLoading: isLoading || isLoadingUpdate };
 };
