@@ -1,5 +1,4 @@
 // ActionCell.tsx
-import { Link, useLocation } from "react-router-dom";
 import { Edit, Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,33 +10,46 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { AplicativosTypeModel } from "@/interfaces/aplicativos.interfaces";
+import { AlertModal } from "@/components/modal/alert-modal";
+import { useState } from "react";
+import { FormularioAplicativos } from "@/components/form/formulario-aplicativos";
+import { useFormAplicativos } from "@/hooks/formularios/aplicativos/useFormAplicativos";
 
-export function ActionCell({ id }: { id: number }) {
-  const location = useLocation(); // ← ¡ahora sí es serializable!
+export function ActionCell({ data }: { data: AplicativosTypeModel }) {
+  const [open, setOpen] = useState(false);
+  const isEdit = Boolean(data);
+  const { form, onSubmit, isLoading } = useFormAplicativos(data, setOpen, isEdit, data.id.toString());
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Ellipsis className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="max-w-3xs" side="right" align="start">
-        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link
-              to={`editar/${id}`} // relativo ⇒ /aplicativos/editar/:id
-              state={{ backgroundLocation: location }} // 🔸 necesario para el overlay
-              className="flex items-center gap-2"
-            >
-              <Edit className="size-4" /> Editar
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <AlertModal
+        title="Actualizar Aplicativo"
+        description="¿Estás seguro de querer actualizar este aplicativo?"
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onConfirm={() => onSubmit(form.getValues())}
+        loading={isLoading}
+      >
+        <FormularioAplicativos form={form} onSubmit={onSubmit} />
+      </AlertModal>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <Ellipsis className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="max-w-3xs" side="right" align="start">
+          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => setOpen(true)}>
+              <Edit className="mr-2 h-4 w-4" /> Actualizar
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          {/* <DropdownMenuSeparator /> */}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 }

@@ -4,8 +4,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { LetterText } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { AsignarAplicativosSchema } from "@/schemas/aplicativos/asignar-aplicativos.schema";
-import { Button } from "../ui/button";
-import { toast } from "sonner";
+// import { Button } from "../ui/button";
+// import { toast } from "sonner";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 export const FormularioAplicativos = ({
@@ -48,10 +48,10 @@ export const FormularioAplicativos = ({
           control={form.control}
           name="configuracion"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="w-full">
               <FormLabel>Configuración (JSON)</FormLabel>
               <FormControl>
-                <div className="relative rounded border">
+                <div className="max-h-[40vh] overflow-auto rounded border">
                   <CodeMirror
                     value={field.value}
                     height="200px"
@@ -62,7 +62,7 @@ export const FormularioAplicativos = ({
                       highlightActiveLine: true,
                     }}
                   />
-                  <Button
+                  {/* <Button
                     size="sm"
                     type="button"
                     variant="custom2"
@@ -71,14 +71,14 @@ export const FormularioAplicativos = ({
                       try {
                         const pretty = JSON.stringify(JSON.parse(field.value), null, 2);
                         field.onChange(pretty);
-                      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
                       } catch (e: unknown) {
                         toast.error(`JSON inválido`);
                       }
                     }}
                   >
                     Formatear
-                  </Button>
+                  </Button> */}
                 </div>
               </FormControl>
               <FormMessage />

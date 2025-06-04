@@ -4,22 +4,14 @@ import { asignarAplicativosSchema, AsignarAplicativosSchema } from "@/schemas/ap
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-export const useFormAplicativos = (
-  data: {
-    nombre: string;
-    descripcion: string;
-    configuracion: { [x: string]: unknown } | null;
-  },
-  setOpen: (open: boolean) => void,
-  isEdit: boolean,
-  id: string,
-) => {
+export const useFormAplicativos = (data: AplicativosTypeModel, setOpen: (open: boolean) => void, isEdit: boolean, id: string) => {
+  console.log(data);
   const form = useForm<AsignarAplicativosSchema>({
     resolver: zodResolver(asignarAplicativosSchema),
     defaultValues: {
       nombre: data?.nombre || "",
       descripcion: data?.descripcion || "",
-      configuracion: data?.configuracion ? JSON.stringify(data.configuracion, null, 2) : "",
+      configuracion: data?.configuracion ? JSON.stringify(data.configuracion, null, 2) : "{}",
     },
     mode: "onChange",
   });
@@ -27,17 +19,29 @@ export const useFormAplicativos = (
   const { mutationAplicativos, isLoading } = useMutationAplicativos();
   const { mutation } = useMutationUpdateAplicativo();
 
-  const onSubmit = async (data: AsignarAplicativosSchema) => {
+  const onSubmit = async (formData: AsignarAplicativosSchema) => {
+    // formData.configuracion es un string. Lo parseamos:
+    let parsedConfig: Record<string, any>;
+    try {
+      parsedConfig = JSON.parse(formData.configuracion);
+    } catch (e) {
+      console.error("JSON inválido en campo configuracion:", e);
+      return; // aquí podrías mostrar un error al usuario en vez de continuar
+    }
+
     const payload: Omit<AplicativosTypeModel, "id"> = {
-      nombre: data.nombre,
-      descripcion: data.descripcion,
-      configuracion: data.configuracion,
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      // Envío como objeto, no como string
+      configuracion: parsedConfig,
     };
+
     if (isEdit) {
       await mutation.mutateAsync({ id, data: payload });
     } else {
       await mutationAplicativos.mutateAsync(payload);
     }
+
     setOpen(false);
     form.reset();
   };

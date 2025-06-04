@@ -72,13 +72,12 @@ export const useMutationAplicativos = () => {
 
 export const useMutationUpdateAplicativo = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Omit<AplicativosTypeModel, "id"> }) => updateAplicativo(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aplicativos"] });
       toast.success("Aplicativo actualizado correctamente");
-      navigate("..", { replace: true });
     },
     onError: (error) => {
       console.log(error);
@@ -91,13 +90,11 @@ export const useMutationUpdateAplicativo = () => {
 
 export const useMutationDeleteAplicativo = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const mutation = useMutation({
     mutationFn: ({ id }: { id: string }) => deleteAplicativo(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aplicativos"] });
       toast.success("Aplicativo eliminado correctamente");
-      navigate("..", { replace: true });
     },
     onError: (error) => {
       toast.error(error.message);

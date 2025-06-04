@@ -1,16 +1,24 @@
-import { Outlet } from "react-router-dom";
-import { columnsAplicativos } from "@/components/tables/asignacionAplicativos/columns";
-import AsignacionAplicativosTable from "@/components/tables/asignacionAplicativos/page";
+import { Link } from "react-router-dom";
 import { Title } from "@/components/title/Title";
-import { useQueryAplicaivos } from "@/hooks/aplicativos/useQueryAplicativos";
+import PageContainer from "@/components/layout/page-container";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import AplicativosTablePage from "@/components/tables/asignacionAplicativos/page";
 
 export const AplicativosPage = () => {
-  const { queryAplicativos } = useQueryAplicaivos();
   return (
-    <>
-      <Title text="Aplicativos" />
-      <AsignacionAplicativosTable columns={columnsAplicativos} data={queryAplicativos.data ?? []} />
-      <Outlet />
-    </>
+    <PageContainer scrollable={false}>
+      <div className="flex flex-1 flex-col space-y-4">
+        <div className="flex items-start justify-between">
+          <Title text="Aplicativos" />
+          <Button variant="custom2" asChild>
+            <Link to="agregar">
+              <Plus className="mr-2 h-4 w-4" /> Nuevo
+            </Link>
+          </Button>
+        </div>
+        <AplicativosTablePage />
+      </div>
+    </PageContainer>
   );
 };

@@ -1,7 +1,7 @@
 import { getAllAplicativos, getAplicativoById } from "@/services/aplicativos/aplicativos.services";
 import { useQuery } from "@tanstack/react-query";
 
-export const useQueryAplicaivos = () => {
+export const useQueryAplicativos = () => {
   const queryAplicativos = useQuery({
     queryKey: ["aplicativos"],
     queryFn: getAllAplicativos,
