@@ -94,7 +94,7 @@ export interface ColaboradorIDType {
   user_type: UserType;
   agency: Agency;
   role: Role;
-  area: null;
+  area: Areas;
   grupos: Grupo[];
   is_active: boolean;
   is_staff: boolean;

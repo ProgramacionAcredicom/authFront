@@ -45,7 +45,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
       user_type: user?.user_type.toUpperCase() === "USER_TYPES" ? "" : user?.user_type.toUpperCase(),
       is_active: user?.is_active ?? true,
       dpi: user?.dpi ?? "",
-      area: user?.area ?? "",
+      area: user?.area?.id.toString() ?? "",
       executive_number: user?.executive_number ?? null,
     },
     mode: "onChange",
@@ -59,6 +59,8 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
   const { mutation } = useMutationUpdateColaborador();
 
   const onSubmit = async (data: ColaboradorSchema) => {
+    console.log(data);
+
     if (selectedGroups.length < 1) {
       toast.error("Debe seleccionar al menos un grupo");
       return;
@@ -74,6 +76,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     formData.append("role", data.role);
     formData.append("user_type", data.user_type);
     formData.append("is_active", String(data.is_active));
+    formData.append("area", data.area);
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
@@ -320,7 +323,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                             {queryAgencias.data?.map((agencia) => (
                               <CommandItem
                                 key={agencia.id}
-                                value={agencia.name}
+                                value={agencia.id.toString()}
                                 onSelect={() => {
                                   form.setValue("agency", agencia.id.toString());
                                 }}
@@ -410,12 +413,12 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
               )}
             />
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
               name="is_active"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <FormItem className="flex h-fit flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                   <div className="space-y-0.5">
                     <FormLabel>Estado</FormLabel>
                     <FormDescription> {field.value ? "Activo" : "Inactivo"} </FormDescription>
@@ -427,104 +430,106 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="user_type"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <div className="space-y-0.5">
-                    <FormLabel>Tipo de usuario</FormLabel>
-                  </div>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
-                        >
-                          {field.value ? field.value : "Selecciona un tipo de usuario"}
-                          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
+            <div className="flex flex-col gap-4">
+              <FormField
+                control={form.control}
+                name="user_type"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="space-y-0.5">
+                      <FormLabel>Tipo de usuario</FormLabel>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value ? field.value : "Selecciona un tipo de usuario"}
+                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
 
-                    <PopoverContent className="w-full p-0" side="bottom" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar tipo de usuario…" className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>Sin resultados.</CommandEmpty>
-                          <CommandGroup>
-                            {Object.values(UserType).map((role) => (
-                              <CommandItem
-                                key={role}
-                                value={role}
-                                onSelect={() => {
-                                  form.setValue("user_type", role);
-                                }}
-                              >
-                                {role}
-                                <Check className={cn("ml-auto size-4", role === field.value ? "opacity-100" : "opacity-0")} />
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="area"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <div className="space-y-0.5">
-                    <FormLabel>Area</FormLabel>
-                  </div>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
-                        >
-                          {field.value ? field.value : "Selecciona un area"}
-                          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" side="bottom" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar tipo de usuario…" className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>Sin resultados.</CommandEmpty>
+                            <CommandGroup>
+                              {Object.values(UserType).map((role) => (
+                                <CommandItem
+                                  key={role}
+                                  value={role}
+                                  onSelect={() => {
+                                    form.setValue("user_type", role);
+                                  }}
+                                >
+                                  {role}
+                                  <Check className={cn("ml-auto size-4", role === field.value ? "opacity-100" : "opacity-0")} />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="area"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="space-y-0.5">
+                      <FormLabel>Area</FormLabel>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value ? queryAreas.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona un area"}
+                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
 
-                    <PopoverContent className="w-full p-0" side="bottom" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar area…" className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>Sin resultados.</CommandEmpty>
-                          <CommandGroup>
-                            {queryAreas.data?.map((area) => (
-                              <CommandItem
-                                key={area.id}
-                                value={area.name}
-                                onSelect={() => {
-                                  form.setValue("area", area.id.toString());
-                                }}
-                              >
-                                {area.name}
-                                <Check className={cn("ml-auto size-4", area.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <PopoverContent className="w-full p-0" side="bottom" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar area…" className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>Sin resultados.</CommandEmpty>
+                            <CommandGroup>
+                              {queryAreas.data?.map((area) => (
+                                <CommandItem
+                                  key={area.id}
+                                  value={area.id.toString()}
+                                  onSelect={() => {
+                                    form.setValue("area", area.id.toString());
+                                  }}
+                                >
+                                  {area.name}
+                                  <Check className={cn("ml-auto size-4", area.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           <FormField
