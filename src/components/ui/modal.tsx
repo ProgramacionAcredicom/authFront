@@ -9,14 +9,18 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ title, description, isOpen, onClose, children }) => {
-  const onChange = (open: boolean) => {
+  if (!isOpen) {
+    return null;
+  }
+
+  const handleOpenChange = (open: boolean) => {
     if (!open) {
       onClose();
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
