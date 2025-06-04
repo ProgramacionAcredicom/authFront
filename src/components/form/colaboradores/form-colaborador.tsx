@@ -76,7 +76,12 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     formData.append("role", data.role);
     formData.append("user_type", data.user_type);
     formData.append("is_active", String(data.is_active));
-    formData.append("area", data.area);
+    if (data.area) {
+      formData.append("area", data.area);
+    } else {
+      formData.append("area", "");
+    }
+
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
@@ -508,6 +513,10 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           <CommandList>
                             <CommandEmpty>Sin resultados.</CommandEmpty>
                             <CommandGroup>
+                              <CommandItem value="null" onSelect={() => form.setValue("area", "")}>
+                                <p>Sin area</p>
+                                <Check className={cn("ml-auto size-4", field.value === "" ? "opacity-100" : "opacity-0")} />
+                              </CommandItem>
                               {queryAreas.data?.map((area) => (
                                 <CommandItem
                                   key={area.id}
