@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-export const useFormAplicativos = (data: AplicativosTypeModel, setOpen: (open: boolean) => void, isEdit: boolean, id: string) => {
+export const useFormAplicativos = (data: AplicativosTypeModel | undefined, setOpen: (open: boolean) => void, isEdit?: boolean, id?: string) => {
   const form = useForm<AsignarAplicativosSchema>({
     resolver: zodResolver(asignarAplicativosSchema),
     defaultValues: {
@@ -19,10 +19,10 @@ export const useFormAplicativos = (data: AplicativosTypeModel, setOpen: (open: b
 
   useEffect(() => {
     form.reset({
-      nombre: data.nombre,
-      descripcion: data.descripcion,
-      configuracion: data.configuracion ? JSON.stringify(data.configuracion, null, 2) : "{}",
-      state: data.state,
+      nombre: data?.nombre || "",
+      descripcion: data?.descripcion || "",
+      configuracion: data?.configuracion ? JSON.stringify(data.configuracion, null, 2) : "{}",
+      state: data?.state || false,
     });
   }, [data, form]);
 
@@ -47,7 +47,7 @@ export const useFormAplicativos = (data: AplicativosTypeModel, setOpen: (open: b
     };
 
     if (isEdit) {
-      await mutation.mutateAsync({ id, data: payload });
+      await mutation.mutateAsync({ id: id!, data: payload });
     } else {
       await mutationAplicativos.mutateAsync(payload);
     }

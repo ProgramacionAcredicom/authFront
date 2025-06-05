@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { AplicativosTypeModel } from "@/interfaces/aplicativos.interfaces";
 import { createAplicativo, deleteAplicativo, updateAplicativo } from "@/services/aplicativos/aplicativos.services";
-import { useNavigate } from "react-router-dom";
 type MutationContext = {
   previousAplicativos: AplicativosTypeModel[] | undefined;
 };
@@ -18,7 +17,6 @@ interface ApiErrorResponse {
 
 export const useMutationAplicativos = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const mutationAplicativos = useMutation<AplicativosTypeModel, Error, Omit<AplicativosTypeModel, "id">, MutationContext>({
     mutationFn: createAplicativo,
 
@@ -59,7 +57,6 @@ export const useMutationAplicativos = () => {
 
     onSuccess: (data: AplicativosTypeModel) => {
       toast.success(`Se ha creado el aplicativo ${data.nombre} correctamente`);
-      navigate("..", { replace: true });
     },
 
     onSettled: () => {
