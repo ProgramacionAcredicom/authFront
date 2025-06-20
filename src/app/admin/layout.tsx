@@ -37,7 +37,7 @@ export default function LayoutAdmin() {
         <div className="flex flex-1 flex-col gap-4 p-4">
           {isNavigating ? (
             <div className="flex h-full items-center justify-center">
-              <Loader2 className="size-28 animate-spin" />
+              <Loader2 className="size-12 animate-spin" />
             </div>
           ) : (
             <Outlet />
