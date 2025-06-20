@@ -44,15 +44,6 @@ const routes = createBrowserRouter(
               path: "agencias/agencias",
               element: <AgenciasPage />,
             },
-            // Grupos y permisos
-            // {
-            //   path: "grupos-permisos/agregar",
-            //   element: <GruposPage />,
-            // },
-            // {
-            //   path: "grupos-permisos/aplicativos",
-            //   element: <AplicativosPage />,
-            // },
           ],
         },
         // Grupos y permisos
@@ -128,7 +119,7 @@ const routes = createBrowserRouter(
       ],
     },
     {
-      element: <GuestRoute />, // Todas las rutas hijas serán accesibles solo para invitados
+      element: <GuestRoute />,
       children: [
         {
           path: "/auth",

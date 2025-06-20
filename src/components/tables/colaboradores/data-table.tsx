@@ -32,7 +32,7 @@ export function ColaboradoresTable<TData extends { id: string | number }, TValue
     onGlobalFilterChange: onSearch,
   });
   return (
-    <DataTable table={table} isLoading={isLoading}>
+    <DataTable table={table} isLoading={isLoading} clickRow>
       <DataTableToolbar table={table} />
     </DataTable>
   );
