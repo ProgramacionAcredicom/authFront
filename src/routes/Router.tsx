@@ -24,6 +24,7 @@ import { ModalEliminarPermiso } from "@/components/modal/permisos/modal-eliminar
 import { ModalEditarGrupo } from "@/components/modal/grupos/modal-editar-grupo";
 import { ModalEliminarGrupo } from "@/components/modal/grupos/modal-eliminar-grupo";
 import { GrupoLoader } from "@/app/admin/grupos-permisos/grupos-y-permisos/loaderGrupo";
+import AreasPage from "@/app/admin/areas/page";
 
 const routes = createBrowserRouter([
   {
@@ -38,20 +39,28 @@ const routes = createBrowserRouter([
             index: true,
             element: <AdminPage />,
           },
-          // Agencias
+        ],
+      },
+      // Agencias
+      {
+        path: "agencias",
+        element: <LayoutAdmin />,
+        children: [
           {
-            path: "agencias/agencias",
+            index: true,
             element: <AgenciasPage />,
           },
-          // Grupos y permisos
-          // {
-          //   path: "grupos-permisos/agregar",
-          //   element: <GruposPage />,
-          // },
-          // {
-          //   path: "grupos-permisos/aplicativos",
-          //   element: <AplicativosPage />,
-          // },
+        ],
+      },
+      // Areas
+      {
+        path: "areas",
+        element: <LayoutAdmin />,
+        children: [
+          {
+            index: true,
+            element: <AreasPage />,
+          },
         ],
       },
       // Grupos y permisos

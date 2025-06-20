@@ -37,7 +37,18 @@ export const dataRoutes: Props = {
       items: [
         {
           title: "Gestionar agencias",
-          url: "/agencias/agencias",
+          url: "/agencias",
+        },
+      ],
+    },
+    {
+      title: "Áreas",
+      url: "/areas",
+      icon: Building,
+      items: [
+        {
+          title: "Gestionar áreas",
+          url: "/areas",
         },
       ],
     },
