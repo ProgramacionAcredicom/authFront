@@ -128,6 +128,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isUploading, setIsUploading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -12,13 +12,37 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Result, UserType } from "@/interfaces/colaboradores.interfaces";
 import { ColumnDef } from "@tanstack/react-table";
-import { Airplay, Blocks, Edit, Ellipsis, Folder, School, Shrub, UserRound, Users } from "lucide-react";
+import { Airplay, Blocks, Edit, Ellipsis, Folder, School, Shrub, Text, UserRound, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const columns: ColumnDef<Result>[] = [
   {
     accessorKey: "id",
     header: "No.",
+    meta: {
+      label: "No.",
+    },
+  },
+  {
+    accessorKey: "picture",
+    header: "Foto",
+    cell: ({ row }) => {
+      const { picture } = row.original;
+      return (
+        <Avatar>
+          {picture ? (
+            <AvatarImage src={picture} alt="Foto" />
+          ) : (
+            <AvatarFallback>
+              <UserRound className="size-4" />
+            </AvatarFallback>
+          )}
+        </Avatar>
+      );
+    },
+    meta: {
+      label: "Foto",
+    },
   },
   {
     accessorKey: "picture",
@@ -41,15 +65,30 @@ export const columns: ColumnDef<Result>[] = [
   {
     accessorKey: "name",
     header: "Nombre",
+    enableColumnFilter: true,
+    meta: {
+      label: "Nombre",
+    },
   },
 
   {
     accessorKey: "username",
     header: "Usuario",
+    meta: {
+      label: "Usuario",
+      placeholder: "Buscar...",
+      variant: "text",
+      icon: Text,
+    },
+    enableColumnFilter: true,
   },
   {
     accessorKey: "email",
     header: "Correo",
+    enableColumnFilter: true,
+    meta: {
+      label: "Correo",
+    },
   },
   {
     accessorKey: "user_type",
@@ -68,10 +107,17 @@ export const columns: ColumnDef<Result>[] = [
       const Icon = iconMap[row.original.user_type];
       return Icon ? <Icon className="size-4" /> : null;
     },
+    meta: {
+      label: "Cuenta",
+    },
   },
   {
     accessorKey: "dpi",
     header: "DPI",
+    enableColumnFilter: true,
+    meta: {
+      label: "DPI",
+    },
   },
   {
     accessorKey: "is_active",
@@ -82,6 +128,9 @@ export const columns: ColumnDef<Result>[] = [
         return <Checkbox checked={true} />;
       }
       return <Checkbox checked={false} />;
+    },
+    meta: {
+      label: "Estado",
     },
   },
   {
@@ -100,21 +149,19 @@ export const columns: ColumnDef<Result>[] = [
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.preventDefault();
-                }}
-              >
-                <Edit className="size-4" />
-                <Link to={`/colaboradores/editar/${id}`} className="w-full">
+              <DropdownMenuItem>
+                <Link to={`/colaboradores/editar/${id}`} className="flex w-full items-center gap-2">
+                  <Edit className="size-4" />
                   Editar
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
           </DropdownMenuContent>
         </DropdownMenu>
       );
+    },
+    meta: {
+      label: "Acciones",
     },
   },
 ];

@@ -8,13 +8,13 @@ import { useFormListaPermisos, useFormPermisos } from "@/hooks/formularios/permi
 import { ScrollArea } from "../../ui/scroll-area";
 import { Card, CardContent } from "../../ui/card";
 import { AsignarPermisosSchema } from "@/schemas/permisos/asignar-permisos.schema";
-import { useQueryAplicaivos } from "@/hooks/aplicativos/useQueryAplicativos";
+import { useQueryAplicativos } from "@/hooks/aplicativos/useQueryAplicativos";
 import { Form } from "../../ui/form";
 
 export const ModalAsignarPermiso = () => {
   const [permisos, setPermisos] = useState<AsignarPermisosSchema[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const { queryAplicativos } = useQueryAplicaivos();
+  const { queryAplicativos } = useQueryAplicativos();
   const { form } = useFormPermisos();
 
   const handleAddPermiso = (data: AsignarPermisosSchema) => {

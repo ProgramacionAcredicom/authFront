@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { KeyRound, Trash2, X } from "lucide-react";
 import { useState } from "react";
-
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useFormGruposEliminar } from "@/hooks/formularios/grupos/useFormGrupos";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useQueryAplicativos } from "@/hooks/aplicativos/useQueryAplicativos";
 
 export const ModalEliminarGrupo = () => {
   const { id } = useParams();
@@ -23,6 +24,7 @@ export const ModalEliminarGrupo = () => {
       navigate("..", { replace: true });
     }
   };
+  const { queryAplicativos } = useQueryAplicativos();
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

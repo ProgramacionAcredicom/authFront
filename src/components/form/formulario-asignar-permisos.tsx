@@ -1,5 +1,5 @@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useQueryAplicaivos } from "@/hooks/aplicativos/useQueryAplicativos";
+import { useQueryAplicativos } from "@/hooks/aplicativos/useQueryAplicativos";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { AppWindow, KeyRound, LetterText } from "lucide-react";
 import { AsignarPermisosSchema } from "@/schemas/permisos/asignar-permisos.schema";
 import { UseFormReturn } from "react-hook-form";
 export const FormularioAsignarPermisos = ({ form }: { form: UseFormReturn<AsignarPermisosSchema> }) => {
-  const { queryAplicativos } = useQueryAplicaivos();
+  const { queryAplicativos } = useQueryAplicativos();
 
   return (
     <Form {...form}>
