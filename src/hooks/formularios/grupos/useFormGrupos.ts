@@ -1,5 +1,5 @@
-import { useMutationGrupos, useMutationUpdateGrupo } from "@/hooks/grupos/useMutationGrupos";
-import { CrearGrupoSchema, crearGrupoSchema } from "@/schemas/grupos/grupos.schema";
+import { useMutationEliminarGrupo, useMutationGrupos, useMutationUpdateGrupo } from "@/hooks/grupos/useMutationGrupos";
+import { CrearGrupoSchema, crearGrupoSchema, eliminarGrupoSchema, EliminarGrupoSchema } from "@/schemas/grupos/grupos.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -9,6 +9,7 @@ export const useFormGrupos = (
     id: string;
     nombre: string;
     permisos: string[];
+    state: boolean;
   },
 ) => {
   const isEdit = Boolean(dataGrupoEditar);
@@ -17,6 +18,7 @@ export const useFormGrupos = (
     defaultValues: {
       nombre: isEdit ? dataGrupoEditar?.nombre : "",
       permisos: isEdit ? dataGrupoEditar?.permisos.map((permiso) => parseInt(permiso)) : [],
+      state: isEdit ? dataGrupoEditar?.state : true,
     },
     mode: "onChange",
   });
@@ -32,4 +34,30 @@ export const useFormGrupos = (
     form.reset();
   };
   return { form, onSubmit, isLoading };
+};
+
+export const useFormGruposEliminar = (
+  data?: { aplicativos: { nombre: string }[]; nombre: string },
+  setOpen?: (open: boolean) => void,
+  id?: string,
+) => {
+  const form = useForm<EliminarGrupoSchema>({
+    resolver: zodResolver(eliminarGrupoSchema),
+    defaultValues: {
+      aplicativo: data?.aplicativos?.length && data?.aplicativos.length > 0 ? data?.aplicativos[0]?.nombre : "SIN APLICATICO N/A",
+      nombre: data?.nombre ?? "",
+    },
+    mode: "onChange",
+  });
+  const { mutationEliminarGrupo, isLoading } = useMutationEliminarGrupo();
+  const onSubmit = async () => {
+    await mutationEliminarGrupo.mutateAsync({ id: id! });
+    form.reset();
+    setOpen?.(false);
+  };
+  return {
+    form,
+    onSubmit,
+    isLoading,
+  };
 };

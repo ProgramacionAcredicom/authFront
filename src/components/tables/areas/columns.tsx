@@ -1,28 +1,21 @@
+import { Result } from "@/interfaces/areas.interfaces";
 import { ColumnDef } from "@tanstack/react-table";
 import { Circle, CircleCheck } from "lucide-react";
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-export type Grupo = {
-  grupo: string;
-  permiso: string;
-  status: "active" | "desactive";
-};
-
-export const columns: ColumnDef<Grupo>[] = [
+export const columns: ColumnDef<Result>[] = [
   {
-    accessorKey: "aplicativo",
-    header: "Aplicativo",
+    accessorKey: "id",
+    header: "ID",
   },
   {
-    accessorKey: "grupo",
-    header: "Grupo",
+    accessorKey: "name",
+    header: "Nombre",
   },
   {
-    accessorKey: "status",
+    accessorKey: "state",
     header: "Estado",
     cell: ({ row }) => {
-      if (row.original.status === "active") {
+      if (row.original) {
         return (
           <div>
             <CircleCheck className="size-4 text-green-500" />
@@ -35,5 +28,13 @@ export const columns: ColumnDef<Grupo>[] = [
         </div>
       );
     },
+  },
+  {
+    accessorKey: "code",
+    header: "Código",
+  },
+  {
+    accessorKey: "no_colaboradores",
+    header: "Usuarios",
   },
 ];

@@ -9,13 +9,21 @@ export const ModalAgregarGrupo = () => {
   const [open, setOpen] = useState(false);
   const { form, onSubmit, isLoading } = useFormGrupos(setOpen);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) {
+          form.reset();
+        }
+        setOpen(open);
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="custom2">
           <Plus /> Agregar
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-custom-gray font-bold">Agregar Grupo</DialogTitle>
           <DialogDescription className="sr-only">Asigna un grupo a un usuario</DialogDescription>

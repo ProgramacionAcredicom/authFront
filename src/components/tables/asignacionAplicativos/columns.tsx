@@ -26,6 +26,7 @@ export const columnsAplicativos: ColumnDef<AplicativosTypeModel>[] = [
     cell: ({ row }) => {
       const data = row.original;
       return <Checkbox checked={data.state} />;
+
     },
   },
   {

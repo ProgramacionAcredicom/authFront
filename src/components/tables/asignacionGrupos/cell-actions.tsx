@@ -34,7 +34,7 @@ export const CellActions = ({ id }: { id: number }) => {
         <DropdownMenuItem asChild>
           <DropdownMenuItem asChild>
             <Link to={`eliminar/${id}`} state={{ modal: true }} className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <Trash className="size-4" /> Eliminar
+              <Trash className="size-4" /> Desactivar
             </Link>
           </DropdownMenuItem>
         </DropdownMenuItem>

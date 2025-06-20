@@ -6,9 +6,8 @@ import { colaboradorSchema } from "@/schemas/colaboradores/colaborador.schema";
 import { Input } from "@/components/ui/input";
 import { Check, ChevronsUpDown, Eye, EyeOff, IdCard, Loader2, LockKeyhole, Mail, Save, Upload, User, UserCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
-import { useQueryAgencias } from "@/hooks/agencias/useQueryAgencias";
 import { Switch } from "@/components/ui/switch";
 import { useQueryRoles } from "@/hooks/roles/useQueryRoles";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
@@ -17,16 +16,18 @@ import { createColaborador } from "@/services/colaboradores/colaboradores.servic
 import { AxiosError } from "axios";
 import { ColaboradorIDType, CrearColaboradorType, UserType } from "@/interfaces/colaboradores.interfaces";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useMutationUpdateColaborador } from "@/hooks/colaboradores/useMutationColaboradores";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQueryListAreasSinPaginacion } from "@/hooks/areas/useQueryAreas";
 export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: GruposTypeModel[]; user?: ColaboradorIDType }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const isEdit = Boolean(user);
+
   const form = useForm<ColaboradorSchema>({
     resolver: zodResolver(colaboradorSchema),
     defaultValues: {
@@ -40,68 +41,20 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
       confirm_password: isEdit ? "" : "Acredicom2025.",
       picture: user?.picture ?? null,
       grup: [],
-      user_type: user?.user_type.toUpperCase() as UserType,
+      user_type: user?.user_type.toUpperCase() === "USER_TYPES" ? "" : user?.user_type.toUpperCase(),
       is_active: user?.is_active ?? true,
-      executive_number: null,
       dpi: user?.dpi ?? "",
+      area: user?.area?.id.toString() ?? "",
+      executive_number: user?.executive_number ?? null,
     },
     mode: "onChange",
   });
 
-  const name = form.watch("name");
-
-  useEffect(() => {
-    if (name) {
-      const username = generateUsername(name);
-      form.setValue("username", username);
-      const email = generateEmail(name);
-      form.setValue("email", email);
-    }
-  }, [name, form]);
-
-  const { queryAgencias } = useQueryAgencias();
+  const { queryAreasSinPaginacion } = useQueryListAreasSinPaginacion();
   const { queryRoles } = useQueryRoles();
-  // Función para generar el username
-  const generateUsername = (fullName: string) => {
-    const names = fullName
-      .trim()
-      .toUpperCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .split(" ");
-
-    if (names.length < 2) return "";
-
-    const firstInitial = names[0]?.charAt(0) || "";
-    const secondInitial = names[1]?.charAt(0) || "";
-    const lastName = names.find((name, index) => index > 1 && name.length > 3) || "";
-
-    // Elimina caracteres no alfabéticos del apellido
-    const cleanLastName = lastName.replace(/[^A-Z]/g, "");
-
-    return `MC${firstInitial}${secondInitial}${cleanLastName}`;
-  };
-
-  const generateEmail = (fullName: string) => {
-    const names = fullName
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .split(" ");
-
-    if (names.length < 2) return "";
-
-    const firstInitial = names[0]?.charAt(0) || "";
-    const secondInitial = names[1]?.charAt(0) || "";
-    const lastName = names.find((name, index) => index > 1 && name.length > 3) || "";
-
-    const cleanLastName = lastName.replace(/[^a-z]/g, "");
-
-    return `${firstInitial}${secondInitial}${cleanLastName}@acredicom.com.gt`;
-  };
+  // const {  } = useQueryListAreas();
   const queryClient = useQueryClient();
-  const route = useNavigate();
+  // const route = useNavigate();
   const { mutation } = useMutationUpdateColaborador();
 
   const onSubmit = async (data: ColaboradorSchema) => {
@@ -109,7 +62,6 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
       toast.error("Debe seleccionar al menos un grupo");
       return;
     }
-
     // 1. Construir FormData
     const formData = new FormData();
     formData.append("name", data.name);
@@ -121,6 +73,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     formData.append("role", data.role);
     formData.append("user_type", data.user_type);
     formData.append("is_active", String(data.is_active));
+    formData.append("area", data.area);
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
@@ -131,11 +84,19 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     }
     // Grupos
     selectedGroups.forEach((g) => {
-      formData.append("grup[]", String(g.id));
+      formData.append("grup", String(g.id));
     });
     // Imagen
     if (data.picture instanceof File) {
       formData.append("picture", data.picture);
+    } else if (data.picture === null) {
+      // Esto depende de tu API. Por ejemplo, si tu backend entiende:
+      //   “picture” vacío o string especial para que lo quite
+      // Puedes hacer:
+      formData.append("picture", "");
+      // o
+      // formData.append("remove_picture", "true");
+      // Si tu API espera un campo distinto para borrar la imagen, úsalo aquí.
     }
 
     try {
@@ -155,7 +116,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
 
       form.reset();
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
-      route("/colaboradores", { replace: true });
+      // route("/colaboradores", { replace: true });
     } catch (error) {
       console.error(error);
       if (error instanceof AxiosError && error.response?.data) {
@@ -227,7 +188,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           className="absolute top-2 right-5 cursor-pointer rounded-full bg-red-500 p-1 transition-colors hover:bg-red-600"
                           onClick={(e) => {
                             e.stopPropagation(); // Prevent opening file dialog
-                            form.setValue("picture", "");
+                            form.setValue("picture", null);
                           }}
                         >
                           <X className="h-4 w-4 text-white" />
@@ -345,7 +306,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           role="combobox"
                           className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? queryAgencias.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona una agencia"}
+                          {field.value ? queryAreasSinPaginacion.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona una agencia"}
                           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -357,10 +318,10 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                         <CommandList>
                           <CommandEmpty>Sin resultados.</CommandEmpty>
                           <CommandGroup>
-                            {queryAgencias.data?.map((agencia) => (
+                            {queryAreasSinPaginacion.data?.map((agencia) => (
                               <CommandItem
                                 key={agencia.id}
-                                value={agencia.name}
+                                value={agencia.id.toString()}
                                 onSelect={() => {
                                   form.setValue("agency", agencia.id.toString());
                                 }}
@@ -378,79 +339,12 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                 </FormItem>
               )}
             />
-          </div>
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Puesto</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
-                      >
-                        {field.value ? queryRoles.data?.find((r) => r.id.toString() === field.value)?.role : "Selecciona un puesto"}
-                        <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-
-                  <PopoverContent className="w-full p-0" side="bottom" align="start">
-                    <Command>
-                      <CommandInput placeholder="Buscar puesto…" className="h-9" />
-                      <CommandList>
-                        <CommandEmpty>Sin resultados.</CommandEmpty>
-                        <CommandGroup>
-                          {queryRoles.data?.map((role) => (
-                            <CommandItem
-                              key={role.id}
-                              value={role.role}
-                              onSelect={() => {
-                                form.setValue("role", role.id.toString());
-                              }}
-                            >
-                              {role.role}
-                              <Check className={cn("ml-auto size-4", role.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Estado</FormLabel>
-                    <FormDescription> {field.value ? "Activo" : "Inactivo"} </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="user_type"
+              name="role"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <div className="space-y-0.5">
-                    <FormLabel>Tipo de usuario</FormLabel>
-                  </div>
+                  <FormLabel>Puesto</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -459,7 +353,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           role="combobox"
                           className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? field.value : "Selecciona un puesto"}
+                          {field.value ? queryRoles.data?.find((r) => r.id.toString() === field.value)?.role : "Selecciona un puesto"}
                           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -471,16 +365,16 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                         <CommandList>
                           <CommandEmpty>Sin resultados.</CommandEmpty>
                           <CommandGroup>
-                            {Object.values(UserType).map((role) => (
+                            {queryRoles.data?.map((role) => (
                               <CommandItem
-                                key={role}
-                                value={role}
+                                key={role.id}
+                                value={role.role}
                                 onSelect={() => {
-                                  form.setValue("user_type", role);
+                                  form.setValue("role", role.id.toString());
                                 }}
                               >
-                                {role}
-                                <Check className={cn("ml-auto size-4", role === field.value ? "opacity-100" : "opacity-0")} />
+                                {role.role}
+                                <Check className={cn("ml-auto size-4", role.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -492,6 +386,148 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="executive_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Numero de ejecutivo</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      startContent={<IdCard />}
+                      pattern="[0-9]*"
+                      inputMode="numeric"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          field.onChange(value);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="is_active"
+              render={({ field }) => (
+                <FormItem className="flex h-fit flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Estado</FormLabel>
+                    <FormDescription> {field.value ? "Activo" : "Inactivo"} </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex flex-col gap-4">
+              <FormField
+                control={form.control}
+                name="user_type"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="space-y-0.5">
+                      <FormLabel>Tipo de usuario</FormLabel>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value ? field.value : "Selecciona un tipo de usuario"}
+                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="w-full p-0" side="bottom" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar tipo de usuario…" className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>Sin resultados.</CommandEmpty>
+                            <CommandGroup>
+                              {Object.values(UserType).map((role) => (
+                                <CommandItem
+                                  key={role}
+                                  value={role}
+                                  onSelect={() => {
+                                    form.setValue("user_type", role);
+                                  }}
+                                >
+                                  {role}
+                                  <Check className={cn("ml-auto size-4", role === field.value ? "opacity-100" : "opacity-0")} />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="area"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="space-y-0.5">
+                      <FormLabel>Area</FormLabel>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value ? queryAreasSinPaginacion.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona un area"}
+                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="w-full p-0" side="bottom" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar area…" className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>Sin resultados.</CommandEmpty>
+                            <CommandGroup>
+                              {queryAreasSinPaginacion.data?.map((area) => (
+                                <CommandItem
+                                  key={area.id}
+                                  value={area.id.toString()}
+                                  onSelect={() => {
+                                    form.setValue("area", area.id.toString());
+                                  }}
+                                >
+                                  {area.name}
+                                  <Check className={cn("ml-auto size-4", area.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           <FormField

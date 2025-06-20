@@ -91,15 +91,16 @@ export interface ColaboradorIDType {
   username: string;
   email: string;
   picture: null;
-  user_type: string;
+  user_type: UserType;
   agency: Agency;
   role: Role;
-  area: null;
+  area: Areas;
   grupos: Grupo[];
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;
   otp_enabled: boolean;
+  executive_number: string | null | undefined;
 }
 
 export interface Agency {

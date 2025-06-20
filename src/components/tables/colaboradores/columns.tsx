@@ -45,6 +45,24 @@ export const columns: ColumnDef<Result>[] = [
     },
   },
   {
+    accessorKey: "picture",
+    header: "Foto",
+    cell: ({ row }) => {
+      const { picture } = row.original;
+      return (
+        <Avatar>
+          {picture ? (
+            <AvatarImage src={picture} alt="Foto" />
+          ) : (
+            <AvatarFallback>
+              <UserRound className="size-4" />
+            </AvatarFallback>
+          )}
+        </Avatar>
+      );
+    },
+  },
+  {
     accessorKey: "name",
     header: "Nombre",
     enableColumnFilter: true,

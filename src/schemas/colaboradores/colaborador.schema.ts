@@ -64,7 +64,10 @@ export const colaboradorSchema = z
         message: "El correo debe ser válido",
       })
       .trim(),
-    picture: z.union([z.string().url(), z.instanceof(File), z.null()]),
+    picture: z
+      .union([z.string().url().nullable(), z.instanceof(File), z.null()])
+      .optional()
+      .nullable(),
     agency: z
       .string({
         required_error: "La agencia es requerida",
@@ -86,7 +89,16 @@ export const colaboradorSchema = z
     ),
     user_type: z.enum(Object.values(UserType) as [string, ...string[]], {
       required_error: "El tipo de usuario es requerido",
+      invalid_type_error: "Deber ser 'USUARIO' | 'KIOSCO' | 'CONSEJO' | 'PROYECTO_DIALOGO' | 'PRADERA' | 'PROYECTO_FORESTAL' | 'OTRO'",
+      message: "Seleccione 'USUARIO' | 'KIOSCO' | 'CONSEJO' | 'PROYECTO_DIALOGO' | 'PRADERA' | 'PROYECTO_FORESTAL' | 'OTRO'",
     }),
+    area: z
+      .string({
+        required_error: "El area es requerida",
+      })
+      .min(1, {
+        message: "El area es requerida",
+      }),
     is_active: z.boolean({
       required_error: "El estado es requerido",
     }),

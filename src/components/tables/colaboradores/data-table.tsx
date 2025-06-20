@@ -1,8 +1,6 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { DataTableToolbar } from "@/components/ui/table/data-table-toolbar";
-
 import { useDataTable } from "@/hooks/use-data-table";
-
 import { ColumnDef } from "@tanstack/react-table";
 import { parseAsInteger, useQueryState } from "nuqs";
 
@@ -31,6 +29,7 @@ export function ColaboradoresTable<TData extends { id: string | number }, TValue
     debounceMs: 500,
     onGlobalFilterChange: onSearch,
   });
+
   return (
     <DataTable table={table} isLoading={isLoading} clickRow>
       <DataTableToolbar table={table} />

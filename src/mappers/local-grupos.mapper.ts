@@ -6,5 +6,6 @@ export const localGruposMapper = (grupos: GruposType) => {
     id: grupos.id,
     nombre: grupos.nombre,
     aplicativos: grupos.aplicativos,
+    state: grupos.state,
   });
 };

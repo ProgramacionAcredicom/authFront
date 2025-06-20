@@ -2,6 +2,7 @@ export interface GruposType {
   id: number;
   nombre: string;
   aplicativos: Aplicativo[];
+  state: boolean;
 }
 
 export interface Aplicativo {
@@ -13,6 +14,8 @@ export interface GruposTypeModel {
   id: number;
   nombre: string;
   permisos: Aplicativo[];
+  aplicativos: Aplicativo[];
+  state: boolean;
 }
 
 export interface PermisoModel {

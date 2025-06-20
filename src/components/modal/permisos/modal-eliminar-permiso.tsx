@@ -32,8 +32,10 @@ export const ModalEliminarPermiso = () => {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="text-custom-gray font-bold">Eliminar permiso</DialogTitle>
-          <DialogDescription className="sr-only">Elimina un permiso</DialogDescription>
+          <DialogTitle className="font-bold text-red-500">Eliminar permiso</DialogTitle>
+          <DialogDescription className="text-red-500">
+            ¿Estás seguro de querer eliminar este permiso? <span className="font-bold">Esta acción elimina permanentemente el permiso.</span>
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form id="formulario-eliminar-permisos" className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
@@ -95,7 +97,8 @@ export const ModalEliminarPermiso = () => {
             type="button"
             variant="outline"
             onClick={() => {
-              // setOpen(false);
+              setOpen(false);
+              navigate("..", { replace: true });
               form.reset();
             }}
           >

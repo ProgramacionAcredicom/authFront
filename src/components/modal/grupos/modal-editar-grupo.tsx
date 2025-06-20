@@ -18,7 +18,9 @@ export const ModalEditarGrupo = () => {
     id: id!,
     nombre: grupo?.nombre,
     permisos: permisos.map((permiso: Aplicativo) => permiso.id),
+    state: grupo?.state,
   };
+
   const { form, onSubmit } = useFormGrupos(setOpen, dataGrupoEditar);
   /** ----- 4. cerrar con la X o backdrop ----- */
   const handleOpenChange = (value: boolean) => {
@@ -27,11 +29,10 @@ export const ModalEditarGrupo = () => {
       navigate("..", { replace: true });
     }
   };
-  console.log(form.formState.errors);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="md:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-custom-gray font-bold">Editar grupo</DialogTitle>
           <DialogDescription className="sr-only">Edita un grupo</DialogDescription>
@@ -42,7 +43,8 @@ export const ModalEditarGrupo = () => {
             type="button"
             variant="outline"
             onClick={() => {
-              // setOpen(false);
+              setOpen(false);
+              navigate("..", { replace: true });
               form.reset();
             }}
           >

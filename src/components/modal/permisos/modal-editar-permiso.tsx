@@ -43,7 +43,7 @@ export const ModalEditarPermiso = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Aplicativo</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled>
                     <FormControl>
                       <SelectTrigger className="w-full rounded-full" startContent={<AppWindow className="size-4" />}>
                         <SelectValue placeholder="Selecciona un aplicativo" />

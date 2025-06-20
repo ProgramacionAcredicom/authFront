@@ -24,138 +24,140 @@ import { ModalEliminarPermiso } from "@/components/modal/permisos/modal-eliminar
 import { ModalEditarGrupo } from "@/components/modal/grupos/modal-editar-grupo";
 import { ModalEliminarGrupo } from "@/components/modal/grupos/modal-eliminar-grupo";
 import { GrupoLoader } from "@/app/admin/grupos-permisos/grupos-y-permisos/loaderGrupo";
+import AreasPage from "@/app/admin/areas/page";
 
-const routes = createBrowserRouter(
-  [
-    {
-      element: <ProtectedRoute />,
-      errorElement: <Page404 />,
-      children: [
-        {
-          path: "/",
-          element: <LayoutAdmin />,
-          children: [
-            {
-              index: true,
-              element: <AdminPage />,
-            },
-            // Agencias
-            {
-              path: "agencias/agencias",
-              element: <AgenciasPage />,
-            },
-          ],
-        },
-        // Grupos y permisos
-        {
-          path: "grupos-permisos",
-          element: <LayoutAdmin />,
-          children: [
-            {
-              path: "grupos",
-              element: <GruposPage />,
-              children: [
-                {
-                  path: "permisos/editar/:id",
-                  element: <ModalEditarPermiso />,
-                  loader: PermisoLoader,
-                },
-                {
-                  path: "permisos/eliminar/:id",
-                  element: <ModalEliminarPermiso />,
-                  loader: PermisoLoader,
-                },
-                {
-                  path: "editar/:id",
-                  element: <ModalEditarGrupo />,
-                  loader: GrupoLoader,
-                },
-                {
-                  path: "eliminar/:id",
-                  element: <ModalEliminarGrupo />,
-                  // loader: GrupoLoader,
-                },
-              ],
-            },
-            {
-              path: "aplicativos",
-              element: <AplicativosPage />,
-              children: [
-                { path: "nuevo", element: <ModalAsignarAplicativo /> },
-                {
-                  path: "editar/:id",
-                  element: <ModalAsignarAplicativo />,
-                  loader: AplicativoLoader,
-                },
-                {
-                  path: "eliminar/:id",
-                  element: <ModalEliminarAplicativo />,
-                  loader: AplicativoLoader,
-                },
-              ],
-            },
-          ],
-        },
-        // Colaboradores
-        {
-          path: "colaboradores",
-          element: <LayoutAdmin />,
-          children: [
-            {
-              index: true,
-              element: <ColaboradoresPage />,
-            },
-            {
-              path: "agregar",
-              element: <AgregarColaboradorPage />,
-            },
-            {
-              path: "editar/:id",
-              element: <EditarColaboradorPage />,
-              loader: ColaboradorLoader,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      element: <GuestRoute />,
-      children: [
-        {
-          path: "/auth",
-          element: <AuthLayout />,
-          children: [
-            {
-              path: "login",
-              element: <LoginPage />,
-            },
-            {
-              path: "forgot-password",
-              element: <ForgotPasswordPage />,
-            },
-            {
-              path: "code-otp",
-              element: <CodeOtpPage />,
-            },
-          ],
-        },
-      ],
-    },
-  ],
+const routes = createBrowserRouter([
   {
-    future: {
-      v7_fetcherPersist: true,
-      v7_normalizeFormMethod: true,
-      v7_partialHydration: true,
-      v7_relativeSplatPath: true,
-      v7_skipActionErrorRevalidation: true,
-    },
-    hydrationData: {
-      loaderData: {},
-      actionData: null,
-      errors: null,
-    },
+    element: <ProtectedRoute />,
+    errorElement: <Page404 />,
+    children: [
+      {
+        path: "/",
+        element: <LayoutAdmin />,
+        children: [
+          {
+            index: true,
+            element: <AdminPage />,
+          },
+        ],
+      },
+      // Agencias
+      {
+        path: "agencias",
+        element: <LayoutAdmin />,
+        children: [
+          {
+            index: true,
+            element: <AgenciasPage />,
+          },
+        ],
+      },
+      // Areas
+      {
+        path: "areas",
+        element: <LayoutAdmin />,
+        children: [
+          {
+            index: true,
+            element: <AreasPage />,
+          },
+        ],
+      },
+      // Grupos y permisos
+      {
+        path: "grupos-permisos",
+        element: <LayoutAdmin />,
+        children: [
+          {
+            path: "grupos",
+            element: <GruposPage />,
+            children: [
+              {
+                path: "permisos/editar/:id",
+                element: <ModalEditarPermiso />,
+                loader: PermisoLoader,
+              },
+              {
+                path: "permisos/eliminar/:id",
+                element: <ModalEliminarPermiso />,
+                loader: PermisoLoader,
+              },
+              {
+                path: "editar/:id",
+                element: <ModalEditarGrupo />,
+                loader: GrupoLoader,
+              },
+              {
+                path: "eliminar/:id",
+                element: <ModalEliminarGrupo />,
+                loader: GrupoLoader,
+              },
+            ],
+          },
+          {
+            path: "aplicativos",
+            element: <AplicativosPage />,
+            children: [
+              { path: "nuevo", element: <ModalAsignarAplicativo /> },
+              {
+                path: "editar/:id",
+                element: <ModalAsignarAplicativo />,
+                loader: AplicativoLoader,
+              },
+              {
+                path: "eliminar/:id",
+                element: <ModalEliminarAplicativo />,
+                loader: AplicativoLoader,
+              },
+            ],
+          },
+        ],
+      },
+      // Colaboradores
+      {
+        path: "colaboradores",
+        element: <LayoutAdmin />,
+        children: [
+          {
+            index: true,
+            element: <ColaboradoresPage />,
+          },
+          {
+            path: "agregar",
+            element: <AgregarColaboradorPage />,
+          },
+          {
+            path: "editar/:id",
+            element: <EditarColaboradorPage />,
+            loader: ColaboradorLoader,
+          },
+        ],
+      },
+    ],
   },
-);
+  {
+    element: <GuestRoute />, // Todas las rutas hijas serán accesibles solo para invitados
+    children: [
+      {
+        path: "/auth",
+        element: <AuthLayout />,
+        children: [
+          {
+            path: "login",
+            element: <LoginPage />,
+          },
+          {
+            path: "forgot-password",
+            element: <ForgotPasswordPage />,
+          },
+          {
+            path: "code-otp",
+            element: <CodeOtpPage />,
+          },
+        ],
+      },
+    ],
+  },
+]);
 
 export const RouterApp = () => <RouterProvider router={routes} />;
