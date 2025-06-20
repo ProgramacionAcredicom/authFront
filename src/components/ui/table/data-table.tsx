@@ -5,16 +5,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { getCommonPinningStyles } from "@/lib/data-table";
 import { Loader2 } from "lucide-react";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData extends { id: string | number }> extends React.ComponentProps<"div"> {
   table: TanstackTable<TData>;
   actionBar?: React.ReactNode;
   isLoading?: boolean;
+  clickRow?: boolean;
 }
 
-export function DataTable<TData extends { id: string | number }>({ table, actionBar, children, isLoading }: DataTableProps<TData>) {
-  // const navigate = useNavigate();
+export function DataTable<TData extends { id: string | number }>({ table, actionBar, children, isLoading, clickRow = false }: DataTableProps<TData>) {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-1 flex-col space-y-4">
       {children}
@@ -57,8 +59,12 @@ export function DataTable<TData extends { id: string | number }>({ table, action
                           style={{
                             ...getCommonPinningStyles({ column: cell.column }),
                           }}
-                          // onClick={() => navigate(`/colaboradores/editar/${row.original.id}`)}
-                          // className="cursor-pointer"
+                          onClick={() => {
+                            if (clickRow) navigate(`/colaboradores/editar/${row.original.id}`);
+                          }}
+                          className={cn({
+                            "cursor-pointer": clickRow,
+                          })}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
