@@ -21,7 +21,7 @@ export const getAllColaboradores = async (
   const params: Record<string, string | number> = globalFilter
     ? { search: globalFilter }
     : {
-        page: pagination.pageIndex + 1,
+        page: pagination.pageIndex,
         page_size: pagination.pageSize,
       };
 

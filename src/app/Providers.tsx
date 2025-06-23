@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { queryClient } from "@/lib/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +11,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <ReactQueryDevtools />
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <Toaster richColors closeButton expand position="top-center" />
-        {children}
+        <NuqsAdapter>{children}</NuqsAdapter>
       </ThemeProvider>
     </QueryClientProvider>
   );

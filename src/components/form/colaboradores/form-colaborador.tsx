@@ -8,7 +8,6 @@ import { Check, ChevronsUpDown, Eye, EyeOff, IdCard, Loader2, LockKeyhole, Mail,
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
-import { useQueryAgencias } from "@/hooks/agencias/useQueryAgencias";
 import { Switch } from "@/components/ui/switch";
 import { useQueryRoles } from "@/hooks/roles/useQueryRoles";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
@@ -17,13 +16,13 @@ import { createColaborador } from "@/services/colaboradores/colaboradores.servic
 import { AxiosError } from "axios";
 import { ColaboradorIDType, CrearColaboradorType, UserType } from "@/interfaces/colaboradores.interfaces";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useMutationUpdateColaborador } from "@/hooks/colaboradores/useMutationColaboradores";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useQueryListAreas } from "@/hooks/areas/useQueryAreas";
+import { useQueryListAreasSinPaginacion } from "@/hooks/areas/useQueryAreas";
 export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: GruposTypeModel[]; user?: ColaboradorIDType }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -51,16 +50,14 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     mode: "onChange",
   });
 
-  const { queryAgencias } = useQueryAgencias();
+  const { queryAreasSinPaginacion } = useQueryListAreasSinPaginacion();
   const { queryRoles } = useQueryRoles();
-  const { queryAreas } = useQueryListAreas();
+  // const {  } = useQueryListAreas();
   const queryClient = useQueryClient();
-  const route = useNavigate();
+  // const route = useNavigate();
   const { mutation } = useMutationUpdateColaborador();
 
   const onSubmit = async (data: ColaboradorSchema) => {
-    console.log(data);
-
     if (selectedGroups.length < 1) {
       toast.error("Debe seleccionar al menos un grupo");
       return;
@@ -124,7 +121,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
 
       form.reset();
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
-      route("/colaboradores", { replace: true });
+      // route("/colaboradores", { replace: true });
     } catch (error) {
       console.error(error);
       if (error instanceof AxiosError && error.response?.data) {
@@ -136,6 +133,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isUploading, setIsUploading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -313,7 +311,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           role="combobox"
                           className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? queryAgencias.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona una agencia"}
+                          {field.value ? queryAreasSinPaginacion.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona una agencia"}
                           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -325,7 +323,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                         <CommandList>
                           <CommandEmpty>Sin resultados.</CommandEmpty>
                           <CommandGroup>
-                            {queryAgencias.data?.map((agencia) => (
+                            {queryAreasSinPaginacion.data?.map((agencia) => (
                               <CommandItem
                                 key={agencia.id}
                                 value={agencia.id.toString()}
@@ -501,7 +499,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                             role="combobox"
                             className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
                           >
-                            {field.value ? queryAreas.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona un area"}
+                            {field.value ? queryAreasSinPaginacion.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona un area"}
                             <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                           </Button>
                         </FormControl>
@@ -513,11 +511,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           <CommandList>
                             <CommandEmpty>Sin resultados.</CommandEmpty>
                             <CommandGroup>
-                              <CommandItem value="null" onSelect={() => form.setValue("area", "")}>
-                                <p>Sin area</p>
-                                <Check className={cn("ml-auto size-4", field.value === "" ? "opacity-100" : "opacity-0")} />
-                              </CommandItem>
-                              {queryAreas.data?.map((area) => (
+                              {queryAreasSinPaginacion.data?.map((area) => (
                                 <CommandItem
                                   key={area.id}
                                   value={area.id.toString()}

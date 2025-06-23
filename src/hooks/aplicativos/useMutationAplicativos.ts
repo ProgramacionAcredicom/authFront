@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { AplicativosTypeModel } from "@/interfaces/aplicativos.interfaces";
 import { createAplicativo, deleteAplicativo, updateAplicativo } from "@/services/aplicativos/aplicativos.services";
-import { useNavigate } from "react-router-dom";
 type MutationContext = {
   previousAplicativos: AplicativosTypeModel[] | undefined;
 };
@@ -18,7 +17,6 @@ interface ApiErrorResponse {
 
 export const useMutationAplicativos = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const mutationAplicativos = useMutation<AplicativosTypeModel, Error, Omit<AplicativosTypeModel, "id">, MutationContext>({
     mutationFn: createAplicativo,
 
@@ -59,7 +57,6 @@ export const useMutationAplicativos = () => {
 
     onSuccess: (data: AplicativosTypeModel) => {
       toast.success(`Se ha creado el aplicativo ${data.nombre} correctamente`);
-      navigate("..", { replace: true });
     },
 
     onSettled: () => {
@@ -72,13 +69,12 @@ export const useMutationAplicativos = () => {
 
 export const useMutationUpdateAplicativo = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Omit<AplicativosTypeModel, "id"> }) => updateAplicativo(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aplicativos"] });
       toast.success("Aplicativo actualizado correctamente");
-      navigate("..", { replace: true });
     },
     onError: (error) => {
       console.log(error);
@@ -86,23 +82,21 @@ export const useMutationUpdateAplicativo = () => {
     },
   });
 
-  return { mutation };
+  return { mutation, isLoading: mutation.isPending };
 };
 
 export const useMutationDeleteAplicativo = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const mutation = useMutation({
+  const mutation = useMutation<{ message: string }, Error, { id: string }>({
     mutationFn: ({ id }: { id: string }) => deleteAplicativo(id),
-    onSuccess: () => {
+    onSuccess: (data: { message: string }) => {
       queryClient.invalidateQueries({ queryKey: ["aplicativos"] });
-      toast.success("Aplicativo eliminado correctamente");
-      navigate("..", { replace: true });
+      toast.success(data.message || "Aplicativo desactivado correctamente");
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
-  return { mutation };
+  return { mutation, isLoading: mutation.isPending };
 };

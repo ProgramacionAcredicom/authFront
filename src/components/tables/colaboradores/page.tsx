@@ -1,7 +1,12 @@
+import { useQueryColaboradores } from "@/hooks/colaboradores/useQueryColaboradores";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { columns } from "./columns";
-import { DataTable } from "./data-table";
+import { ColaboradoresTable } from "./data-table";
 
-export default function ColaboradoresTable() {
-
-  return <DataTable columns={columns} />;
+export default function ColaboradoresTablePage() {
+  const [pageSize] = useQueryState("perPage", parseAsInteger.withDefault(10));
+  const [pageIndex] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [globalFilter, setGlobalFilter] = useQueryState("search", parseAsString.withDefault(""));
+  const { data, isLoading } = useQueryColaboradores({ pageIndex, pageSize }, globalFilter);
+  return <ColaboradoresTable data={data?.results || []} totalItems={data?.total || 0} columns={columns} onSearch={setGlobalFilter} isLoading={isLoading} />;
 }

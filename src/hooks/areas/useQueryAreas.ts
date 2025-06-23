@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { listAreas } from "@/services/areas/areas.services";
+import { listAreas, listAreasSinPaginacion } from "@/services/areas/areas.services";
 
 export const useQueryListAreas = () => {
   const queryAreas = useQuery({
@@ -7,4 +7,12 @@ export const useQueryListAreas = () => {
     queryFn: listAreas,
   });
   return { queryAreas };
+};
+
+export const useQueryListAreasSinPaginacion = () => {
+  const queryAreasSinPaginacion = useQuery({
+    queryKey: ["areas-sinPaginacion"],
+    queryFn: listAreasSinPaginacion,
+  });
+  return { queryAreasSinPaginacion };
 };

@@ -10,7 +10,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { useQueryAplicaivos } from "@/hooks/aplicativos/useQueryAplicativos";
+import { useQueryAplicativos } from "@/hooks/aplicativos/useQueryAplicativos";
 
 export const ModalEliminarPermiso = () => {
   const { id } = useParams();
@@ -26,7 +26,7 @@ export const ModalEliminarPermiso = () => {
       navigate("..", { replace: true });
     }
   };
-  const { queryAplicativos } = useQueryAplicaivos();
+  const { queryAplicativos } = useQueryAplicativos();
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
