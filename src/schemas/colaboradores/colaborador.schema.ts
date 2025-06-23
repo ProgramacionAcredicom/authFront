@@ -96,9 +96,7 @@ export const colaboradorSchema = z
       .string({
         required_error: "El area es requerida",
       })
-      .min(1, {
-        message: "El area es requerida",
-      }),
+      .optional(),
     is_active: z.boolean({
       required_error: "El estado es requerido",
     }),

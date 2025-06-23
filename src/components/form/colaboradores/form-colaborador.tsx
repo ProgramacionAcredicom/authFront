@@ -73,7 +73,12 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     formData.append("role", data.role);
     formData.append("user_type", data.user_type);
     formData.append("is_active", String(data.is_active));
-    formData.append("area", data.area);
+    if (data.area) {
+      formData.append("area", data.area);
+    } else {
+      formData.append("area", "");
+    }
+
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
