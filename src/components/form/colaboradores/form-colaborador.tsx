@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useMutationUpdateColaborador } from "@/hooks/colaboradores/useMutationColaboradores";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQueryListAreasSinPaginacion } from "@/hooks/areas/useQueryAreas";
+import { useQueryAgencias } from "@/hooks/agencias/useQueryAgencias";
 export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: GruposTypeModel[]; user?: ColaboradorIDType }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -51,6 +52,8 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
   });
 
   const { queryAreasSinPaginacion } = useQueryListAreasSinPaginacion();
+  const { queryAgencias } = useQueryAgencias();
+  const dataAgencias = queryAgencias.data;
   const { queryRoles } = useQueryRoles();
   // const {  } = useQueryListAreas();
   const queryClient = useQueryClient();
@@ -310,7 +313,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           role="combobox"
                           className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? queryAreasSinPaginacion.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona una agencia"}
+                          {field.value ? dataAgencias?.find((a) => a.id.toString() === field.value)?.name : "Selecciona una agencia"}
                           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -322,10 +325,10 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                         <CommandList>
                           <CommandEmpty>Sin resultados.</CommandEmpty>
                           <CommandGroup>
-                            {queryAreasSinPaginacion.data?.map((agencia) => (
+                            {dataAgencias?.map((agencia) => (
                               <CommandItem
                                 key={agencia.id}
-                                value={agencia.id.toString()}
+                                value={agencia.name.toLowerCase()}
                                 onSelect={() => {
                                   form.setValue("agency", agencia.id.toString());
                                 }}
