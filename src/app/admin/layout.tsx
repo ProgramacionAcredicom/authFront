@@ -7,17 +7,17 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebarStore } from "@/store/useSidebard.store";
-import { Loader2 } from "lucide-react";
-import { Outlet, useLocation, useNavigation } from "react-router-dom";
+// import { Loader2 } from "lucide-react";
+import { Outlet } from "react-router-dom";
 
 export default function LayoutAdmin() {
   const isMobile = useIsMobile();
   const open = useSidebarStore((state) => state.open);
   const setOpen = useSidebarStore((state) => state.setOpen);
-  const navigation = useNavigation();
-  const pathname = useLocation();
-  const isExcludedPath = pathname.pathname.startsWith("/grupos-permisos/grupos/");
-  const isNavigating = navigation.state === "loading" && !isExcludedPath;
+  // const navigation = useNavigation();
+  // const pathname = useLocation();
+  // const isExcludedPath = pathname.pathname.startsWith("/grupos-permisos/grupos/");
+  // const isNavigating = navigation.state === "loading" && !isExcludedPath;
 
   return (
     <SidebarProvider open={open} onOpenChange={setOpen}>
@@ -37,13 +37,7 @@ export default function LayoutAdmin() {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4">
-          {isNavigating ? (
-            <div className="flex h-full items-center justify-center">
-              <Loader2 className="size-12 animate-spin" />
-            </div>
-          ) : (
-            <Outlet />
-          )}
+          <Outlet />
         </div>
       </SidebarInset>
     </SidebarProvider>

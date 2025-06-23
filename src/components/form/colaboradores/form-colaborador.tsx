@@ -73,7 +73,11 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     formData.append("role", data.role);
     formData.append("user_type", data.user_type);
     formData.append("is_active", String(data.is_active));
-    formData.append("area", data.area);
+    if (data.area) {
+      formData.append("area", data.area);
+    } else {
+      formData.append("area", "");
+    }
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
@@ -114,7 +118,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
         toast.success("Colaborador creado correctamente");
       }
 
-      form.reset();
+      // form.reset();
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
       // route("/colaboradores", { replace: true });
     } catch (error) {
@@ -395,6 +399,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                   <FormControl>
                     <Input
                       {...field}
+                      value={field.value ?? ""}
                       startContent={<IdCard />}
                       pattern="[0-9]*"
                       inputMode="numeric"
@@ -506,6 +511,10 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           <CommandList>
                             <CommandEmpty>Sin resultados.</CommandEmpty>
                             <CommandGroup>
+                              <CommandItem value="" onSelect={() => form.setValue("area", "")}>
+                                Sin Area
+                                <Check className={cn("ml-auto size-4", field.value === "" ? "opacity-100" : "opacity-0")} />
+                              </CommandItem>
                               {queryAreasSinPaginacion.data?.map((area) => (
                                 <CommandItem
                                   key={area.id}
