@@ -8,14 +8,16 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebarStore } from "@/store/useSidebard.store";
 import { Loader2 } from "lucide-react";
-import { Outlet, useNavigation } from "react-router-dom";
+import { Outlet, useLocation, useNavigation } from "react-router-dom";
 
 export default function LayoutAdmin() {
   const isMobile = useIsMobile();
   const open = useSidebarStore((state) => state.open);
   const setOpen = useSidebarStore((state) => state.setOpen);
   const navigation = useNavigation();
-  const isNavigating = Boolean(navigation.location);
+  const pathname = useLocation();
+  const isExcludedPath = pathname.pathname.startsWith("/grupos-permisos/grupos/");
+  const isNavigating = navigation.state === "loading" && !isExcludedPath;
 
   return (
     <SidebarProvider open={open} onOpenChange={setOpen}>

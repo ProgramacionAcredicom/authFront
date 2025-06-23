@@ -15,7 +15,7 @@ export const useQueryPermisos = (id?: string, globalFilter?: string) => {
 
   const useInfinitePermisos = useInfiniteQuery({
     queryKey: ["permisos-infinite", globalFilter],
-    queryFn: ({ pageParam = 0 }) => getAllPermisos({ pageIndex: pageParam, pageSize: 220 }, globalFilter),
+    queryFn: ({ pageParam = 0 }) => getAllPermisos({ pageIndex: pageParam, pageSize: 500 }, globalFilter),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages, lastPageParam) => {
       if (lastPage.results.length === 0) {

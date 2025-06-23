@@ -6,9 +6,10 @@ import { useState } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { useQueryAplicativos } from "@/hooks/aplicativos/useQueryAplicativos";
+// import { Textarea } from "@/components/ui/textarea";
+// import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+// import { useQueryAplicativos } from "@/hooks/aplicativos/useQueryAplicativos";
+import { useFormGruposEliminar } from "@/hooks/formularios/grupos/useFormGrupos";
 
 export const ModalEliminarGrupo = () => {
   const { id } = useParams();
@@ -24,7 +25,7 @@ export const ModalEliminarGrupo = () => {
       navigate("..", { replace: true });
     }
   };
-  const { queryAplicativos } = useQueryAplicativos();
+  // const { queryAplicativos } = useQueryAplicativos();
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
