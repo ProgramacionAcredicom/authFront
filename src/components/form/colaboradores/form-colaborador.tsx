@@ -46,7 +46,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
       is_active: user?.is_active ?? true,
       dpi: user?.dpi ?? "",
       area: user?.area?.id.toString() ?? "",
-      executive_number: user?.executive_number ?? null,
+      executive_number: user?.ejecutivo_principal ?? null,
     },
     mode: "onChange",
   });
