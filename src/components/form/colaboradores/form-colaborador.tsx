@@ -400,19 +400,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                 <FormItem>
                   <FormLabel>Numero de ejecutivo</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value ?? ""}
-                      startContent={<IdCard />}
-                      pattern="[0-9]*"
-                      inputMode="numeric"
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (/^\d*$/.test(value)) {
-                          field.onChange(value);
-                        }
-                      }}
-                    />
+                    <Input {...field} value={field.value ?? ""} startContent={<IdCard />} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
