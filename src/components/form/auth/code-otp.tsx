@@ -22,6 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { verifyOTP } from "@/services/auth/auth.services";
 import { toast } from "sonner";
 import { OTPSchema, OTPSchemaType } from "@/schemas/auth/otp.schema";
+import { environment } from "@/config/environment";
 
 export const FormCodeOtp = () => {
   const [searchParams] = useSearchParams();
@@ -55,7 +56,14 @@ export const FormCodeOtp = () => {
         icon: "🔑",
         position: "bottom-right",
       });
-      navigate("/auth/login");
+      // Redirigir según si es URL externa o ruta interna
+      const redirectTarget = environment.passwordResetRedirectUrl;
+      const isExternal = /^https?:\/\//i.test(redirectTarget);
+      if (isExternal) {
+        window.location.href = redirectTarget;
+      } else {
+        navigate(redirectTarget);
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.log(error);
