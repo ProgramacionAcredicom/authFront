@@ -23,6 +23,27 @@ export const columns: ColumnDef<Result>[] = [
       label: "No.",
     },
   },
+  // {
+  //   accessorKey: "picture",
+  //   header: "Foto",
+  //   cell: ({ row }) => {
+  //     const { picture } = row.original;
+  //     return (
+  //       <Avatar>
+  //         {picture ? (
+  //           <AvatarImage src={picture} alt="Foto" />
+  //         ) : (
+  //           <AvatarFallback>
+  //             <UserRound className="size-4" />
+  //           </AvatarFallback>
+  //         )}
+  //       </Avatar>
+  //     );
+  //   },
+  //   meta: {
+  //     label: "Foto",
+  //   },
+  // },
   {
     accessorKey: "picture",
     header: "Foto",
@@ -42,24 +63,6 @@ export const columns: ColumnDef<Result>[] = [
     },
     meta: {
       label: "Foto",
-    },
-  },
-  {
-    accessorKey: "picture",
-    header: "Foto",
-    cell: ({ row }) => {
-      const { picture } = row.original;
-      return (
-        <Avatar>
-          {picture ? (
-            <AvatarImage src={picture} alt="Foto" />
-          ) : (
-            <AvatarFallback>
-              <UserRound className="size-4" />
-            </AvatarFallback>
-          )}
-        </Avatar>
-      );
     },
   },
   {

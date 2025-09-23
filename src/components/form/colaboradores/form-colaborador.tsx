@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useMutationUpdateColaborador } from "@/hooks/colaboradores/useMutationColaboradores";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQueryListAreasSinPaginacion } from "@/hooks/areas/useQueryAreas";
+import { useQueryAgencias } from "@/hooks/agencias/useQueryAgencias";
 export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: GruposTypeModel[]; user?: ColaboradorIDType }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -45,12 +46,14 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
       is_active: user?.is_active ?? true,
       dpi: user?.dpi ?? "",
       area: user?.area?.id.toString() ?? "",
-      executive_number: user?.executive_number ?? null,
+      executive_number: user?.ejecutivo_principal ?? null,
     },
     mode: "onChange",
   });
 
   const { queryAreasSinPaginacion } = useQueryListAreasSinPaginacion();
+  const { queryAgencias } = useQueryAgencias();
+  const dataAgencias = queryAgencias.data;
   const { queryRoles } = useQueryRoles();
   // const {  } = useQueryListAreas();
   const queryClient = useQueryClient();
@@ -78,7 +81,6 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
     } else {
       formData.append("area", "");
     }
-
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
@@ -119,7 +121,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
         toast.success("Colaborador creado correctamente");
       }
 
-      form.reset();
+      // form.reset();
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
       // route("/colaboradores", { replace: true });
     } catch (error) {
@@ -311,7 +313,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           role="combobox"
                           className={cn("w-full justify-between rounded-full bg-white font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? queryAreasSinPaginacion.data?.find((a) => a.id.toString() === field.value)?.name : "Selecciona una agencia"}
+                          {field.value ? dataAgencias?.find((a) => a.id.toString() === field.value)?.name : "Selecciona una agencia"}
                           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -323,10 +325,10 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                         <CommandList>
                           <CommandEmpty>Sin resultados.</CommandEmpty>
                           <CommandGroup>
-                            {queryAreasSinPaginacion.data?.map((agencia) => (
+                            {dataAgencias?.map((agencia) => (
                               <CommandItem
                                 key={agencia.id}
-                                value={agencia.id.toString()}
+                                value={agencia.name.toLowerCase()}
                                 onSelect={() => {
                                   form.setValue("agency", agencia.id.toString());
                                 }}
@@ -398,7 +400,7 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                 <FormItem>
                   <FormLabel>Numero de ejecutivo</FormLabel>
                   <FormControl>
-                    <Input {...field} startContent={<IdCard />} />
+                    <Input {...field} value={field.value ?? ""} startContent={<IdCard />} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -500,6 +502,10 @@ export const FormColaborador = ({ selectedGroups, user }: { selectedGroups: Grup
                           <CommandList>
                             <CommandEmpty>Sin resultados.</CommandEmpty>
                             <CommandGroup>
+                              <CommandItem value="" onSelect={() => form.setValue("area", "")}>
+                                Sin Area
+                                <Check className={cn("ml-auto size-4", field.value === "" ? "opacity-100" : "opacity-0")} />
+                              </CommandItem>
                               {queryAreasSinPaginacion.data?.map((area) => (
                                 <CommandItem
                                   key={area.id}
