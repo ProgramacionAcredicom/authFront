@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,15 +9,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Result, UserType } from "@/interfaces/colaboradores.interfaces";
+import { Result } from "@/interfaces/colaboradores.interfaces";
 import { ColumnDef } from "@tanstack/react-table";
-import { Airplay, Blocks, Edit, Ellipsis, Folder, School, Shrub, Text, UserRound, Users } from "lucide-react";
+import { Edit, Ellipsis, Search, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const columns: ColumnDef<Result>[] = [
   {
     accessorKey: "id",
     header: "No.",
+    size: 50,
+    maxSize: 70,
+    cell: ({ row }) => {
+      const isActive = row.original.is_active;
+      return (
+        <span className={!isActive ? "opacity-50" : ""}>
+          {row.original.id}
+        </span>
+      );
+    },
     meta: {
       label: "No.",
     },
@@ -47,18 +56,22 @@ export const columns: ColumnDef<Result>[] = [
   {
     accessorKey: "picture",
     header: "Foto",
+    size: 60,
+    maxSize: 60,
     cell: ({ row }) => {
-      const { picture } = row.original;
+      const { picture, is_active } = row.original;
       return (
-        <Avatar>
-          {picture ? (
-            <AvatarImage src={picture} alt="Foto" />
-          ) : (
-            <AvatarFallback>
-              <UserRound className="size-4" />
-            </AvatarFallback>
-          )}
-        </Avatar>
+        <div className={!is_active ? "opacity-50" : ""}>
+          <Avatar>
+            {picture ? (
+              <AvatarImage src={picture} alt="Foto" />
+            ) : (
+              <AvatarFallback>
+                <UserRound className="size-4" />
+              </AvatarFallback>
+            )}
+          </Avatar>
+        </div>
       );
     },
     meta: {
@@ -68,99 +81,85 @@ export const columns: ColumnDef<Result>[] = [
   {
     accessorKey: "name",
     header: "Nombre",
+    cell: ({ row }) => {
+      const { name, username, is_active } = row.original;
+      return (
+        <div className={`flex flex-col ${!is_active ? "opacity-50" : ""}`}>
+          <span className="font-medium">{name || "N/A"}</span>
+          <span className="text-sm text-muted-foreground flex items-center gap-2">
+            {!is_active && <span className="size-2 rounded-full bg-red-500" />}
+            {username || "N/A"}
+          </span>
+        </div>
+      );
+    },
     enableColumnFilter: true,
     meta: {
       label: "Nombre",
-    },
-  },
-
-  {
-    accessorKey: "username",
-    header: "Usuario",
-    meta: {
-      label: "Usuario",
       placeholder: "Buscar...",
       variant: "text",
-      icon: Text,
+      icon: Search,
     },
-    enableColumnFilter: true,
+  },
+  {
+    accessorKey: "agency",
+    header: "Agencia",
+    cell: ({ row }) => {
+      const { agency, role, is_active } = row.original;
+      return (
+        <div className={`flex flex-col ${!is_active ? "opacity-50" : ""}`}>
+          <span className="font-medium">{agency?.name || "N/A"}</span>
+          <span className="text-sm text-muted-foreground">{role?.role || "N/A"}</span>
+        </div>
+      );
+    },
+    meta: {
+      label: "Agencia",
+    },
   },
   {
     accessorKey: "email",
     header: "Correo",
+    cell: ({ row }) => {
+      const { email, is_active } = row.original;
+      return (
+        <span className={!is_active ? "opacity-50" : ""}>
+          {email}
+        </span>
+      );
+    },
     enableColumnFilter: true,
     meta: {
       label: "Correo",
     },
   },
   {
-    accessorKey: "user_type",
-    header: "Cuenta",
-    cell: ({ row }) => {
-      const iconMap = {
-        [UserType.Usuario]: UserRound,
-        [UserType.Kiosco]: Airplay,
-        [UserType.Consejo]: Users,
-        [UserType.ProyectoDialogo]: Folder,
-        [UserType.Pradera]: School,
-        [UserType.ProyectoForestal]: Shrub,
-        [UserType.Otro]: Blocks,
-      } as const;
-
-      const Icon = iconMap[row.original.user_type];
-      return Icon ? <Icon className="size-4" /> : null;
-    },
-    meta: {
-      label: "Cuenta",
-    },
-  },
-  {
-    accessorKey: "dpi",
-    header: "DPI",
-    enableColumnFilter: true,
-    meta: {
-      label: "DPI",
-    },
-  },
-  {
-    accessorKey: "is_active",
-    header: "Estado",
-    cell: ({ row }) => {
-      const { is_active } = row.original;
-      if (is_active) {
-        return <Checkbox checked={true} />;
-      }
-      return <Checkbox checked={false} />;
-    },
-    meta: {
-      label: "Estado",
-    },
-  },
-  {
     accessorKey: "actions",
     header: "Acciones",
     cell: ({ row }) => {
-      const { id } = row.original;
+      const { id, is_active } = row.original;
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Ellipsis className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="max-w-3xs" side="right" align="start">
-            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Link to={`/colaboradores/editar/${id}`} className="flex w-full items-center gap-2">
-                  <Edit className="size-4" />
-                  Editar
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className={!is_active ? "opacity-50" : ""}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Ellipsis className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="max-w-3xs" side="right" align="start">
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem>
+                  <Link to={`/colaboradores/editar/${id}`} className="flex w-full items-center gap-2">
+                    <Edit className="size-4" />
+                    Editar
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       );
     },
     meta: {

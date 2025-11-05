@@ -210,11 +210,22 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
 
   const handleGlobalFilterChange = React.useCallback(
     (value: string) => {
-      void setPage(1);
-      void setGlobalFilter(value);
+      // Actualizar página y filtro de forma coordinada para preservar perPage
+      const updateParams = () => {
+        void setPage(1);
+        void setGlobalFilter(value);
+      };
+      
+      // Usar startTransition si está disponible, sino ejecutar directamente
+      if (startTransition) {
+        startTransition(updateParams);
+      } else {
+        updateParams();
+      }
+      
       onGlobalFilterChange?.(value);
     },
-    [setPage, setGlobalFilter, onGlobalFilterChange],
+    [setPage, setGlobalFilter, onGlobalFilterChange, startTransition],
   );
 
   const table = useReactTable({

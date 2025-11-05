@@ -8,7 +8,6 @@ interface ColaboradoresTableParams<TData extends { id: string | number }, TValue
   data: TData[];
   totalItems: number;
   columns: ColumnDef<TData, TValue>[];
-  onSearch: (value: string) => void;
   isLoading?: boolean;
 }
 
@@ -16,7 +15,6 @@ export function ColaboradoresTable<TData extends { id: string | number }, TValue
   data,
   totalItems,
   columns,
-  onSearch,
   isLoading,
 }: ColaboradoresTableParams<TData, TValue>) {
   const [pageSize] = useQueryState("perPage", parseAsInteger.withDefault(10));
@@ -27,7 +25,6 @@ export function ColaboradoresTable<TData extends { id: string | number }, TValue
     pageCount: pageCount,
     shallow: false,
     debounceMs: 500,
-    onGlobalFilterChange: onSearch,
   });
 
   return (

@@ -18,12 +18,14 @@ export const getAllColaboradores = async (
   pagination: { pageIndex: number; pageSize: number },
   globalFilter: string,
 ): Promise<ColaboradoresModelType> => {
-  const params: Record<string, string | number> = globalFilter
-    ? { search: globalFilter }
-    : {
-        page: pagination.pageIndex,
-        page_size: pagination.pageSize,
-      };
+  const params: Record<string, string | number> = {
+    page: pagination.pageIndex,
+    page_size: pagination.pageSize,
+  };
+
+  if (globalFilter) {
+    params.search = globalFilter;
+  }
 
   const res = await apiServices.get("/users/get-list-users/", { params });
   const colaboradores = localColaboradoresMapper(res.data);

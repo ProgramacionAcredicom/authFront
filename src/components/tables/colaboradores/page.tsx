@@ -6,7 +6,7 @@ import { ColaboradoresTable } from "./data-table";
 export default function ColaboradoresTablePage() {
   const [pageSize] = useQueryState("perPage", parseAsInteger.withDefault(10));
   const [pageIndex] = useQueryState("page", parseAsInteger.withDefault(1));
-  const [globalFilter, setGlobalFilter] = useQueryState("search", parseAsString.withDefault(""));
+  const [globalFilter] = useQueryState("search", parseAsString.withDefault(""));
   const { data, isLoading } = useQueryColaboradores({ pageIndex, pageSize }, globalFilter);
-  return <ColaboradoresTable data={data?.results || []} totalItems={data?.total || 0} columns={columns} onSearch={setGlobalFilter} isLoading={isLoading} />;
+  return <ColaboradoresTable data={data?.results || []} totalItems={data?.total || 0} columns={columns} isLoading={isLoading} />;
 }
