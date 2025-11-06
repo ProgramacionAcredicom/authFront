@@ -4,6 +4,10 @@ import { refreshToken } from "./auth/auth.services";
 
 const { VITE_HOST_AUTH_DEV } = import.meta.env;
 
+if (!VITE_HOST_AUTH_DEV) {
+  throw new Error("VITE_HOST_AUTH_DEV environment variable is not defined");
+}
+
 const apiServices = axios.create({
   baseURL: `${VITE_HOST_AUTH_DEV}`,
   headers: {

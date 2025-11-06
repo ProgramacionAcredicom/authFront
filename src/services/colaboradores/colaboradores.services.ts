@@ -9,7 +9,10 @@ export const getColaboradorById = async (id: string) => {
   return colaborador;
 };
 
-export const updateColaborador = async (id: number, colaborador: CrearColaboradorType, config: AxiosRequestConfig) => {
+// Tipo que acepta FormData o CrearColaboradorType para flexibilidad
+export type ColaboradorFormData = FormData | CrearColaboradorType;
+
+export const updateColaborador = async (id: number, colaborador: ColaboradorFormData, config: AxiosRequestConfig) => {
   const res = await apiServices.put(`/users/actions/${id}/`, colaborador, config);
   return res.data;
 };
@@ -32,7 +35,7 @@ export const getAllColaboradores = async (
   return colaboradores;
 };
 
-export const createColaborador = async (colaborador: CrearColaboradorType, config: AxiosRequestConfig) => {
+export const createColaborador = async (colaborador: ColaboradorFormData, config: AxiosRequestConfig) => {
   const res = await apiServices.post("/users/actions/", colaborador, config);
   return res.data;
 };

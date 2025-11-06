@@ -7,9 +7,25 @@ export const listAreas = async (): Promise<AreasPaginationType> => {
   return res.data;
 };
 
+/**
+ * Lista todas las áreas sin paginación.
+ * El backend puede devolver:
+ * - Un array directo de Result[] cuando no hay paginación
+ * - Un objeto AreasPaginationType cuando hay paginación
+ * 
+ * @returns Promise que resuelve a AreasPaginationType o Result[]
+ */
 export const listAreasSinPaginacion = async (): Promise<AreasPaginationType | Result[]> => {
   const res = await apiServices.get<AreasPaginationType | Result[]>("/areas/sin-paginacion/");
   return res.data;
+};
+
+/**
+ * Helper para normalizar la respuesta de listAreasSinPaginacion a un array de Result
+ * Útil cuando necesitas trabajar siempre con un array, independientemente del formato del backend
+ */
+export const normalizeAreasResponse = (data: AreasPaginationType | Result[]): Result[] => {
+  return Array.isArray(data) ? data : data.results;
 };
 
 export const crearArea = async (data: AreasSchema) => {

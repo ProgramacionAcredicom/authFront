@@ -13,9 +13,8 @@ import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
 import { toast } from "sonner";
 import { createColaborador } from "@/services/colaboradores/colaboradores.services";
 import { AxiosError } from "axios";
-import { ColaboradorIDType, CrearColaboradorType, UserType } from "@/interfaces/colaboradores.interfaces";
+import { ColaboradorIDType, UserType } from "@/interfaces/colaboradores.interfaces";
 import { useQueryClient } from "@tanstack/react-query";
-// import { useNavigate } from "react-router-dom";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -69,9 +68,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
     ? queryAreasSinPaginacion.data 
     : queryAreasSinPaginacion.data?.results || [];
   const { queryRoles } = useQueryRoles();
-  // const {  } = useQueryListAreas();
   const queryClient = useQueryClient();
-  // const route = useNavigate();
   const { mutation } = useMutationUpdateColaborador();
 
   // Observar cambios en el nombre para generar automáticamente email y username (solo en creación)
@@ -79,7 +76,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
   const userHasEditedEmail = useRef(false);
   const userHasEditedUsername = useRef(false);
 
-  // Función para normalizar caracteres especiales (quitar tildes y convertir ñ a n)
+  // Normalizar caracteres especiales (quitar tildes y convertir ñ a n)
   const normalizeString = (str: string): string => {
     return str
       .normalize("NFD") // Descompone caracteres con tildes
@@ -90,7 +87,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
 
   // Generar email y username automáticamente cuando cambia el nombre (solo en creación)
   useEffect(() => {
-    if (isEdit) return; // No generar automáticamente en edición
+    if (isEdit) return;
 
     if (!watchedName || watchedName.trim().length === 0) {
       return;
@@ -131,7 +128,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
       toast.error("Debe seleccionar al menos un grupo");
       return;
     }
-    // 1. Construir FormData
+    
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("dpi", data.dpi);
@@ -152,26 +149,23 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
+    
     // Contraseña (solo si aplica)
     if (!isEdit || (data.password && data.confirm_password)) {
       formData.append("password", data.password!);
       formData.append("confirm_password", data.confirm_password!);
     }
+    
     // Grupos
     selectedGroups.forEach((g) => {
       formData.append("grup", String(g.id));
     });
+    
     // Imagen
     if (data.picture instanceof File) {
       formData.append("picture", data.picture);
     } else if (data.picture === null) {
-      // Esto depende de tu API. Por ejemplo, si tu backend entiende:
-      //   “picture” vacío o string especial para que lo quite
-      // Puedes hacer:
       formData.append("picture", "");
-      // o
-      // formData.append("remove_picture", "true");
-      // Si tu API espera un campo distinto para borrar la imagen, úsalo aquí.
     }
 
     try {
@@ -180,18 +174,16 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
       if (isEdit) {
         await mutation.mutateAsync({
           id: Number(user!.id),
-          data: formData as unknown as CrearColaboradorType,
+          data: formData,
           config,
         });
         toast.success("Colaborador actualizado correctamente");
       } else {
-        await createColaborador(formData as unknown as CrearColaboradorType, config);
+        await createColaborador(formData, config);
         toast.success("Colaborador creado correctamente");
       }
 
-      // form.reset();
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
-      // route("/colaboradores", { replace: true });
     } catch (error) {
       console.error(error);
       if (error instanceof AxiosError && error.response?.data) {
@@ -203,17 +195,12 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isUploading, setIsUploading] = useState(false);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsUploading(true);
     form.setValue("picture", file, { shouldValidate: true });
-    setIsUploading(false);
   };
   const openFileSelector = () => {
     fileInputRef.current?.click();

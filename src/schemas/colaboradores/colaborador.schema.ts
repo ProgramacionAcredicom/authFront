@@ -103,9 +103,23 @@ export const colaboradorSchema = z
     is_staff: z.boolean().optional().default(false),
     is_superuser: z.boolean().optional().default(false),
   })
-  .refine((data) => data.password === data.confirm_password, {
-    message: "Las contraseñas no coinciden",
-    path: ["confirm_password"],
-  });
+  .refine(
+    (data) => {
+      // Si ambas contraseñas están vacías, permitir (modo edición sin cambiar contraseña)
+      if (!data.password && !data.confirm_password) {
+        return true;
+      }
+      // Si ambas están presentes, deben coincidir
+      if (data.password && data.confirm_password) {
+        return data.password === data.confirm_password;
+      }
+      // Si solo una está presente, no permitir
+      return false;
+    },
+    {
+      message: "Las contraseñas no coinciden o ambas deben estar presentes",
+      path: ["confirm_password"],
+    },
+  );
 
 export type ColaboradorSchema = z.infer<typeof colaboradorSchema>;

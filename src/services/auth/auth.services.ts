@@ -1,7 +1,16 @@
 import axios from "axios";
 import apiServices from "../configAxios";
 import { localPerfilUsuarioMapper } from "@/mappers/local-perfilUsuario.mapper";
+
 const { VITE_HOST_AUTH_DEV, VITE_APLICATIVO_ID } = import.meta.env;
+
+if (!VITE_HOST_AUTH_DEV) {
+  throw new Error("VITE_HOST_AUTH_DEV environment variable is not defined");
+}
+
+if (!VITE_APLICATIVO_ID) {
+  throw new Error("VITE_APLICATIVO_ID environment variable is not defined");
+}
 
 export const login = async (credentials: { username: string; password: string }): Promise<{ access: string; refresh: string }> => {
   const response = await axios.post(`${VITE_HOST_AUTH_DEV}/auth/login/`, {
