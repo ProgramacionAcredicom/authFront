@@ -1,18 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Result } from "@/interfaces/colaboradores.interfaces";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, Ellipsis, Search, UserRound } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Search, UserRound } from "lucide-react";
+import { ActionsCell } from "./actions-cell";
 
 export const columns: ColumnDef<Result>[] = [
   {
@@ -136,32 +126,7 @@ export const columns: ColumnDef<Result>[] = [
   {
     accessorKey: "actions",
     header: "Acciones",
-    cell: ({ row }) => {
-      const { id, is_active } = row.original;
-      return (
-        <div className={!is_active ? "opacity-50" : ""}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Ellipsis className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="max-w-3xs" side="right" align="start">
-              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <Link to={`/colaboradores/editar/${id}`} className="flex w-full items-center gap-2">
-                    <Edit className="size-4" />
-                    Editar
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      );
-    },
+    cell: ({ row }) => <ActionsCell data={row.original} />,
     meta: {
       label: "Acciones",
     },
