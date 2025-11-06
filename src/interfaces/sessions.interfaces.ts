@@ -4,6 +4,7 @@ export interface SessionResponse {
   page_size: number;
   total_pages: number;
   results: Session[];
+  total_active?: number;
 }
 
 export interface Session {
@@ -39,7 +40,18 @@ export interface CloseSessionsResponse {
 export type SessionsByAplicativo = Record<number, Session[]>;
 
 export function groupSessionsByAplicativo(sessions: Session[]): SessionsByAplicativo {
+  // Validar que sessions sea un array válido
+  if (!sessions || !Array.isArray(sessions)) {
+    return {};
+  }
+  
   return sessions.reduce((acc, session) => {
+    // Validar que session.aplicativo.id exista
+    if (!session?.aplicativo?.id) {
+      console.warn("Session missing aplicativo or aplicativo.id:", session);
+      return acc;
+    }
+    
     const aplicativoId = session.aplicativo.id;
     if (!acc[aplicativoId]) {
       acc[aplicativoId] = [];

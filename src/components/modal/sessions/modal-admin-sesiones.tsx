@@ -17,15 +17,19 @@ interface ModalAdminSesionesProps {
 export const ModalAdminSesiones = ({ isOpen, onClose, userId, userName }: ModalAdminSesionesProps) => {
   const { groupedSessions, isLoading, error } = useQueryUserSessions(userId, isOpen);
   const { mutation, isLoading: isClosing } = useMutationCloseSessions();
-  const [loadingSessionId, setLoadingSessionId] = useState<number | null>(null);
-  const [loadingGroupId, setLoadingGroupId] = useState<number | null>(null);
+  const [loadingSessionIds, setLoadingSessionIds] = useState<Set<number>>(new Set());
+  const [loadingGroupIds, setLoadingGroupIds] = useState<Set<number>>(new Set());
 
   const handleCloseSession = async (sessionId: number) => {
-    setLoadingSessionId(sessionId);
+    setLoadingSessionIds(prev => new Set(prev).add(sessionId));
     try {
       await mutation.mutateAsync([sessionId]);
     } finally {
-      setLoadingSessionId(null);
+      setLoadingSessionIds(prev => {
+        const next = new Set(prev);
+        next.delete(sessionId);
+        return next;
+      });
     }
   };
 
@@ -35,13 +39,21 @@ export const ModalAdminSesiones = ({ isOpen, onClose, userId, userName }: ModalA
     );
     
     if (aplicativoId) {
-      setLoadingGroupId(Number(aplicativoId));
+      const aplicativoIdNum = Number(aplicativoId);
+      setLoadingGroupIds(prev => new Set(prev).add(aplicativoIdNum));
     }
     
     try {
       await mutation.mutateAsync(sessionIds);
     } finally {
-      setLoadingGroupId(null);
+      if (aplicativoId) {
+        const aplicativoIdNum = Number(aplicativoId);
+        setLoadingGroupIds(prev => {
+          const next = new Set(prev);
+          next.delete(aplicativoIdNum);
+          return next;
+        });
+      }
     }
   };
 
@@ -100,8 +112,8 @@ export const ModalAdminSesiones = ({ isOpen, onClose, userId, userName }: ModalA
                       sessions={sessions}
                       onCloseSession={handleCloseSession}
                       onCloseAllSessions={handleCloseAllSessions}
-                      isLoadingSession={loadingSessionId ?? undefined}
-                      isLoadingAll={loadingGroupId === Number(aplicativoId) && isClosing}
+                      loadingSessionIds={loadingSessionIds}
+                      isLoadingAll={loadingGroupIds.has(Number(aplicativoId)) && isClosing}
                     />
                   );
                 })}

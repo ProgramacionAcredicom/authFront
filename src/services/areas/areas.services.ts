@@ -1,4 +1,4 @@
-import { AreasPaginationType } from "@/interfaces/areas.interfaces";
+import { AreasPaginationType, Result } from "@/interfaces/areas.interfaces";
 import apiServices from "../configAxios";
 import { AreasSchema } from "@/schemas/areas/areas.schemas";
 
@@ -7,8 +7,8 @@ export const listAreas = async (): Promise<AreasPaginationType> => {
   return res.data;
 };
 
-export const listAreasSinPaginacion = async (): Promise<AreasPaginationType> => {
-  const res = await apiServices.get<AreasPaginationType>("/areas/sin-paginacion/");
+export const listAreasSinPaginacion = async (): Promise<AreasPaginationType | Result[]> => {
+  const res = await apiServices.get<AreasPaginationType | Result[]>("/areas/sin-paginacion/");
   return res.data;
 };
 

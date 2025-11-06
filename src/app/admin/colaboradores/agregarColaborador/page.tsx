@@ -3,10 +3,9 @@ import { FormColaborador } from "@/components/form/colaboradores/form-colaborado
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import AsignacionGruposTable from "@/components/tables/asignacionGrupos/page";
 import { useState } from "react";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
-import { columns } from "@/components/tables/asignacionGrupos/columns";
+
 export const AgregarColaboradorPage = () => {
   const navigate = useNavigate();
   const [selectedGroups, setSelectedGroups] = useState<GruposTypeModel[]>([]);
@@ -19,9 +18,8 @@ export const AgregarColaboradorPage = () => {
         </Button>
         <Title text="Agregar" />
       </div>
-      <div className="grid h-full grid-cols-1 gap-12 lg:grid-cols-2">
-        <FormColaborador selectedGroups={selectedGroups} />
-        <AsignacionGruposTable setSelectedRows={setSelectedGroups} columns={columns} enableMultiRowSelection={true} />
+      <div className="flex flex-col gap-12 w-full">
+        <FormColaborador selectedGroups={selectedGroups} setSelectedGroups={setSelectedGroups} />
       </div>
     </>
   );

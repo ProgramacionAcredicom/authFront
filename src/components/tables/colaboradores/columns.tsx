@@ -1,8 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Result } from "@/interfaces/colaboradores.interfaces";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, UserRound } from "lucide-react";
+import { Crown, Search, UserRound } from "lucide-react";
 import { ActionsCell } from "./actions-cell";
+import { Badge } from "@/components/ui/badge";
 
 export const columns: ColumnDef<Result>[] = [
   {
@@ -72,14 +73,30 @@ export const columns: ColumnDef<Result>[] = [
     accessorKey: "name",
     header: "Nombre",
     cell: ({ row }) => {
-      const { name, username, is_active } = row.original;
+      const { name, username, is_active, is_staff, is_superuser } = row.original;
       return (
         <div className={`flex flex-col ${!is_active ? "opacity-50" : ""}`}>
           <span className="font-medium">{name || "N/A"}</span>
-          <span className="text-sm text-muted-foreground flex items-center gap-2">
+          <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
             {!is_active && <span className="size-2 rounded-full bg-red-500" />}
-            {username || "N/A"}
-          </span>
+            <span>{username || "N/A"}</span>
+            {is_staff && (
+              <Badge
+                variant="secondary"
+                className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-xs px-1.5 py-0.5 h-5 font-medium"
+              >
+                Staff
+              </Badge>
+            )}
+            {is_superuser && (
+              <Badge
+                variant="secondary"
+                className="bg-yellow-300 text-yellow-900 border-yellow-400 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800 text-xs px-1.5 py-0.5 h-5 flex items-center gap-0.5 font-medium"
+              >
+                <Crown className="h-2.5 w-2.5" />
+              </Badge>
+            )}
+          </div>
         </div>
       );
     },

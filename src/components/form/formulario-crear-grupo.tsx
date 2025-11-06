@@ -159,7 +159,7 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
                   <FormLabel>Nombre del grupo</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Users2 className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500" />
+                      <Users2 className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500 dark:text-gray-400" />
                       <Input type="text" {...field} className="pl-10" />
                     </div>
                   </FormControl>
@@ -188,10 +188,10 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
             <div className="flex flex-col">
               <div className="mb-2 flex items-center justify-between">
                 <Label>Permisos disponibles</Label>
-                <span className="text-sm text-gray-500">{availablePermisos.length} permisos</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">{availablePermisos.length} permisos</span>
               </div>
               <div className="relative mb-2">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500" />
+                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500 dark:text-gray-400" />
                 <Input
                   className="pl-10"
                   type="text"
@@ -200,21 +200,21 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
                   onChange={(e) => setSearchNombre(e.target.value)}
                 />
               </div>
-              <div className="h-96 overflow-y-auto rounded-lg border bg-gray-50 p-2" onDragOver={handleDragOver} onDrop={handleDropToAvailable}>
+              <div className="h-96 overflow-y-auto rounded-lg border bg-gray-50 dark:bg-neutral-900/50 p-2" onDragOver={handleDragOver} onDrop={handleDropToAvailable}>
                 {availablePermisos.map((permiso) => (
                   <div
                     key={permiso.id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, permiso)}
                     onClick={() => moveToSelected(permiso)}
-                    className="mb-2 cursor-pointer rounded-md border bg-white p-3 transition-all hover:border-blue-300 hover:shadow-sm"
+                    className="mb-2 cursor-pointer rounded-md border bg-white dark:bg-neutral-800 p-3 transition-all hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm"
                   >
                     <div className="text-sm font-medium">{permiso.aplicativo.nombre}</div>
-                    <div className="mt-1 text-xs text-gray-500">{permiso.descripcion}</div>
+                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{permiso.descripcion}</div>
                   </div>
                 ))}
                 {availablePermisos.length === 0 && (
-                  <div className="flex h-full items-center justify-center text-gray-500">No hay permisos disponibles</div>
+                  <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-400">No hay permisos disponibles</div>
                 )}
                 <div ref={ref} className="py-4">
                   {isFetchingNextPage && (
@@ -244,14 +244,14 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
               <div className="mb-2 flex items-center justify-between">
                 <Label>Permisos seleccionados</Label>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">{selectedItems.length} permisos</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{selectedItems.length} permisos</span>
                   <Button type="button" variant="ghost" size="icon" onClick={moveAllToAvailable} title="Eliminar todos" className="h-8 w-8">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
               <div className="mb-2 h-9" /> {/* Spacer para alinear con el input de búsqueda */}
-              <div className="h-96 overflow-y-auto rounded-lg border bg-gray-50 p-2" onDragOver={handleDragOver} onDrop={handleDropToSelected}>
+              <div className="h-96 overflow-y-auto rounded-lg border bg-gray-50 dark:bg-neutral-900/50 p-2" onDragOver={handleDragOver} onDrop={handleDropToSelected}>
                 {selectedItems.length > 0 ? (
                   selectedItems.map((permiso) => (
                     <div
@@ -259,14 +259,14 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
                       draggable
                       onDragStart={(e) => handleDragStart(e, permiso)}
                       onClick={() => moveToAvailable(permiso)}
-                      className="mb-2 cursor-pointer rounded-md border bg-white p-3 transition-all hover:border-red-300 hover:shadow-sm"
+                      className="mb-2 cursor-pointer rounded-md border bg-white dark:bg-neutral-800 p-3 transition-all hover:border-red-300 dark:hover:border-red-600 hover:shadow-sm"
                     >
                       <div className="text-sm font-medium">{permiso.aplicativo.nombre}</div>
-                      <div className="mt-1 text-xs text-gray-500">{permiso.descripcion}</div>
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{permiso.descripcion}</div>
                     </div>
                   ))
                 ) : (
-                  <div className="flex h-full items-center justify-center text-gray-500">Arrastra permisos aquí o haz clic para seleccionar</div>
+                  <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-400">Arrastra permisos aquí o haz clic para seleccionar</div>
                 )}
               </div>
             </div>

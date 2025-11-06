@@ -45,3 +45,8 @@ export const verifyOTP = async (email: string, otp_code: string, new_password: s
   const response = await axios.post(`${VITE_HOST_AUTH_DEV}/auth/reset-password-otp/`, { email, otp_code, new_password });
   return response.data;
 };
+
+export const generatePassword = async (id: string | number) => {
+  const response = await apiServices.post(`/auth/password/generate/${id}/`);
+  return response.data;
+};

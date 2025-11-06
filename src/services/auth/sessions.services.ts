@@ -1,11 +1,19 @@
 import { SessionResponse, CloseSessionsRequest, CloseSessionsResponse } from "@/interfaces/sessions.interfaces";
 import apiServices from "@/services/configAxios";
 
-export const getUserSessions = async (userId: number): Promise<SessionResponse> => {
+export const getUserSessions = async (
+  userId: number,
+  options?: { pageSize?: number; ordering?: string }
+): Promise<SessionResponse> => {
+  // Validar userId
+  if (!userId || userId <= 0 || !Number.isInteger(userId)) {
+    throw new Error("Invalid user ID: userId must be a positive integer");
+  }
+
   const params: Record<string, string | number> = {
     user_id: userId,
-    ordering: "expires_at",
-    page_size: 10,
+    ordering: options?.ordering || "expires_at",
+    page_size: options?.pageSize || 10,
   };
 
   const res = await apiServices.get<SessionResponse>("/auth/sessions/", { params });
@@ -20,16 +28,33 @@ export const getUserSessions = async (userId: number): Promise<SessionResponse> 
   return {
     ...res.data,
     results: filteredSessions,
-    total: filteredSessions.length,
+    total: res.data.total, // Mantener total original del servidor
+    total_active: filteredSessions.length, // Añadir total de sesiones activas
   };
 };
 
 export const closeSessions = async (sessionIds: number[]): Promise<CloseSessionsResponse> => {
+  // Validar que sessionIds no esté vacío
+  if (!sessionIds || sessionIds.length === 0) {
+    throw new Error("No session IDs provided");
+  }
+
+  // Validar que todos los IDs sean números enteros positivos
+  if (!sessionIds.every(id => Number.isInteger(id) && id > 0)) {
+    throw new Error("Invalid session IDs: all IDs must be positive integers");
+  }
+
   const body: CloseSessionsRequest = {
     sessions: sessionIds,
   };
 
   const res = await apiServices.patch<CloseSessionsResponse>("/auth/sessions/", body);
+  
+  // Validar formato de respuesta del servidor
+  if (!res.data || !res.data.message) {
+    throw new Error("Invalid response format from server");
+  }
+  
   return res.data;
 };
 

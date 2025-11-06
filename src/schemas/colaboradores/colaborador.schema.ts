@@ -100,6 +100,8 @@ export const colaboradorSchema = z
     is_active: z.boolean({
       required_error: "El estado es requerido",
     }),
+    is_staff: z.boolean().optional().default(false),
+    is_superuser: z.boolean().optional().default(false),
   })
   .refine((data) => data.password === data.confirm_password, {
     message: "Las contraseñas no coinciden",

@@ -10,6 +10,10 @@ export const useQueryUserSessions = (userId: number, enabled: boolean = true) =>
     enabled: !!userId && enabled,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 30000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
   });
 
   const groupedSessions: SessionsByAplicativo = queryData.data
