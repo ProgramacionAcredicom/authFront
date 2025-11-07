@@ -7,3 +7,4 @@ export async function GrupoLoader({ params }: LoaderFunctionArgs) {
   const permisos = await getPermisosById(params.id as string);
   return { grupo, permisos };
 }
+

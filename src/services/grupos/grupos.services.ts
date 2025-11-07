@@ -11,6 +11,7 @@ export const getAllGrupos = async () => {
 interface CreateGrupoDTO {
   nombre: string;
   permisos: number[];
+  users_ids?: number[];
 }
 
 export const createGrupo = async (data: CreateGrupoDTO) => {

@@ -1,9 +1,10 @@
-import { PermisosTypeModel, Result, ResultModel } from "@/interfaces/permisos.interfaces";
+import { PermisosTypeModel, ResultModel } from "@/interfaces/permisos.interfaces";
 import { createPermiso, deletePermiso, updatePermiso } from "@/services/permisos/permisos.services";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+import { generateTempId } from "@/lib/id-generator";
 
 export const useMutationPermisos = () => {
   const queryClient = useQueryClient();
@@ -16,7 +17,7 @@ export const useMutationPermisos = () => {
       queryClient.setQueryData<PermisosTypeModel>(["permisos"], (old) => {
         if (!old) return old;
         const newResult: ResultModel = {
-          id: Date.now(),
+          id: generateTempId(),
           nombre: permiso.permisos[0].nombre,
           descripcion: permiso.permisos[0].descripcion,
           aplicativo: {
@@ -32,16 +33,20 @@ export const useMutationPermisos = () => {
 
       return { previousPermisos };
     },
-    onError: (error: AxiosError<{ error: string; nombre: string }>, newPermiso, context) => {
+    onError: (error: AxiosError<{ error?: string; nombre?: string }>, _newPermiso, context) => {
       if (context?.previousPermisos) {
         queryClient.setQueryData<PermisosTypeModel>(["permisos"], context.previousPermisos);
       }
-      toast.error(error.response?.data.error || error.response?.data.nombre);
+      const errorMessage = error.response?.data?.error 
+        || error.response?.data?.nombre 
+        || error.message 
+        || "Error al crear el permiso";
+      toast.error(errorMessage);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["permisos"] });
     },
-    onSuccess: (data: Result) => {
+    onSuccess: (data: ResultModel) => {
       toast.success(`Permiso ${data.nombre} creado correctamente`);
     },
   });
@@ -64,21 +69,21 @@ export const useMutationEditarPermiso = () => {
       permiso: {
         nombre: string;
         descripcion: string;
-        aplicativo: number;
       };
     }) => updatePermiso(permiso, id),
     onMutate: async (permiso) => {
       await queryClient.cancelQueries({ queryKey: ["permisos"] });
       const previousPermisos = queryClient.getQueryData<PermisosTypeModel>(["permisos"]);
       queryClient.setQueryData<PermisosTypeModel>(["permisos"], (old) => {
-        console.log(permiso);
         if (!old) return old;
+        // Mantener el aplicativo original del permiso existente
+        const existingPermiso = old.results.find((result) => result.id === Number(permiso.id));
         const newResult: ResultModel = {
-          id: Date.now(),
-          nombre: permiso?.permiso?.nombre,
-          descripcion: permiso?.permiso?.descripcion,
-          aplicativo: {
-            id: Number(permiso?.permiso?.aplicativo),
+          id: existingPermiso?.id || generateTempId(),
+          nombre: permiso.permiso.nombre,
+          descripcion: permiso.permiso.descripcion,
+          aplicativo: existingPermiso?.aplicativo || {
+            id: 0,
             nombre: "",
           },
         };
@@ -89,17 +94,21 @@ export const useMutationEditarPermiso = () => {
       });
       return { previousPermisos };
     },
-    onError: (error: AxiosError<{ error: string; nombre: string }>, newPermiso, context) => {
+    onError: (error: AxiosError<{ error?: string; nombre?: string }>, _newPermiso, context) => {
       if (context?.previousPermisos) {
         queryClient.setQueryData<PermisosTypeModel>(["permisos"], context.previousPermisos);
       }
-      toast.error(error.response?.data.error || error.response?.data.nombre);
+      const errorMessage = error.response?.data?.error 
+        || error.response?.data?.nombre 
+        || error.message 
+        || "Error al actualizar el permiso";
+      toast.error(errorMessage);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["permisos"] });
       queryClient.invalidateQueries({ queryKey: ["grupos"] });
     },
-    onSuccess: (data: Result) => {
+    onSuccess: (data: ResultModel) => {
       toast.success(`Permiso ${data.nombre} actualizado correctamente`);
       navigate("..", { replace: true });
     },
@@ -116,7 +125,7 @@ export const useMutationEliminarPermiso = () => {
   const navigate = useNavigate();
   const mutatePermiso = useMutation<
     { message: string },
-    AxiosError<{ error: string; nombre: string }>,
+    AxiosError<{ error?: string; nombre?: string }>,
     { id: string },
     { previousPermisos: PermisosTypeModel | undefined }
   >({
@@ -133,11 +142,15 @@ export const useMutationEliminarPermiso = () => {
       });
       return { previousPermisos };
     },
-    onError: (error: AxiosError<{ error: string; nombre: string }>, newPermiso, context) => {
+    onError: (error: AxiosError<{ error?: string; nombre?: string }>, _newPermiso, context) => {
       if (context?.previousPermisos) {
         queryClient.setQueryData<PermisosTypeModel>(["permisos"], context.previousPermisos);
       }
-      toast.error(error.response?.data.error || error.response?.data.nombre);
+      const errorMessage = error.response?.data?.error 
+        || error.response?.data?.nombre 
+        || error.message 
+        || "Error al eliminar el permiso";
+      toast.error(errorMessage);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["permisos"] });

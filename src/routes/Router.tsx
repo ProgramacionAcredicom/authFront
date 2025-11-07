@@ -7,7 +7,8 @@ import { ProtectedRoute } from "@/components/protected-route/ProtectedRoute";
 import { GuestRoute } from "@/components/protected-route/GuestRoute";
 import { ColaboradoresPage } from "@/app/admin/colaboradores/page";
 import { AgenciasPage } from "@/app/admin/agencias/page";
-import { GruposPage } from "@/app/admin/grupos-permisos/grupos-y-permisos/page";
+import { GruposPage } from "@/app/admin/grupos-permisos/grupos/page";
+import PermisosPage from "@/app/admin/grupos-permisos/permisos/page";
 import { AplicativosPage } from "@/app/admin/grupos-permisos/aplicativos/page";
 import ForgotPasswordPage from "@/app/auth/forgot-password/page";
 import CodeOtpPage from "@/app/auth/code-otp/page";
@@ -18,12 +19,12 @@ import { EditarColaboradorPage } from "@/app/admin/colaboradores/editarColaborad
 import { ModalAsignarAplicativo } from "@/components/modal/aplicativos/modal-asignar-aplicativo";
 import { AplicativoLoader } from "@/app/admin/grupos-permisos/aplicativos/loader";
 import { ModalEliminarAplicativo } from "@/components/modal/aplicativos/modal-eliminar-aplicativo";
-import { PermisoLoader } from "@/app/admin/grupos-permisos/grupos-y-permisos/loaderPermiso";
+import { PermisoLoader } from "@/app/admin/grupos-permisos/permisos/loader";
 import { ModalEditarPermiso } from "@/components/modal/permisos/modal-editar-permiso";
 import { ModalEliminarPermiso } from "@/components/modal/permisos/modal-eliminar-permiso";
 import { ModalEditarGrupo } from "@/components/modal/grupos/modal-editar-grupo";
 import { ModalEliminarGrupo } from "@/components/modal/grupos/modal-eliminar-grupo";
-import { GrupoLoader } from "@/app/admin/grupos-permisos/grupos-y-permisos/loaderGrupo";
+import { GrupoLoader } from "@/app/admin/grupos-permisos/grupos/loader";
 import AreasPage from "@/app/admin/areas/page";
 
 const routes = createBrowserRouter([
@@ -63,53 +64,75 @@ const routes = createBrowserRouter([
           },
         ],
       },
-      // Grupos y permisos
+      // Grupos
       {
-        path: "grupos-permisos",
+        path: "grupos",
         element: <LayoutAdmin />,
         children: [
           {
-            path: "grupos",
+            index: true,
             element: <GruposPage />,
+          },
+          {
+            path: "editar/:id",
+            element: <ModalEditarGrupo />,
+            loader: GrupoLoader,
+          },
+          {
+            path: "eliminar/:id",
+            element: <ModalEliminarGrupo />,
+            loader: GrupoLoader,
+          },
+        ],
+      },
+      // Permisos
+      {
+        path: "permisos",
+        element: <LayoutAdmin />,
+        children: [
+          {
+            element: <PermisosPage />,
             children: [
               {
-                path: "permisos/editar/:id",
+                index: true,
+                element: <></>,
+              },
+              {
+                path: "editar/:id",
                 element: <ModalEditarPermiso />,
                 loader: PermisoLoader,
               },
               {
-                path: "permisos/eliminar/:id",
+                path: "eliminar/:id",
                 element: <ModalEliminarPermiso />,
                 loader: PermisoLoader,
               },
-              {
-                path: "editar/:id",
-                element: <ModalEditarGrupo />,
-                loader: GrupoLoader,
-              },
-              {
-                path: "eliminar/:id",
-                element: <ModalEliminarGrupo />,
-                loader: GrupoLoader,
-              },
             ],
           },
+        ],
+      },
+      // Aplicativos
+      {
+        path: "aplicativos",
+        element: <LayoutAdmin />,
+        children: [
           {
-            path: "aplicativos",
+            index: true,
             element: <AplicativosPage />,
-            children: [
-              { path: "nuevo", element: <ModalAsignarAplicativo /> },
-              {
-                path: "editar/:id",
-                element: <ModalAsignarAplicativo />,
-                loader: AplicativoLoader,
-              },
-              {
-                path: "eliminar/:id",
-                element: <ModalEliminarAplicativo />,
-                loader: AplicativoLoader,
-              },
-            ],
+          },
+          {
+            path: "nuevo",
+            element: <ModalAsignarAplicativo />,
+          },
+          {
+            path: "editar/:id",
+            element: <ModalAsignarAplicativo />,
+            loader: AplicativoLoader,
+          },
+          {
+            path: "eliminar/:id",
+            element: <ModalEliminarAplicativo />,
+            loader: AplicativoLoader,
           },
         ],
       },

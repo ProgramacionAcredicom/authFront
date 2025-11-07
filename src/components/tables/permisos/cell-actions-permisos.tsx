@@ -8,11 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { Ellipsis, Edit, Trash } from "lucide-react";
+import { Ellipsis, Edit, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export const CellActions = ({ id }: { id: number }) => {
+export const CellActionsPermisos = ({ id }: { id: number }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -32,11 +31,12 @@ export const CellActions = ({ id }: { id: number }) => {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to={`/permisos/eliminar/${id}`} state={{ modal: true }} className="flex items-center gap-2">
-            <Trash className="size-4" /> Eliminar
+          <Link to={`/permisos/eliminar/${id}`} state={{ modal: true }} className="flex items-center gap-2 text-destructive">
+            <Trash2 className="size-4" /> Eliminar
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
+

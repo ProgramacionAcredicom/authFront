@@ -54,17 +54,28 @@ export const dataRoutes: Props = {
     },
 
     {
-      title: "Grupos y permisos",
-      url: "/grupos-permisos",
+      title: "Gestión de grupos",
+      url: "/grupos",
       icon: Group,
       items: [
         {
-          title: "Gestionar grupos & permisos",
-          url: "/grupos-permisos/grupos",
+          title: "Grupos",
+          url: "/grupos",
         },
         {
+          title: "Permisos",
+          url: "/permisos",
+        },
+      ],
+    },
+    {
+      title: "Aplicativos",
+      url: "/aplicativos",
+      icon: Group,
+      items: [
+        {
           title: "Aplicativos",
-          url: "/grupos-permisos/aplicativos",
+          url: "/aplicativos",
         },
       ],
     },

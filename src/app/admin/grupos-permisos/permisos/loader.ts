@@ -5,3 +5,4 @@ export async function PermisoLoader({ params }: LoaderFunctionArgs) {
   const permiso = await getPermisoById(params.id as string);
   return { permiso };
 }
+

@@ -1,12 +1,12 @@
-import { PermisosType, Result, PermisosByIDType, Aplicativo } from "@/interfaces/permisos.interfaces";
+import { PermisosTypeModel, ResultModel, PermisosByIDType, Aplicativo } from "@/interfaces/permisos.interfaces";
 
 export class PermisosModel {
   total: number;
   page: number;
   page_size: number;
   total_pages: number;
-  results: Result[];
-  constructor(permisos: PermisosType) {
+  results: ResultModel[];
+  constructor(permisos: PermisosTypeModel) {
     this.total = permisos.total;
     this.page = permisos.page;
     this.page_size = permisos.page_size;

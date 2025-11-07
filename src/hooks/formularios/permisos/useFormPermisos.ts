@@ -1,10 +1,11 @@
 import { useMutationEditarPermiso, useMutationPermisos, useMutationEliminarPermiso } from "@/hooks/permisos/useMutationPermisos";
-import { PermisosCreateType } from "@/interfaces/permisos.interfaces";
+import { PermisosCreateType, ResultModel } from "@/interfaces/permisos.interfaces";
 import { AsignarPermisosSchema, asignarPermisosSchema, ListarPermisosSchema, listarPermisosSchema } from "@/schemas/permisos/asignar-permisos.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 export const useFormPermisos = () => {
   const [params] = useSearchParams();
@@ -66,17 +67,7 @@ export const useFormListaPermisos = ({
   };
 };
 
-interface FormularioPermisosEditar {
-  nombre: string;
-  descripcion: string;
-  aplicativo: { id: number };
-}
-
-export const useFormPermisosEditar = (data?: FormularioPermisosEditar, setOpen?: (open: boolean) => void, id?: string) => {
-  const [searchParams] = useSearchParams();
-  const idAplicativo = searchParams.get("id");
-  console.log(idAplicativo);
-  console.log(data?.aplicativo);
+export const useFormPermisosEditar = (data?: ResultModel, setOpen?: (open: boolean) => void, id?: string) => {
   const form = useForm<AsignarPermisosSchema>({
     resolver: zodResolver(asignarPermisosSchema),
     defaultValues: {
@@ -86,15 +77,29 @@ export const useFormPermisosEditar = (data?: FormularioPermisosEditar, setOpen?:
     },
     mode: "onChange",
   });
+
+  // Actualizar el formulario cuando los datos cambien
+  useEffect(() => {
+    if (data) {
+      form.reset({
+        nombre: data.nombre ?? "",
+        descripcion: data.descripcion ?? "",
+        aplicativo: data.aplicativo?.id.toString() ?? "",
+      });
+    }
+  }, [data, form]);
+
   const { mutatePermiso, isLoading } = useMutationEditarPermiso();
-  const onSubmit = async (data: AsignarPermisosSchema) => {
+  const onSubmit = async (formData: AsignarPermisosSchema) => {
+    if (!id) {
+      toast.error("ID no válido");
+      return;
+    }
     const payload = {
-      nombre: data?.nombre,
-      descripcion: data?.descripcion,
-      aplicativo: Number(data?.aplicativo),
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
     };
-    // console.log(payload);
-    await mutatePermiso.mutateAsync({ id: id!, permiso: payload });
+    await mutatePermiso.mutateAsync({ id, permiso: payload });
     form.reset();
     setOpen?.(false);
   };
@@ -105,7 +110,7 @@ export const useFormPermisosEditar = (data?: FormularioPermisosEditar, setOpen?:
   };
 };
 
-export const useFormPermisosEliminar = (data?: FormularioPermisosEditar, setOpen?: (open: boolean) => void, id?: string) => {
+export const useFormPermisosEliminar = (data?: ResultModel, setOpen?: (open: boolean) => void, id?: string) => {
   const form = useForm<AsignarPermisosSchema>({
     resolver: zodResolver(asignarPermisosSchema),
     defaultValues: {
@@ -115,9 +120,25 @@ export const useFormPermisosEliminar = (data?: FormularioPermisosEditar, setOpen
     },
     mode: "onChange",
   });
+
+  // Actualizar el formulario cuando los datos cambien
+  useEffect(() => {
+    if (data) {
+      form.reset({
+        nombre: data.nombre ?? "",
+        descripcion: data.descripcion ?? "",
+        aplicativo: data.aplicativo?.id.toString() ?? "",
+      });
+    }
+  }, [data, form]);
+
   const { mutatePermiso, isLoading } = useMutationEliminarPermiso();
   const onSubmit = async () => {
-    await mutatePermiso.mutateAsync({ id: id! });
+    if (!id) {
+      toast.error("ID no válido");
+      return;
+    }
+    await mutatePermiso.mutateAsync({ id });
     form.reset();
     setOpen?.(false);
   };

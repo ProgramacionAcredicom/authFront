@@ -4,9 +4,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+import { generateTempId } from "@/lib/id-generator";
 
 interface ErrorResponse {
-  error: string;
+  error?: string;
 }
 
 export const useMutationGrupos = () => {
@@ -18,16 +19,21 @@ export const useMutationGrupos = () => {
       await queryClient.cancelQueries({ queryKey: ["grupos"] });
       const previousGrupos = queryClient.getQueryData<GruposTypeModel[]>(["grupos"]);
       const newGrupo: GruposTypeModel = {
-        id: Date.now(),
+        id: generateTempId(),
         nombre: grupo.nombre,
         permisos: grupo.permisos.map((id) => ({ id, nombre: "" })),
       };
       queryClient.setQueryData<GruposTypeModel[]>(["grupos"], (old) => [...(old || []), newGrupo]);
       return { previousGrupos };
     },
-    onError: (error: AxiosError<ErrorResponse>, newGrupo, context) => {
-      toast.error(error.response?.data.error || "Error al crear el grupo");
-      queryClient.setQueryData<GruposTypeModel[]>(["grupos"], context?.previousGrupos);
+    onError: (error: AxiosError<ErrorResponse>, _newGrupo, context) => {
+      const errorMessage = error.response?.data?.error 
+        || error.message 
+        || "Error al crear el grupo";
+      toast.error(errorMessage);
+      if (context?.previousGrupos) {
+        queryClient.setQueryData<GruposTypeModel[]>(["grupos"], context.previousGrupos);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["grupos"] });
@@ -45,6 +51,7 @@ export const useMutationGrupos = () => {
 interface CreateGrupoDTO {
   nombre: string;
   permisos: number[];
+  users_ids?: number[];
 }
 
 export const useMutationUpdateGrupo = () => {
@@ -59,17 +66,25 @@ export const useMutationUpdateGrupo = () => {
     onMutate: async (grupo) => {
       await queryClient.cancelQueries({ queryKey: ["grupos"] });
       const previousGrupos = queryClient.getQueryData<GruposTypeModel[]>(["grupos"]);
-      const newGrupo: GruposTypeModel = {
-        id: Date.now(),
-        nombre: grupo.data.nombre,
-        permisos: [...new Set(grupo.data.permisos)].map((id) => ({ id, nombre: "" })),
-      };
-      queryClient.setQueryData<GruposTypeModel[]>(["grupos"], (old) => [...(old || []), newGrupo]);
+      queryClient.setQueryData<GruposTypeModel[]>(["grupos"], (old) => {
+        const existingGrupo = old?.find((g) => g.id === Number(grupo.id));
+        const newGrupo: GruposTypeModel = {
+          id: existingGrupo?.id || generateTempId(),
+          nombre: grupo.data.nombre,
+          permisos: [...new Set(grupo.data.permisos)].map((id) => ({ id, nombre: "" })),
+        };
+        return old?.map((g) => (g.id === Number(grupo.id) ? newGrupo : g)) || [newGrupo];
+      });
       return { previousGrupos };
     },
-    onError: (error: AxiosError<ErrorResponse>, newGrupo, context) => {
-      toast.error(error.response?.data.error || "Error al crear el grupo");
-      queryClient.setQueryData<GruposTypeModel[]>(["grupos"], context?.previousGrupos);
+    onError: (error: AxiosError<ErrorResponse>, _newGrupo, context) => {
+      const errorMessage = error.response?.data?.error 
+        || error.message 
+        || "Error al crear el grupo";
+      toast.error(errorMessage);
+      if (context?.previousGrupos) {
+        queryClient.setQueryData<GruposTypeModel[]>(["grupos"], context.previousGrupos);
+      }
     },
     onSuccess: (data: GruposTypeModel) => {
       toast.success(`Grupo ${data.nombre} actualizado correctamente`);
@@ -93,9 +108,14 @@ export const useMutationEliminarGrupo = () => {
       queryClient.setQueryData<GruposTypeModel[]>(["grupos"], (old) => old?.filter((g) => g.id !== Number(grupo.id)));
       return { previousGrupos };
     },
-    onError: (error: AxiosError<ErrorResponse>, newGrupo, context) => {
-      toast.error(error.response?.data.error || "Error al desactivar el grupo");
-      queryClient.setQueryData<GruposTypeModel[]>(["grupos"], context?.previousGrupos);
+    onError: (error: AxiosError<ErrorResponse>, _newGrupo, context) => {
+      const errorMessage = error.response?.data?.error 
+        || error.message 
+        || "Error al desactivar el grupo";
+      toast.error(errorMessage);
+      if (context?.previousGrupos) {
+        queryClient.setQueryData<GruposTypeModel[]>(["grupos"], context.previousGrupos);
+      }
     },
     onSuccess: (data: { message: string }) => {
       queryClient.invalidateQueries({ queryKey: ["grupos"] });

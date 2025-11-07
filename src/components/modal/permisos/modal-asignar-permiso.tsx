@@ -69,11 +69,20 @@ export const ModalAsignarPermiso = () => {
 
     setEditingIndex(index);
 
-    // En dispositivos móviles, hacer scroll al formulario
+    // En dispositivos móviles, hacer scroll al formulario sin cambiar el foco
     if (window.innerWidth < 768) {
-      document.getElementById("formulario-asignar-permisos")?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
+      // Usar setTimeout con doble requestAnimationFrame para asegurar que el Dialog esté completamente renderizado y el focus trap esté activo
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const element = document.getElementById("formulario-asignar-permisos");
+          if (element) {
+            // Hacer scroll sin cambiar el foco
+            element.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
+          }
+        });
       });
     }
   };
@@ -200,6 +209,7 @@ export const ModalAsignarPermiso = () => {
                     size="sm"
                     variant="custom2"
                     id="formulario-asignar-permisos"
+                    type="button"
                     onClick={() => handleAddPermiso(form.getValues())}
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -217,6 +227,9 @@ export const ModalAsignarPermiso = () => {
             onClick={() => {
               form.reset();
               formListaPermisos.reset();
+              setPermisos([]);
+              setEditingIndex(null);
+              setOpen(false);
             }}
           >
             <X />

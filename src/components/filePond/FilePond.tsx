@@ -67,8 +67,31 @@ export function FilePondComponent({ field }: Props) {
     // Extrae los File puros
     const chosenFiles = items.map((item) => item.file as File | null).filter((f): f is File => !!f);
 
+    // Convierte FilePondFile[] a InitialPondFile[] de forma segura
+    const pondFiles: InitialPondFile[] = items.map((item) => {
+      if (item.file instanceof File) {
+        return item.file;
+      }
+      // Si tiene source, mantener la estructura original
+      if (item.source) {
+        return {
+          source: item.source,
+          options: {
+            type: "local" as const,
+            file: item.file ? {
+              name: item.file.name || item.filename || "file",
+              size: item.file.size,
+              type: item.file.type,
+            } : undefined,
+          },
+        };
+      }
+      // Fallback: crear un File si es posible
+      return item.file || new File([], item.filename || "file");
+    });
+
     // Actualiza el estado de FilePond
-    setPondFiles(items as unknown as InitialPondFile[]);
+    setPondFiles(pondFiles);
 
     // Notifica a React Hook Form (solo un archivo)
     field.onChange(chosenFiles.length > 0 ? chosenFiles[0] : null);

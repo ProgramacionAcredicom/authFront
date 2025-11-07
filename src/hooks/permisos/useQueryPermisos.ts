@@ -1,10 +1,17 @@
 import { getAllPermisos, getPermisosById } from "@/services/permisos/permisos.services";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
-export const useQueryPermisos = (id?: string, globalFilter?: string) => {
+export const useQueryPermisos = (id?: string) => {
+  const [page] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [perPage] = useQueryState("perPage", parseAsInteger.withDefault(10));
+  const [search] = useQueryState("search", parseAsString.withDefault(""));
+  
+  const pagination = { pageIndex: (page || 1) - 1, pageSize: perPage || 10 };
+  
   const queryPermisos = useQuery({
-    queryKey: ["permisos"],
-    queryFn: () => getAllPermisos({ pageIndex: 0, pageSize: 5 }),
+    queryKey: ["permisos", pagination, search],
+    queryFn: () => getAllPermisos(pagination, search),
   });
 
   const queryPermisosById = useQuery({
@@ -14,8 +21,8 @@ export const useQueryPermisos = (id?: string, globalFilter?: string) => {
   });
 
   const useInfinitePermisos = useInfiniteQuery({
-    queryKey: ["permisos-infinite", globalFilter],
-    queryFn: ({ pageParam = 0 }) => getAllPermisos({ pageIndex: pageParam, pageSize: 500 }, globalFilter),
+    queryKey: ["permisos-infinite", search],
+    queryFn: ({ pageParam = 0 }) => getAllPermisos({ pageIndex: pageParam, pageSize: 500 }, search || ""),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages, lastPageParam) => {
       if (lastPage.results.length === 0) {

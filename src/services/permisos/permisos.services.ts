@@ -1,4 +1,4 @@
-import { PermisosCreateType, Result, PermisosByIDType, AplicativoModel } from "@/interfaces/permisos.interfaces";
+import { PermisosCreateType, ResultModel, PermisosByIDType, AplicativoModel } from "@/interfaces/permisos.interfaces";
 import apiServices from "@/services/configAxios";
 import { localPermisosMapper, localPermisosByIdMapper } from "@/mappers/local-permisos.mapper";
 import { PermisosModel } from "@/models/permisos.model";
@@ -30,19 +30,21 @@ export const getPermisosById = async (id: string): Promise<PermisosByIdResponse[
   return permisos.toRows();
 };
 
-export const getPermisoById = async (id: string): Promise<PermisosByIdResponse> => {
-  const res = await apiServices.get<PermisosByIDType>(`/permisos/${id}`);
-  const permisos = res.data;
-  return permisos;
-};
-
-export const createPermiso = async (permiso: PermisosCreateType): Promise<Result> => {
-  const res = await apiServices.post<Result>("/permisos/", permiso);
+export const getPermisoById = async (id: string): Promise<ResultModel> => {
+  const res = await apiServices.get<ResultModel>(`/permisos/${id}/`);
   return res.data;
 };
 
-export const updatePermiso = async (permiso, id: string): Promise<Result> => {
-  const res = await apiServices.put<Result>(`/permisos/${id}/`, permiso);
+export const createPermiso = async (permiso: PermisosCreateType): Promise<ResultModel> => {
+  const res = await apiServices.post<ResultModel>("/permisos/", permiso);
+  return res.data;
+};
+
+export const updatePermiso = async (
+  permiso: { nombre: string; descripcion: string },
+  id: string
+): Promise<ResultModel> => {
+  const res = await apiServices.put<ResultModel>(`/permisos/${id}/`, permiso);
   return res.data;
 };
 

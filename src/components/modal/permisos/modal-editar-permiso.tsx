@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
-import { AppWindow, KeyRound, LetterText, Save, X } from "lucide-react";
+import { AppWindow, KeyRound, LetterText, Save, X, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useFormPermisosEditar } from "@/hooks/formularios/permisos/useFormPermisos";
 
@@ -18,7 +18,7 @@ export const ModalEditarPermiso = () => {
   const navigate = useNavigate();
   const { permiso } = useLoaderData() ?? { permiso: null };
   const [open, setOpen] = useState(isEdit);
-  const { form, onSubmit } = useFormPermisosEditar(permiso, setOpen, id);
+  const { form, onSubmit, isLoading } = useFormPermisosEditar(permiso, setOpen, id);
   /** ----- 4. cerrar con la X o backdrop ----- */
   const handleOpenChange = (value: boolean) => {
     setOpen(value);
@@ -95,15 +95,16 @@ export const ModalEditarPermiso = () => {
             type="button"
             variant="outline"
             onClick={() => {
-              // setOpen(false);
+              setOpen(false);
+              navigate("..", { replace: true });
               form.reset();
             }}
           >
             <X />
             Cancelar
           </Button>
-          <Button type="submit" variant="custom2" form="formulario-editar-permisos">
-            <Save />
+          <Button type="submit" variant="custom2" form="formulario-editar-permisos" disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save />}
             Guardar
           </Button>
         </DialogFooter>
