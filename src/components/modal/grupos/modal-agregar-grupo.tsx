@@ -5,15 +5,20 @@ import { Loader2, Plus, Save, X } from "lucide-react";
 import { useState } from "react";
 import FormCrearGrupo from "@/components/form/formulario-crear-grupo";
 import { useFormGrupos } from "@/hooks/formularios/grupos/useFormGrupos";
+import { SelectUsuariosGrupo } from "@/components/form/grupos/select-usuarios-grupo";
+import { Result as ColaboradorResult } from "@/interfaces/colaboradores.interfaces";
+
 export const ModalAgregarGrupo = () => {
   const [open, setOpen] = useState(false);
-  const { form, onSubmit, isLoading } = useFormGrupos(setOpen);
+  const [selectedUsers, setSelectedUsers] = useState<ColaboradorResult[]>([]);
+  const { form, onSubmit, isLoading } = useFormGrupos(setOpen, undefined, selectedUsers, setSelectedUsers);
   return (
     <Dialog
       open={open}
       onOpenChange={(open) => {
         if (!open) {
           form.reset();
+          setSelectedUsers([]);
         }
         setOpen(open);
       }}
@@ -23,12 +28,18 @@ export const ModalAgregarGrupo = () => {
           <Plus /> Agregar
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="md:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-custom-gray font-bold">Agregar Grupo</DialogTitle>
           <DialogDescription className="sr-only">Asigna un grupo a un usuario</DialogDescription>
         </DialogHeader>
-        <FormCrearGrupo form={form} onSubmit={onSubmit} />
+        <div className="flex flex-col gap-6">
+          <FormCrearGrupo form={form} onSubmit={onSubmit} />
+          <SelectUsuariosGrupo
+            selectedUsers={selectedUsers}
+            setSelectedUsers={setSelectedUsers}
+          />
+        </div>
         <DialogFooter>
           <Button
             type="submit"
@@ -36,6 +47,7 @@ export const ModalAgregarGrupo = () => {
             onClick={() => {
               setOpen(false);
               form.reset();
+              setSelectedUsers([]);
             }}
           >
             <X />

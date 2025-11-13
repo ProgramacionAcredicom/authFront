@@ -17,10 +17,11 @@ export interface UserInGroup {
   id: number;
   name: string;
   is_active: boolean;
-  is_staff: boolean;
-  is_superuser: boolean;
+  is_staff?: boolean; // Opcional en listado de grupos (GET /grupos/)
+  is_superuser?: boolean; // Opcional en listado de grupos (GET /grupos/)
   picture: string | null;
-  agency: {
+  agency?: {
+    // Opcional en listado de grupos (GET /grupos/), siempre presente en GET /grupos/{id}/
     id: number;
     name: string;
   };
@@ -44,4 +45,12 @@ export interface GruposTypeModel {
 export interface PermisoModel {
   id: number;
   nombre: string;
+}
+
+export interface GruposPaginationType {
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  results: GruposType[];
 }

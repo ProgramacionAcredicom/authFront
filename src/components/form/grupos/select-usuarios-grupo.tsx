@@ -21,9 +21,10 @@ interface SelectUsuariosGrupoProps {
   setSelectedUsers: (users: ColaboradorResult[]) => void;
   userIds?: number[];
   initialUsers?: ColaboradorResult[];
+  hideFilters?: boolean;
 }
 
-export const SelectUsuariosGrupo = ({ selectedUsers, setSelectedUsers, userIds, initialUsers }: SelectUsuariosGrupoProps) => {
+export const SelectUsuariosGrupo = ({ selectedUsers, setSelectedUsers, userIds, initialUsers, hideFilters = false }: SelectUsuariosGrupoProps) => {
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [filterAgencia, setFilterAgencia] = useState<string>("all");
   const [filterPuesto, setFilterPuesto] = useState<string>("all");
@@ -247,34 +248,36 @@ export const SelectUsuariosGrupo = ({ selectedUsers, setSelectedUsers, userIds, 
                     value={searchFilter}
                     onValueChange={setSearchFilter}
                   />
-                  <div className="flex gap-2">
-                    <Select value={filterAgencia} onValueChange={setFilterAgencia}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Filtrar por agencia" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas las agencias</SelectItem>
-                        {queryAgencias.data?.map((agencia) => (
-                          <SelectItem key={agencia.id} value={agencia.id.toString()}>
-                            {agencia.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={filterPuesto} onValueChange={setFilterPuesto}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Filtrar por puesto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos los puestos</SelectItem>
-                        {queryRoles.data?.map((rol) => (
-                          <SelectItem key={rol.id} value={rol.id.toString()}>
-                            {rol.role}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {!hideFilters && (
+                    <div className="flex gap-2">
+                      <Select value={filterAgencia} onValueChange={setFilterAgencia}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Filtrar por agencia" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas las agencias</SelectItem>
+                          {queryAgencias.data?.map((agencia) => (
+                            <SelectItem key={agencia.id} value={agencia.id.toString()}>
+                              {agencia.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={filterPuesto} onValueChange={setFilterPuesto}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Filtrar por puesto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los puestos</SelectItem>
+                          {queryRoles.data?.map((rol) => (
+                            <SelectItem key={rol.id} value={rol.id.toString()}>
+                              {rol.role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 <CommandList 
                   className="h-[300px] max-h-[300px]"

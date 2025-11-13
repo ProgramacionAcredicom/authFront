@@ -4,7 +4,7 @@ import { Loader2, X, ChevronDown, ChevronUp, Plus, Check, ChevronsUpDown } from 
 import { Button } from "@/components/ui/button";
 import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
 import { ModalAgregarGrupo } from "@/components/modal/grupos/modal-agregar-grupo";
-import { useQueryGrupos } from "@/hooks/grupos/useQueryGrupos";
+import { useQueryGruposSinPaginacion } from "@/hooks/grupos/useQueryGrupos";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -21,7 +21,7 @@ interface DataTableProps<TData, TValue> {
 }
 
 export function DataTable<TData, TValue>({ setSelectedRows, groupIds }: DataTableProps<TData, TValue>) {
-  const { queryGrupos } = useQueryGrupos();
+  const { queryGruposSinPaginacion } = useQueryGruposSinPaginacion();
   const [selectedGroups, setSelectedGroups] = useState<GruposTypeModel[]>([]);
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [expandedAplicativos, setExpandedAplicativos] = useState<Set<string>>(new Set());
@@ -29,8 +29,8 @@ export function DataTable<TData, TValue>({ setSelectedRows, groupIds }: DataTabl
 
   // Ordenar grupos por aplicativos (por nombre del primer aplicativo)
   const sortedGroups = useMemo(() => {
-    if (!queryGrupos.data) return [];
-    return [...queryGrupos.data].sort((a, b) => {
+    if (!queryGruposSinPaginacion.data) return [];
+    return [...queryGruposSinPaginacion.data].sort((a, b) => {
       const aAplicativo = a.aplicativos?.[0]?.nombre || "";
       const bAplicativo = b.aplicativos?.[0]?.nombre || "";
       if (aAplicativo !== bAplicativo) {
@@ -38,7 +38,7 @@ export function DataTable<TData, TValue>({ setSelectedRows, groupIds }: DataTabl
       }
       return a.nombre.localeCompare(b.nombre);
     });
-  }, [queryGrupos.data]);
+  }, [queryGruposSinPaginacion.data]);
 
   // Filtrar grupos por búsqueda (nombre de grupo o nombre de aplicativo)
   const filteredGroups = useMemo(() => {
@@ -99,8 +99,8 @@ export function DataTable<TData, TValue>({ setSelectedRows, groupIds }: DataTabl
       setExpandedAplicativos(new Set());
       return;
     }
-    if (queryGrupos.data && queryGrupos.data.length > 0) {
-      const initialSelected = queryGrupos.data.filter((g: GruposTypeModel) => groupIds.includes(g.id));
+    if (queryGruposSinPaginacion.data && queryGruposSinPaginacion.data.length > 0) {
+      const initialSelected = queryGruposSinPaginacion.data.filter((g: GruposTypeModel) => groupIds.includes(g.id));
       setSelectedGroups(initialSelected);
       
       // Expandir automáticamente los aplicativos que tienen grupos seleccionados
@@ -111,7 +111,7 @@ export function DataTable<TData, TValue>({ setSelectedRows, groupIds }: DataTabl
       });
       setExpandedAplicativos(aplicativosWithGroups);
     }
-  }, [groupIds, queryGrupos.data]);
+  }, [groupIds, queryGruposSinPaginacion.data]);
 
   // Agrupar grupos por aplicativo para el Command
   const groupedByAplicativo = useMemo(() => {
@@ -228,7 +228,7 @@ export function DataTable<TData, TValue>({ setSelectedRows, groupIds }: DataTabl
               />
               <CommandList className="max-h-[400px]">
                 <CommandEmpty>
-                  {queryGrupos.isLoading ? (
+                  {queryGruposSinPaginacion.isLoading ? (
                     <div className="flex items-center justify-center gap-2 py-6">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <TypographyMuted text="Cargando..." />

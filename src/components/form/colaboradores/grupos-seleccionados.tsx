@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { Loader2, X, ChevronDown, ChevronUp, Plus, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
-import { useQueryGrupos } from "@/hooks/grupos/useQueryGrupos";
+import { useQueryGruposSinPaginacion } from "@/hooks/grupos/useQueryGrupos";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -19,7 +19,7 @@ interface GruposSeleccionadosProps {
 }
 
 export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupIds }: GruposSeleccionadosProps) => {
-  const { queryGrupos } = useQueryGrupos();
+  const { queryGruposSinPaginacion } = useQueryGruposSinPaginacion();
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [expandedAplicativos, setExpandedAplicativos] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
@@ -68,8 +68,8 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
 
   // Ordenar grupos por aplicativos (por nombre del primer aplicativo)
   const sortedGroups = useMemo(() => {
-    if (!queryGrupos.data) return [];
-    return [...queryGrupos.data].sort((a, b) => {
+    if (!queryGruposSinPaginacion.data) return [];
+    return [...queryGruposSinPaginacion.data].sort((a, b) => {
       const aAplicativo = a.aplicativos?.[0]?.nombre || "";
       const bAplicativo = b.aplicativos?.[0]?.nombre || "";
       if (aAplicativo !== bAplicativo) {
@@ -77,7 +77,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
       }
       return a.nombre.localeCompare(b.nombre);
     });
-  }, [queryGrupos.data]);
+  }, [queryGruposSinPaginacion.data]);
 
   // Filtrar grupos por búsqueda (nombre de grupo o nombre de aplicativo)
   const filteredGroups = useMemo(() => {
@@ -179,10 +179,10 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
       return;
     }
     
-    if (queryGrupos.data && queryGrupos.data.length > 0) {
+    if (queryGruposSinPaginacion.data && queryGruposSinPaginacion.data.length > 0) {
       // Solo inicializar si los groupIds cambiaron (nuevo usuario) o es la primera carga
       if (groupIdsChanged || !initializedRef.current) {
-        const initialSelected = queryGrupos.data.filter((g: GruposTypeModel) => groupIds.includes(g.id));
+        const initialSelected = queryGruposSinPaginacion.data.filter((g: GruposTypeModel) => groupIds.includes(g.id));
         
         // Solo actualizar si:
         // 1. Los groupIds cambiaron (nuevo usuario) - siempre actualizar
@@ -209,7 +209,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
       
       previousGroupIdsRef.current = groupIds;
     }
-  }, [groupIds, queryGrupos.data, setSelectedGroups]);
+  }, [groupIds, queryGruposSinPaginacion.data, setSelectedGroups]);
 
   // Agrupar grupos por aplicativo para el Command
   const groupedByAplicativo = useMemo(() => {
@@ -284,7 +284,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
                 />
                 <CommandList className="h-[200px] max-h-[200px]">
                 <CommandEmpty>
-                    {queryGrupos.isLoading ? (
+                    {queryGruposSinPaginacion.isLoading ? (
                     <div className="flex items-center justify-center gap-2 py-6">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         <TypographyMuted text="Cargando..." />

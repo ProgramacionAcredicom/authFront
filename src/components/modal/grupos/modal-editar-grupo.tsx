@@ -88,6 +88,7 @@ export const ModalEditarGrupo = () => {
             setSelectedUsers={setSelectedUsers}
             userIds={dataGrupoEditar.usuarios}
             initialUsers={initialUsers}
+            hideFilters={true}
           />
         </div>
         <DialogFooter>

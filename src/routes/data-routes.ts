@@ -1,4 +1,4 @@
-import { type LucideIcon, Building, Group, HomeIcon, Users2 } from "lucide-react";
+import { type LucideIcon, Building, Group, HomeIcon, Users2, Briefcase } from "lucide-react";
 
 interface Props {
   navMain: {
@@ -23,29 +23,16 @@ export const dataRoutes: Props = {
       title: "Colaboradores",
       url: "/colaboradores",
       icon: Users2,
-      items: [
-        {
-          title: "Colaboradores",
-          url: "/colaboradores",
-        },
-      ],
     },
     {
-      title: "Agencias",
+      title: "Unidades de trabajo",
       url: "/agencias",
-      icon: Building,
+      icon: Briefcase,
       items: [
         {
           title: "Gestionar agencias",
           url: "/agencias",
         },
-      ],
-    },
-    {
-      title: "Áreas",
-      url: "/areas",
-      icon: Building,
-      items: [
         {
           title: "Gestionar áreas",
           url: "/areas",
@@ -72,12 +59,6 @@ export const dataRoutes: Props = {
       title: "Aplicativos",
       url: "/aplicativos",
       icon: Group,
-      items: [
-        {
-          title: "Aplicativos",
-          url: "/aplicativos",
-        },
-      ],
     },
   ],
 };
