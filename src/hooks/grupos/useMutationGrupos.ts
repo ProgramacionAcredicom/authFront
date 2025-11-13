@@ -69,7 +69,7 @@ export const useMutationUpdateGrupo = () => {
   return { mutationUpdateGrupo, isLoading: mutationUpdateGrupo.isPending };
 };
 
-export const useMutationEliminarGrupo = () => {
+export const useMutationEliminarGrupo = (shouldNavigate = true) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const mutationEliminarGrupo = useMutation({
@@ -82,7 +82,10 @@ export const useMutationEliminarGrupo = () => {
     },
     onSuccess: (data: { message: string }) => {
       toast.success(data.message || "Grupo desactivado correctamente");
-      navigate("..", { replace: true });
+      // Solo navegar si se especifica (útil cuando se elimina desde un modal de edición)
+      if (shouldNavigate) {
+        navigate("..", { replace: true });
+      }
     },
     onSettled: () => {
       // Invalidar todas las queries de grupos (paginadas y sin paginar)

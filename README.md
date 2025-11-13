@@ -22,11 +22,14 @@ Sistema web moderno para la gestión de autenticación, usuarios, permisos y ses
 
 ### Autenticación y Seguridad
 - 🔑 Sistema de login con JWT (Access y Refresh tokens)
-- 🔄 Renovación automática de tokens
+- 🔄 Renovación automática de tokens con reintentos y prevención de loops infinitos
 - 🔐 Recuperación de contraseña con código OTP
 - 👤 Gestión de perfil de usuario
 - 🚪 Cierre de sesión seguro
 - 🛡️ Rutas protegidas y públicas
+- ✅ Validación centralizada de variables de entorno con Zod
+- 📝 Logger configurable (desactiva logs en producción)
+- 🛡️ Manejo centralizado de errores de API
 
 ### Gestión de Usuarios (Colaboradores)
 - 👥 CRUD completo de colaboradores
@@ -42,9 +45,11 @@ Sistema web moderno para la gestión de autenticación, usuarios, permisos y ses
 - 👨‍👩‍👧‍👦 Creación y gestión de grupos de permisos
 - 🔐 Asignación de permisos a grupos
 - 📱 Gestión de aplicativos
-- 🎯 Asignación de grupos a colaboradores
-- 🔍 Búsqueda y filtrado avanzado
+- 🎯 Asignación de grupos a colaboradores (solo en edición)
+- 🔍 Búsqueda y filtrado avanzado con scroll infinito
 - 📊 Visualización organizada por aplicativo
+- 🗑️ Desactivación de grupos (borrado lógico) desde cards
+- 🎨 Indicadores visuales para grupos activos/inactivos
 
 ### Administración de Sesiones
 - 📱 Visualización de sesiones activas por usuario
@@ -64,8 +69,10 @@ Sistema web moderno para la gestión de autenticación, usuarios, permisos y ses
 - 🌓 Modo oscuro/claro
 - 📱 Totalmente adaptable a móviles
 - ♿ Accesible (ARIA labels, navegación por teclado)
-- ⚡ Optimizado para rendimiento
+- ⚡ Optimizado para rendimiento con code splitting y lazy loading
 - 🎯 Feedback visual en todas las operaciones
+- ⚡ Caché inteligente de datos con React Query
+- 🔄 Scroll infinito para listas grandes
 
 ## 🛠️ Tecnologías
 
@@ -83,7 +90,7 @@ Sistema web moderno para la gestión de autenticación, usuarios, permisos y ses
 
 ### UI y Estilos
 - **Tailwind CSS 4** - Framework de utilidades CSS
-- **Radix UI** - Componentes accesibles sin estilos
+- **Radix UI** - Componentes accesibles sin estilos (incluyendo AlertDialog)
 - **Lucide React** - Iconos
 - **Sonner** - Notificaciones toast
 - **next-themes** - Gestión de temas
@@ -93,11 +100,16 @@ Sistema web moderno para la gestión de autenticación, usuarios, permisos y ses
 - **React Intersection Observer** - Scroll infinito
 
 ### Utilidades
-- **Axios** - Cliente HTTP
+- **Axios** - Cliente HTTP con interceptores mejorados
 - **date-fns** - Manipulación de fechas
 - **FilePond** - Gestión de archivos
 - **CodeMirror** - Editor de código JSON
 - **dnd-kit** - Drag and drop
+
+### Testing
+- **Vitest** - Framework de testing
+- **React Testing Library** - Testing de componentes
+- **jsdom** - Entorno DOM para tests
 
 ## 📦 Requisitos Previos
 
@@ -137,6 +149,11 @@ VITE_APLICATIVO_ID=1
 |----------|-------------|-----------|
 | `VITE_HOST_AUTH_DEV` | URL base del API de autenticación | ✅ Sí |
 | `VITE_APLICATIVO_ID` | ID del aplicativo en el sistema | ✅ Sí |
+| `VITE_PASSWORD_RESET_REDIRECT_URL` | URL de redirección después de reset de contraseña | ❌ No (default: `/auth/login`) |
+| `VITE_APP_NAME` | Nombre de la aplicación | ❌ No (default: `Acredicom Auth`) |
+| `VITE_API_BASE_URL` | URL base de la API | ❌ No (default: `http://localhost:8000`) |
+
+**Nota**: Las variables de entorno se validan automáticamente al iniciar la aplicación usando Zod. Si falta alguna variable requerida, la aplicación mostrará un error descriptivo.
 
 ### Configuración de Vite
 
@@ -159,11 +176,16 @@ npm run lint         # Ejecuta ESLint para verificar el código
 
 # Preview
 npm run preview      # Previsualiza el build de producción en http://localhost:5173
+
+# Testing
+npm run test         # Ejecuta los tests con Vitest
+npm run test:ui      # Ejecuta los tests con interfaz gráfica
+npm run test:coverage # Ejecuta los tests con reporte de cobertura
 ```
 
 ## 📁 Estructura del Proyecto
 
-```
+```text
 authFront/
 ├── public/                 # Archivos estáticos
 │   └── img/               # Imágenes públicas
@@ -189,6 +211,9 @@ authFront/
 │   │   ├── ui/            # Componentes UI base (ShadCN)
 │   │   └── ...
 │   ├── config/            # Configuraciones
+│   │   ├── env.ts         # Validación centralizada de variables de entorno
+│   │   ├── constants.ts   # Constantes de la aplicación
+│   │   └── environment.ts # Configuración de entorno
 │   ├── hooks/             # Custom hooks
 │   │   ├── colaboradores/
 │   │   ├── agencias/
@@ -198,16 +223,28 @@ authFront/
 │   │   └── sessions/
 │   ├── interfaces/        # Interfaces TypeScript
 │   ├── lib/               # Utilidades y helpers
+│   │   ├── logger.ts      # Logger configurable
+│   │   ├── error-handler.ts # Manejo centralizado de errores
+│   │   ├── react-query.ts # Configuración de React Query
+│   │   └── ...
 │   ├── mappers/           # Mappers de datos
 │   ├── models/            # Modelos de datos
 │   ├── routes/            # Configuración de rutas
+│   │   ├── Router.tsx     # Router principal con lazy loading
+│   │   ├── auth.routes.tsx # Rutas de autenticación
+│   │   └── admin.routes.tsx # Rutas de administración
 │   ├── schemas/           # Esquemas de validación Zod
-│   ├── services/           # Servicios API
+│   ├── services/          # Servicios API
+│   │   ├── base.service.ts # Clase base para servicios
+│   │   ├── configAxios.ts # Configuración de Axios con interceptores
+│   │   └── ...
 │   │   ├── auth/
 │   │   ├── colaboradores/
 │   │   ├── agencias/
 │   │   └── ...
 │   ├── store/             # Estado global (Zustand)
+│   ├── test/              # Configuración de tests
+│   │   └── setup.ts       # Setup de Vitest
 │   ├── types/             # Tipos TypeScript
 │   └── main.tsx           # Punto de entrada
 ├── .env                   # Variables de entorno (no commitear)
@@ -215,6 +252,7 @@ authFront/
 ├── tailwind.config.js     # Configuración Tailwind
 ├── tsconfig.json          # Configuración TypeScript
 ├── vite.config.ts         # Configuración Vite
+├── vitest.config.ts       # Configuración de Vitest
 └── package.json           # Dependencias y scripts
 ```
 
@@ -241,6 +279,9 @@ authFront/
 - **Asignación visual** con drag & drop
 - **Búsqueda avanzada** con scroll infinito
 - **Gestión de aplicativos** con configuración JSON
+- **Desactivación de grupos** (borrado lógico) desde cards con confirmación
+- **Indicadores visuales** para grupos activos/inactivos
+- **Asignación de usuarios** solo disponible en edición (no en creación)
 
 ### 4. Tablas de Datos
 
@@ -249,6 +290,16 @@ authFront/
 - **Ordenamiento** (sorting)
 - **Búsqueda global**
 - **Selección múltiple**
+
+### 5. Arquitectura y Calidad
+
+- **Code Splitting** con lazy loading de rutas
+- **Componentes modulares** y reutilizables
+- **Hooks personalizados** para lógica reutilizable
+- **Abstracción de servicios** con clase base
+- **Constantes centralizadas** para valores configurables
+- **Logger estructurado** con niveles y contexto
+- **Manejo de errores** consistente en toda la aplicación
 
 ## 🏗️ Arquitectura
 
@@ -277,18 +328,41 @@ El proyecto sigue una arquitectura basada en **capas**:
 
 ### Flujo de Datos
 
-```
+```text
 Componente → Hook → Service → API
+     ↓         ↓       ↓       ↓
+  Estado   Query   Axios   Interceptor
      ↓         ↓       ↓
-  Estado   Query   Axios
+  Logger  Caché   Error Handler
 ```
+
+### Mejoras de Arquitectura
+
+- **Rutas modulares**: Separación de rutas por feature (auth, admin)
+- **Lazy Loading**: Carga diferida de componentes de página
+- **Configuración centralizada**: Variables de entorno validadas con Zod
+- **Servicios base**: Clase abstracta para operaciones CRUD comunes
+- **Hooks personalizados**: Lógica reutilizable extraída a hooks
+- **Componentes pequeños**: Componentes grandes divididos en subcomponentes
 
 ### Manejo de Estado
 
 - **React Query**: Estado del servidor, caché, sincronización
+  - Configuración global con staleTime, gcTime y retry logic
+  - Caché diferenciado según tipo de dato (estático, semi-estático, dinámico)
+  - Reintentos automáticos con exponential backoff
 - **Zustand**: Estado global (autenticación, UI)
 - **React Hook Form**: Estado de formularios
 - **Estado local**: `useState` para estado de componente
+
+### Optimizaciones Implementadas
+
+- **Code Splitting**: Lazy loading de rutas con React.lazy() y Suspense
+- **Caché Inteligente**: Configuración de React Query optimizada por tipo de dato
+- **Logger Configurable**: Logs deshabilitados en producción automáticamente
+- **Manejo de Errores Centralizado**: Utilidad reutilizable para manejo consistente de errores
+- **Abstracción de Servicios**: Clase base para servicios API con métodos comunes
+- **Constantes Centralizadas**: Valores mágicos extraídos a constantes configurables
 
 ## 💻 Desarrollo
 
@@ -325,8 +399,10 @@ export const Component = ({ ...props }: ComponentProps) => {
 ### Hooks Personalizados
 
 Los hooks siguen el patrón:
-- `useQuery*`: Para consultas (GET)
+- `useQuery*`: Para consultas (GET) con configuración de caché optimizada
 - `useMutation*`: Para mutaciones (POST, PUT, DELETE)
+- `useInfinite*`: Para queries con scroll infinito
+- Hooks de UI: `useUserSelection`, `useKeyboardShortcuts`, etc.
 
 ### Validación de Formularios
 
@@ -334,6 +410,13 @@ Todos los formularios usan:
 - **React Hook Form** para manejo de estado
 - **Zod** para validación de esquemas
 - **@hookform/resolvers** para integración
+
+### Manejo de Errores
+
+- **Utilidad centralizada** (`lib/error-handler.ts`) para manejo consistente
+- **Mensajes de error** personalizables por contexto
+- **Logging estructurado** con contexto adicional
+- **Manejo diferenciado** por código de estado HTTP
 
 ## 🏭 Build y Despliegue
 
@@ -346,7 +429,9 @@ npm run build
 El build se genera en la carpeta `dist/` con:
 - Código optimizado y minificado
 - Assets procesados
-- Code splitting automático
+- Code splitting automático por rutas
+- Tree shaking para eliminar código no utilizado
+- Optimización de imports
 
 ### Variables de Entorno en Producción
 
@@ -365,10 +450,37 @@ Ajusta el `base` en `vite.config.ts` según tu entorno.
 
 ## 🧪 Testing
 
-> **Nota**: Actualmente no hay tests implementados. Se recomienda añadir:
-> - Tests unitarios con Vitest
-> - Tests de componentes con React Testing Library
-> - Tests E2E con Playwright o Cypress
+El proyecto incluye configuración de testing con:
+
+- **Vitest** - Framework de testing rápido
+- **React Testing Library** - Testing de componentes React
+- **jsdom** - Entorno DOM simulado para tests
+
+### Ejecutar Tests
+
+```bash
+# Ejecutar todos los tests
+npm run test
+
+# Ejecutar tests con interfaz gráfica
+npm run test:ui
+
+# Ejecutar tests con cobertura
+npm run test:coverage
+```
+
+### Tests Implementados
+
+- Tests unitarios para logger (`src/lib/__tests__/logger.test.ts`)
+- Tests para manejo de errores (`src/lib/__tests__/error-handler.test.ts`)
+- Tests para validación de variables de entorno (`src/config/__tests__/env.test.ts`)
+
+### Próximos Pasos
+
+Se recomienda añadir:
+- Tests de componentes con React Testing Library
+- Tests E2E con Playwright o Cypress
+- Tests de integración para hooks y servicios
 
 ## 📝 Contribución
 
@@ -387,17 +499,48 @@ Ajusta el `base` en `vite.config.ts` según tu entorno.
 
 ## 🔒 Seguridad
 
-- ✅ Validación de variables de entorno al inicio
-- ✅ Tokens almacenados de forma segura
-- ✅ Renovación automática de tokens
-- ✅ Validación de formularios en cliente y servidor
-- ✅ Sanitización de inputs
-- ✅ Rutas protegidas
+- ✅ **Validación centralizada de variables de entorno** con Zod al inicio de la aplicación
+- ✅ **Tokens almacenados** en localStorage (considerar httpOnly cookies para mayor seguridad)
+- ✅ **Renovación automática de tokens** con interceptores de Axios
+- ✅ **Prevención de loops infinitos** en refresh token con contador de reintentos
+- ✅ **Timeout configurable** en requests HTTP (30 segundos)
+- ✅ **Validación de formularios** en cliente (Zod) y servidor
+- ✅ **Logger configurable** que desactiva logs en producción
+- ✅ **Manejo centralizado de errores** con logging estructurado
+- ✅ **Rutas protegidas** con componentes de protección
+- ✅ **Tipado completo** de variables de entorno en TypeScript
 
 ## 📚 Documentación Adicional
 
 - [AUDITORIA_CODIGO.md](./AUDITORIA_CODIGO.md) - Auditoría de código y mejores prácticas
 - [INTEGRACIONES/](./INTEGRACIONES/) - Documentación de integraciones
+
+## 🎯 Mejoras Recientes
+
+### Seguridad y Calidad
+- ✅ Validación centralizada de variables de entorno con Zod
+- ✅ Logger configurable que desactiva logs en producción
+- ✅ Manejo centralizado de errores con contexto estructurado
+- ✅ Interceptor de Axios mejorado con prevención de loops infinitos
+- ✅ Reintentos automáticos con exponential backoff
+
+### Arquitectura y Escalabilidad
+- ✅ Code splitting de rutas con lazy loading
+- ✅ Rutas modulares por feature (auth, admin)
+- ✅ Abstracción base para servicios API
+- ✅ Configuración optimizada de React Query por tipo de dato
+- ✅ Constantes centralizadas para valores configurables
+
+### Optimización
+- ✅ Caché inteligente diferenciado (estático, semi-estático, dinámico)
+- ✅ Lazy loading de componentes de página
+- ✅ Componentes grandes refactorizados en subcomponentes
+- ✅ Hooks personalizados para lógica reutilizable
+
+### Testing
+- ✅ Configuración de Vitest y React Testing Library
+- ✅ Tests básicos para logger, error handler y configuración
+- ✅ Setup de testing con jsdom
 
 ## 🐛 Problemas Conocidos
 

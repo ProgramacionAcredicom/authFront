@@ -5,30 +5,81 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
-import { Edit, Users } from "lucide-react";
+import { Edit, Users, Power } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMutationEliminarGrupo } from "@/hooks/grupos/useMutationGrupos";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CardGruposProps {
   grupo: GruposTypeModel;
 }
 
 export const CardGrupos = ({ grupo }: CardGruposProps) => {
-  const { nombre, users = [], aplicativos = [], id } = grupo;
+  const { nombre, users = [], aplicativos = [], id, state } = grupo;
   const totalUsers = users.length;
   const visibleUsers = users.slice(0, 3);
   const remainingUsers = totalUsers - visibleUsers.length;
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  // No navegar después de eliminar cuando se elimina desde la card
+  const { mutationEliminarGrupo, isLoading } = useMutationEliminarGrupo(false);
+  const isActive = state;
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mutationEliminarGrupo.mutate({ id: id.toString() });
+    setShowDeleteDialog(false);
+  };
 
   return (
-    <Card className="relative flex flex-col transition-shadow hover:shadow-md">
-      <CardHeader className="flex flex-row items-start justify-between pb-3">
-        <div className="flex flex-col gap-1 flex-1 min-w-0">
-          <TypographyMuted 
-            text={`Total ${totalUsers} ${totalUsers === 1 ? "usuario" : "usuarios"}`}
-            className="text-xs font-medium text-muted-foreground"
-          />
-          <TypographyH3 text={nombre} className="text-lg font-semibold truncate" />
-        </div>
-      </CardHeader>
+    <>
+      <Card className={`group relative flex flex-col transition-shadow hover:shadow-md ${
+        !isActive ? "opacity-60 grayscale" : ""
+      }`}>
+        <CardHeader className="flex flex-row items-start justify-between pb-3">
+          <div className="flex flex-col gap-1 flex-1 min-w-0">
+            <TypographyMuted 
+              text={`Total ${totalUsers} ${totalUsers === 1 ? "usuario" : "usuarios"}`}
+              className="text-xs font-medium text-muted-foreground"
+            />
+            <TypographyH3 text={nombre} className="text-lg font-semibold truncate" />
+          </div>
+          {isActive && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowDeleteDialog(true);
+                    }}
+                    disabled={isLoading}
+                    aria-label={`Desactivar grupo ${nombre}`}
+                  >
+                    <Power className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Desactivar grupo</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-4 pt-0">
         <TooltipProvider delayDuration={200}>
           <div className="flex items-center gap-2">
@@ -101,6 +152,29 @@ export const CardGrupos = ({ grupo }: CardGruposProps) => {
         </Link>
       </CardContent>
     </Card>
+
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Desactivar grupo?</AlertDialogTitle>
+          <AlertDialogDescription>
+            ¿Estás seguro de que deseas desactivar el grupo "{nombre}"? El grupo se desactivará pero podrá ser reactivado más tarde.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={isLoading}
+            type="button"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isLoading ? "Desactivando..." : "Desactivar"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
