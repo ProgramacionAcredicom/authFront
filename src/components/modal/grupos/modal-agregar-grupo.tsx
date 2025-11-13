@@ -5,20 +5,16 @@ import { Loader2, Plus, Save, X } from "lucide-react";
 import { useState } from "react";
 import FormCrearGrupo from "@/components/form/formulario-crear-grupo";
 import { useFormGrupos } from "@/hooks/formularios/grupos/useFormGrupos";
-import { SelectUsuariosGrupo } from "@/components/form/grupos/select-usuarios-grupo";
-import { Result as ColaboradorResult } from "@/interfaces/colaboradores.interfaces";
 
 export const ModalAgregarGrupo = () => {
   const [open, setOpen] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState<ColaboradorResult[]>([]);
-  const { form, onSubmit, isLoading } = useFormGrupos(setOpen, undefined, selectedUsers, setSelectedUsers);
+  const { form, onSubmit, isLoading } = useFormGrupos(setOpen, undefined, [], () => {});
   return (
     <Dialog
       open={open}
       onOpenChange={(open) => {
         if (!open) {
           form.reset();
-          setSelectedUsers([]);
         }
         setOpen(open);
       }}
@@ -35,10 +31,7 @@ export const ModalAgregarGrupo = () => {
         </DialogHeader>
         <div className="flex flex-col gap-6">
           <FormCrearGrupo form={form} onSubmit={onSubmit} />
-          <SelectUsuariosGrupo
-            selectedUsers={selectedUsers}
-            setSelectedUsers={setSelectedUsers}
-          />
+          {/* Los usuarios solo se pueden asignar al editar un grupo, no al crearlo */}
         </div>
         <DialogFooter>
           <Button
@@ -47,7 +40,6 @@ export const ModalAgregarGrupo = () => {
             onClick={() => {
               setOpen(false);
               form.reset();
-              setSelectedUsers([]);
             }}
           >
             <X />

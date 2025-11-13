@@ -3,6 +3,7 @@ import { crearArea, actualizarAreas } from "@/services/areas/areas.services";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AreasSchema } from "@/schemas/areas/areas.schemas";
+import { logger } from "@/lib/logger";
 
 export const MutationAreas = (closeModal: () => void) => {
   const queryClient = useQueryClient();
@@ -33,7 +34,7 @@ export const MutationAreas = (closeModal: () => void) => {
     },
 
     onError: (error, newAgencia, context) => {
-      console.log(error);
+      logger.errorWithContext("Error al crear área", error);
       toast.error("Error al crear el area");
       if (context?.previousAreas) {
         queryClient.setQueryData<AreasPaginationType>(["areas"], context.previousAreas);

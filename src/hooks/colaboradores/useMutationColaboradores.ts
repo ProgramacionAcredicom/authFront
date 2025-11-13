@@ -3,6 +3,7 @@ import { updateColaborador, ColaboradorFormData } from "@/services/colaboradores
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AxiosRequestConfig } from "axios";
+import { logger } from "@/lib/logger";
 
 export const useMutationUpdateColaborador = () => {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export const useMutationUpdateColaborador = () => {
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
     },
     onError: (error) => {
-      console.error(error);
+      logger.errorWithContext("Error al actualizar colaborador", error);
       toast.error(error.message || "Error al actualizar el colaborador");
     },
   });

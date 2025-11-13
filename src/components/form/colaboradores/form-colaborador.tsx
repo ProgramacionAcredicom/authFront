@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { GruposSeleccionados } from "./grupos-seleccionados";
 import { splitName } from "@/lib/splitName";
+import { logger } from "@/lib/logger";
 export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { selectedGroups: GruposTypeModel[]; setSelectedGroups: (groups: GruposTypeModel[]) => void; user?: ColaboradorIDType }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -185,7 +186,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
 
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
     } catch (error) {
-      console.error(error);
+      logger.errorWithContext("Error al guardar colaborador", error);
       if (error instanceof AxiosError && error.response?.data) {
         const errs = error.response.data as Record<string, string[] | string>;
         Object.values(errs)
@@ -217,7 +218,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
       await generatePassword(user.id);
       toast.success("Contraseña generada y enviada al correo del usuario");
     } catch (error) {
-      console.error(error);
+      logger.errorWithContext("Error al generar contraseña", error);
       if (error instanceof AxiosError && error.response?.data) {
         const errorMessage = error.response.data?.error || error.response.data?.message || "Error al generar la contraseña";
         toast.error(errorMessage);

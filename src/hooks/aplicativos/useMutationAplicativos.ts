@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { AplicativosTypeModel } from "@/interfaces/aplicativos.interfaces";
 import { createAplicativo, deleteAplicativo, updateAplicativo } from "@/services/aplicativos/aplicativos.services";
+import { logger } from "@/lib/logger";
 type MutationContext = {
   previousAplicativos: AplicativosTypeModel[] | undefined;
 };
@@ -77,7 +78,7 @@ export const useMutationUpdateAplicativo = () => {
       toast.success("Aplicativo actualizado correctamente");
     },
     onError: (error) => {
-      console.log(error);
+      logger.errorWithContext("Error al actualizar aplicativo", error);
       toast.error(error.message);
     },
   });

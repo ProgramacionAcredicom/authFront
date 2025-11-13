@@ -5,6 +5,7 @@ import { AgenciasModelTypes, Chif } from "@/interfaces/agencias.interfaces";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { generateTempId } from "@/lib/id-generator";
+import { logger } from "@/lib/logger";
 
 type MutationContext = {
   previousAgencias: AgenciasSchema[] | undefined;
@@ -95,7 +96,7 @@ export const MutationUpdateAgencia = (closeModal: () => void) => {
       if (error instanceof AxiosError) {
         const axiosError = error as AxiosError<ApiErrorResponse>;
         const { data } = axiosError.response || {};
-        console.log(data);
+        logger.errorWithContext("Error al actualizar agencia", error, { responseData: data });
         if (data?.code?.some((msg) => msg.toLowerCase().includes("code already exists"))) {
           return toast.error("Ya existe una agencia con este CÓDIGO");
         }

@@ -1,6 +1,7 @@
 import apiServices from "../configAxios";
 import { GruposTypeModel, GruposPaginationType, GruposType } from "@/interfaces/grupos.interfaces";
 import { localGruposMapper } from "@/mappers/local-grupos.mapper";
+import { PAGINATION } from "@/config/constants";
 
 export const getAllGrupos = async (params?: { page?: number; page_size?: number; search?: string }): Promise<GruposPaginationType> => {
   const queryParams: Record<string, any> = {};
@@ -25,7 +26,7 @@ export const getAllGruposSinPaginacion = async (): Promise<GruposTypeModel[]> =>
   const allGrupos: GruposTypeModel[] = [];
   let page = 1;
   let hasMore = true;
-  const pageSize = 100; // Tamaño grande para minimizar llamadas
+  const pageSize = PAGINATION.LARGE_PAGE_SIZE;
 
   while (hasMore) {
     const res = await getAllGrupos({ page, page_size: pageSize });

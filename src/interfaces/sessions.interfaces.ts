@@ -39,6 +39,8 @@ export interface CloseSessionsResponse {
 
 export type SessionsByAplicativo = Record<number, Session[]>;
 
+import { logger } from "@/lib/logger";
+
 export function groupSessionsByAplicativo(sessions: Session[]): SessionsByAplicativo {
   // Validar que sessions sea un array válido
   if (!sessions || !Array.isArray(sessions)) {
@@ -48,7 +50,7 @@ export function groupSessionsByAplicativo(sessions: Session[]): SessionsByAplica
   return sessions.reduce((acc, session) => {
     // Validar que session.aplicativo.id exista
     if (!session?.aplicativo?.id) {
-      console.warn("Session missing aplicativo or aplicativo.id:", session);
+      logger.warn("Session missing aplicativo or aplicativo.id", { session });
       return acc;
     }
     

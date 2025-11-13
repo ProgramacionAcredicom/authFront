@@ -23,6 +23,7 @@ import { verifyOTP } from "@/services/auth/auth.services";
 import { toast } from "sonner";
 import { OTPSchema, OTPSchemaType } from "@/schemas/auth/otp.schema";
 import { environment } from "@/config/environment";
+import { logger } from "@/lib/logger";
 
 export const FormCodeOtp = () => {
   const [searchParams] = useSearchParams();
@@ -66,8 +67,8 @@ export const FormCodeOtp = () => {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.log(error);
-      setErrorMessage(error.response.data.error);
+      logger.errorWithContext("Error al verificar OTP", error);
+      setErrorMessage(error.response?.data?.error || "Error al verificar el código OTP");
     }
   };
 

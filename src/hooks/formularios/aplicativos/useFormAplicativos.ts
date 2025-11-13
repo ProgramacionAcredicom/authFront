@@ -4,6 +4,7 @@ import { asignarAplicativosSchema, AsignarAplicativosSchema } from "@/schemas/ap
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { logger } from "@/lib/logger";
 
 export const useFormAplicativos = (data: AplicativosTypeModel | undefined, setOpen: (open: boolean) => void, isEdit?: boolean, id?: string) => {
   const form = useForm<AsignarAplicativosSchema>({
@@ -35,8 +36,9 @@ export const useFormAplicativos = (data: AplicativosTypeModel | undefined, setOp
     try {
       parsedConfig = JSON.parse(formData.configuracion);
     } catch (e) {
-      console.error("JSON inválido en campo configuracion:", e);
-      return; // aquí podrías mostrar un error al usuario en vez de continuar
+      logger.errorWithContext("JSON inválido en campo configuracion", e, { configuracion: formData.configuracion });
+      toast.error("El campo de configuración contiene JSON inválido");
+      return;
     }
 
     const payload: Omit<AplicativosTypeModel, "id"> = {

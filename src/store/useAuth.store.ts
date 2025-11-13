@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import { queryClient } from "@/lib/react-query";
+import { logger } from "@/lib/logger";
 interface AuthStoreProps {
   access: null | string;
   refresh: null | string;
@@ -46,7 +47,7 @@ const authStore: StateCreator<AuthStoreProps & AuthActionsProps> = (set, get) =>
         return `¡Bienvenido!`;
       },
       error: (data) => {
-        console.log(data);
+        logger.errorWithContext("Error al iniciar sesión", data);
         return data?.error || "Error al iniciar sesión.";
       },
       position: "bottom-right",
