@@ -152,6 +152,7 @@ VITE_APLICATIVO_ID=1
 | `VITE_PASSWORD_RESET_REDIRECT_URL` | URL de redirección después de reset de contraseña | ❌ No (default: `/auth/login`) |
 | `VITE_APP_NAME` | Nombre de la aplicación | ❌ No (default: `Acredicom Auth`) |
 | `VITE_API_BASE_URL` | URL base de la API | ❌ No (default: `http://localhost:8000`) |
+| `VITE_BASE` | Ruta base pública de la aplicación para Vite | ❌ No (default: `/`) |
 
 **Nota**: Las variables de entorno se validan automáticamente al iniciar la aplicación usando Zod. Si falta alguna variable requerida, la aplicación mostrará un error descriptivo.
 

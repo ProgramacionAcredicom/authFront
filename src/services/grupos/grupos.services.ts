@@ -3,7 +3,15 @@ import { GruposTypeModel, GruposPaginationType, GruposType } from "@/interfaces/
 import { localGruposMapper } from "@/mappers/local-grupos.mapper";
 import { PAGINATION } from "@/config/constants";
 
-export const getAllGrupos = async (params?: { page?: number; page_size?: number; search?: string }): Promise<GruposPaginationType> => {
+export const getAllGrupos = async (params?: { 
+  page?: number; 
+  page_size?: number; 
+  search?: string;
+  usuario?: string;
+  grupo?: string;
+  aplicativo?: string;
+  ordering?: string;
+}): Promise<GruposPaginationType> => {
   const queryParams: Record<string, any> = {};
   if (params?.page) {
     queryParams.page = params.page;
@@ -13,6 +21,18 @@ export const getAllGrupos = async (params?: { page?: number; page_size?: number;
   }
   if (params?.search?.trim().length) {
     queryParams.search = params.search.trim();
+  }
+  if (params?.usuario?.trim().length) {
+    queryParams.usuario = params.usuario.trim();
+  }
+  if (params?.grupo?.trim().length) {
+    queryParams.grupo = params.grupo.trim();
+  }
+  if (params?.aplicativo?.trim().length) {
+    queryParams.aplicativo = params.aplicativo.trim();
+  }
+  if (params?.ordering?.trim().length) {
+    queryParams.ordering = params.ordering.trim();
   }
   const res = await apiServices.get<GruposPaginationType>("/grupos/", { params: queryParams });
   return res.data;
@@ -25,16 +45,44 @@ export const getAllGrupos = async (params?: { page?: number; page_size?: number;
 export const getAllGruposSinPaginacion = async (): Promise<GruposTypeModel[]> => {
   const allGrupos: GruposTypeModel[] = [];
   let page = 1;
-  let hasMore = true;
   const pageSize = PAGINATION.LARGE_PAGE_SIZE;
+  let totalPages: number | null = null;
 
-  while (hasMore) {
-    const res = await getAllGrupos({ page, page_size: pageSize });
-    const gruposMapeados = res.results.map((grupo: GruposType) => localGruposMapper(grupo));
-    allGrupos.push(...gruposMapeados);
-    
-    hasMore = page < res.total_pages;
-    page++;
+  while (true) {
+    try {
+      const res = await getAllGrupos({ page, page_size: pageSize });
+      const gruposMapeados = res.results.map((grupo: GruposType) => localGruposMapper(grupo));
+      allGrupos.push(...gruposMapeados);
+      
+      // Si no hay resultados en esta página, salir
+      if (res.results.length === 0) {
+        break;
+      }
+      
+      // Calcular el total de páginas desde count en la primera respuesta
+      if (totalPages === null && res.count !== undefined) {
+        totalPages = Math.ceil(res.count / pageSize);
+      }
+      
+      // Verificar múltiples condiciones para determinar si hay más páginas
+      // 1. Si next es null, no hay más páginas
+      // 2. Si totalPages está calculado y page >= totalPages, no hay más páginas
+      const hasMorePages = res.next !== null && (totalPages === null || page < totalPages);
+      
+      if (!hasMorePages) {
+        break;
+      }
+      
+      page++;
+    } catch (error: any) {
+      // Si recibimos un 404 u otro error, significa que no hay más páginas
+      // Salir del bucle y devolver los grupos obtenidos hasta ahora
+      if (error?.response?.status === 404 || error?.response?.status === 400) {
+        break;
+      }
+      // Si es otro error, relanzarlo
+      throw error;
+    }
   }
 
   return allGrupos;

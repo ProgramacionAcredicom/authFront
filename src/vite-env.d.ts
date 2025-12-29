@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_APP_NAME?: string;
   /** URL base de la API (opcional) */
   readonly VITE_API_BASE_URL?: string;
+  /** Ruta base pública de la aplicación para Vite (opcional, default: "/") */
+  readonly VITE_BASE?: string;
 }
 
 interface ImportMeta {

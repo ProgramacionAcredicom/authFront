@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "https://oauth.mcenlinea.com/",
+  base: process.env.VITE_BASE || "/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

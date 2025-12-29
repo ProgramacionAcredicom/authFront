@@ -6,7 +6,15 @@ import { CACHE_TIMES } from "@/config/constants";
  * Query para obtener grupos con paginación
  * staleTime: 5 minutos (datos relativamente estáticos)
  */
-export const useQueryGrupos = (params?: { page?: number; page_size?: number; search?: string }) => {
+export const useQueryGrupos = (params?: { 
+  page?: number; 
+  page_size?: number; 
+  search?: string;
+  usuario?: string;
+  grupo?: string;
+  aplicativo?: string;
+  ordering?: string;
+}) => {
   const queryGrupos = useQuery({
     queryKey: ["grupos", params],
     queryFn: () => getAllGrupos(params),

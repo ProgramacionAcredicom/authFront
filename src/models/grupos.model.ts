@@ -5,6 +5,7 @@ export class GruposModel {
   nombre: string;
   aplicativos: Aplicativo[];
   users?: UserInGroup[];
+  users_count?: number;
   state: boolean;
   created_on?: string;
   update_at?: string;
@@ -13,6 +14,7 @@ export class GruposModel {
     this.nombre = grupos.nombre;
     this.aplicativos = grupos.aplicativos;
     this.users = grupos.users;
+    this.users_count = grupos.users_count;
     this.state = grupos.state;
     this.created_on = grupos.created_on;
     this.update_at = grupos.update_at;

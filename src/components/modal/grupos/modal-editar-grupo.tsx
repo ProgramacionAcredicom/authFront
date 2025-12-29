@@ -25,17 +25,28 @@ export const ModalEditarGrupo = () => {
       id: user.id,
       name: user.name,
       picture: user.picture,
-      agency: {
+      agency: user.agency ? {
         id: user.agency.id,
         name: user.agency.name,
         code: "",
         state: true,
         chif: null,
         no_colaboradores: 0,
+      } : {
+        id: 0,
+        name: "",
+        code: "",
+        state: true,
+        chif: null,
+        no_colaboradores: 0,
       },
-      role: {
+      role: user.role ? {
         id: user.role.id,
         role: user.role.role,
+        state: true,
+      } : {
+        id: 0,
+        role: "",
         state: true,
       },
       is_active: user.is_active,

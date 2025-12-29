@@ -28,21 +28,24 @@ export default function TabGrupos() {
 
   // Obtener información de paginación del servidor
   // Mantener valores anteriores durante la carga para evitar que desaparezcan los controles
-  const totalPages = queryGrupos.data?.total_pages ?? (queryGrupos.isLoading ? undefined : 0);
-  const totalItems = queryGrupos.data?.total ?? (queryGrupos.isLoading ? undefined : 0);
+  // Calcular total_pages desde count y page_size
+  const count = queryGrupos.data?.count ?? (queryGrupos.isLoading ? undefined : 0);
+  const calculatedTotalPages = count !== undefined ? Math.ceil(count / ITEMS_PER_PAGE) : undefined;
+  const totalPages = calculatedTotalPages ?? (queryGrupos.isLoading ? undefined : 0);
+  const totalItems = count ?? (queryGrupos.isLoading ? undefined : 0);
   
   // Usar valores anteriores si están disponibles durante la carga
   const [previousTotalPages, setPreviousTotalPages] = useState<number>(0);
   const [previousTotalItems, setPreviousTotalItems] = useState<number>(0);
   
   useEffect(() => {
-    if (queryGrupos.data?.total_pages) {
-      setPreviousTotalPages(queryGrupos.data.total_pages);
+    if (calculatedTotalPages !== undefined) {
+      setPreviousTotalPages(calculatedTotalPages);
     }
-    if (queryGrupos.data?.total) {
-      setPreviousTotalItems(queryGrupos.data.total);
+    if (count !== undefined) {
+      setPreviousTotalItems(count);
     }
-  }, [queryGrupos.data]);
+  }, [calculatedTotalPages, count]);
   
   // Usar valores actuales o anteriores para mantener la paginación visible
   const displayTotalPages = totalPages ?? previousTotalPages;
@@ -51,16 +54,16 @@ export default function TabGrupos() {
   // Ajustar página si está fuera de rango (solo cuando tenemos datos del servidor)
   useEffect(() => {
     // Solo ajustar si tenemos datos del servidor y no estamos cargando
-    if (!queryGrupos.isLoading && queryGrupos.data && queryGrupos.data.total_pages > 0) {
+    if (!queryGrupos.isLoading && calculatedTotalPages !== undefined && calculatedTotalPages > 0) {
       // Si la página actual es mayor que el total de páginas, ajustar a la última página
       setCurrentPage((prevPage) => {
-        if (prevPage > queryGrupos.data.total_pages) {
-          return queryGrupos.data.total_pages;
+        if (prevPage > calculatedTotalPages) {
+          return calculatedTotalPages;
         }
         return prevPage;
       });
     }
-  }, [queryGrupos.data, queryGrupos.isLoading]); // Usamos función de actualización para acceder al valor actual
+  }, [queryGrupos.data, queryGrupos.isLoading, calculatedTotalPages]); // Usamos función de actualización para acceder al valor actual
 
   // Resetear a página 1 cuando cambia la búsqueda
   const handleSearchChange = (value: string) => {
@@ -152,8 +155,8 @@ export default function TabGrupos() {
             )}
           </div>
 
-          {/* Paginación - siempre visible si hay más de 1 página (usa valores anteriores durante carga) */}
-          {displayTotalPages > 1 && (
+          {/* Paginación - siempre visible si hay datos (usa valores anteriores durante carga) */}
+          {displayTotalPages > 0 && displayTotalItems > 0 && (
             <div className="flex flex-col-reverse items-center justify-between gap-4 sm:flex-row sm:gap-6">
               <div className="text-muted-foreground text-sm whitespace-nowrap">
                 Mostrando {startIndex + 1} - {Math.min(endIndex, displayTotalItems)} de {displayTotalItems} grupo(s)

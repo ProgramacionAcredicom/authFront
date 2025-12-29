@@ -25,10 +25,11 @@ interface CardGruposProps {
 }
 
 export const CardGrupos = ({ grupo }: CardGruposProps) => {
-  const { nombre, users = [], aplicativos = [], id, state } = grupo;
-  const totalUsers = users.length;
+  const { nombre, users = [], aplicativos = [], id, state, users_count } = grupo;
+  // Usar users_count si está disponible (del endpoint optimizado), sino usar users.length como fallback
+  const totalUsers = users_count ?? users.length;
   const visibleUsers = users.slice(0, 3);
-  const remainingUsers = totalUsers - visibleUsers.length;
+  const remainingUsers = Math.max(0, totalUsers - visibleUsers.length);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   // No navegar después de eliminar cuando se elimina desde la card
   const { mutationEliminarGrupo, isLoading } = useMutationEliminarGrupo(false);

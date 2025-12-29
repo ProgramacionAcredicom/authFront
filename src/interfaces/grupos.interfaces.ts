@@ -3,6 +3,7 @@ export interface GruposType {
   nombre: string;
   aplicativos: Aplicativo[];
   users?: UserInGroup[];
+  users_count?: number;
   state: boolean;
   created_on?: string;
   update_at?: string;
@@ -28,7 +29,7 @@ export interface UserInGroup {
   role: {
     id: number;
     role: string;
-  };
+  } | null;
 }
 
 export interface GruposTypeModel {
@@ -37,6 +38,7 @@ export interface GruposTypeModel {
   permisos: Aplicativo[];
   aplicativos: Aplicativo[];
   users?: UserInGroup[];
+  users_count?: number;
   state: boolean;
   created_on?: string;
   update_at?: string;
@@ -48,9 +50,8 @@ export interface PermisoModel {
 }
 
 export interface GruposPaginationType {
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
+  count: number;
+  next: string | null;
+  previous: string | null;
   results: GruposType[];
 }

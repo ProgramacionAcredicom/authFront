@@ -7,6 +7,7 @@ export const localGruposMapper = (grupos: GruposType): GruposTypeModel => {
     aplicativos: grupos.aplicativos,
     permisos: grupos.aplicativos, // En el listado, permisos es igual a aplicativos
     users: grupos.users,
+    users_count: grupos.users_count,
     state: grupos.state,
     created_on: grupos.created_on,
     update_at: grupos.update_at,
