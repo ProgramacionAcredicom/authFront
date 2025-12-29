@@ -1,14 +1,14 @@
 export interface NewUser {
   id: number;
   name: string;
-  agency: {
+  agency?: {
     id: number;
     name: string;
-  };
-  role: {
+  } | null;
+  role?: {
     id: number;
     role: string;
-  };
+  } | null;
   picture: string | null;
 }
 

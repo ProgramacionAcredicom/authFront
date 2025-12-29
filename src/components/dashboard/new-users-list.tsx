@@ -48,38 +48,39 @@ export const NewUsersList = ({ users }: NewUsersListProps) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/40">
+    <Card className="w-full max-w-full overflow-hidden">
+      <CardHeader className="w-full">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/40 shrink-0">
               <UserPlus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
-            <CardTitle>Nuevos Usuarios este Mes</CardTitle>
+            <CardTitle className="truncate">Nuevos Usuarios este Mes</CardTitle>
           </div>
-          <Badge variant="secondary" className="font-semibold">
+          <Badge variant="secondary" className="font-semibold shrink-0">
             {users.length}
           </Badge>
         </div>
         <CardDescription>Usuarios registrados en el mes actual</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="w-full p-0 sm:p-6">
         <TooltipProvider delayDuration={300}>
-          <ScrollArea className="h-[400px] pr-4">
-            <div className="space-y-3">
+          <ScrollArea className="h-[400px] w-full px-4 sm:px-0">
+            <div className="space-y-3 pr-4">
               {users.map((user, index) => (
-                <div key={user.id}>
+                <div key={user.id} className="w-full">
                   <Link
                     to={`/colaboradores/editar/${user.id}`}
-                    className="block"
+                    className="block w-full"
                   >
                     <div
                       className={cn(
-                        "group flex items-start gap-4 rounded-lg border bg-card p-4 transition-all duration-200",
-                        "hover:border-primary/50 hover:bg-accent/50 hover:shadow-sm cursor-pointer"
+                        "group flex items-start gap-3 sm:gap-4 rounded-lg border bg-card p-3 sm:p-4 transition-all duration-200",
+                        "hover:border-primary/50 hover:bg-accent/50 hover:shadow-sm cursor-pointer",
+                        "w-full max-w-full min-w-0"
                       )}
                     >
-                      <Avatar className="h-14 w-14 shrink-0 border-2 border-background ring-2 ring-primary/10 transition-all group-hover:ring-primary/20">
+                      <Avatar className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 border-2 border-background ring-2 ring-primary/10 transition-all group-hover:ring-primary/20">
                         {user.picture ? (
                           <AvatarImage src={user.picture} alt={user.name} />
                         ) : (
@@ -88,36 +89,54 @@ export const NewUsersList = ({ users }: NewUsersListProps) => {
                           </AvatarFallback>
                         )}
                       </Avatar>
-                      <div className="flex flex-1 flex-col gap-2 min-w-0">
-                        <TypographyP
-                          text={user.name}
-                          className="truncate font-semibold leading-tight"
-                        />
-                        <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge variant="outline" className="text-xs gap-1.5 max-w-full" onClick={(e) => e.stopPropagation()}>
-                                <Building2 className="h-3 w-3 shrink-0" />
-                                <span className="truncate">{user.agency.name}</span>
-                              </Badge>
-                            </TooltipTrigger>
-                            {user.agency.name.length > 15 && (
+                      <div className="flex flex-1 flex-col gap-2 min-w-0 w-full max-w-full overflow-hidden">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="min-w-0 w-full max-w-full overflow-hidden">
+                              <p className="truncate font-semibold leading-tight text-sm sm:text-base">
+                                {user.name}
+                              </p>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs break-words">{user.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <div className="flex flex-wrap items-center gap-2 w-full min-w-0" onClick={(e) => e.stopPropagation()}>
+                          {user.agency && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs gap-1.5 min-w-0 flex-1 sm:flex-initial sm:max-w-[calc(50%-4px)] max-w-full overflow-hidden" 
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Building2 className="h-3 w-3 shrink-0" />
+                                  <span className="truncate min-w-0 block">{user.agency.name}</span>
+                                </Badge>
+                              </TooltipTrigger>
                               <TooltipContent>
                                 <p className="max-w-xs break-words">{user.agency.name}</p>
                               </TooltipContent>
-                            )}
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge variant="outline" className="text-xs gap-1.5 max-w-full" onClick={(e) => e.stopPropagation()}>
-                                <Briefcase className="h-3 w-3 shrink-0" />
-                                <span className="break-words whitespace-normal">{user.role.role}</span>
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs">
-                              <p className="break-words">{user.role.role}</p>
-                            </TooltipContent>
-                          </Tooltip>
+                            </Tooltip>
+                          )}
+                          {user.role && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs gap-1.5 min-w-0 flex-1 sm:flex-initial sm:max-w-[calc(50%-4px)] max-w-full overflow-hidden" 
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Briefcase className="h-3 w-3 shrink-0" />
+                                  <span className="truncate min-w-0 block">{user.role.role}</span>
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <p className="break-words">{user.role.role}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                       </div>
                     </div>
