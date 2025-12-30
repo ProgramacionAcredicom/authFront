@@ -1,5 +1,5 @@
 // ActionCell.tsx
-import { AlertTriangle, Edit, Ellipsis, Globe, Settings, Trash } from "lucide-react";
+import { AlertTriangle, Edit, Ellipsis, Globe, Settings, Trash, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,10 +18,14 @@ import { useFormAplicativos } from "@/hooks/formularios/aplicativos/useFormAplic
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMutationDeleteAplicativo } from "@/hooks/aplicativos/useMutationAplicativos";
+import { ModalAppKeyInfo } from "@/components/modal/aplicativos/modal-app-key-info";
+import { ModalGenerateAppKey } from "@/components/modal/aplicativos/modal-generate-app-key";
 
 export function ActionCell({ data }: { data: AplicativosTypeModel }) {
   const [open, setOpen] = useState(false);
   const [openDesactivar, setOpenDesactivar] = useState(false);
+  const [openAppKeyInfo, setOpenAppKeyInfo] = useState(false);
+  const [openGenerateAppKey, setOpenGenerateAppKey] = useState(false);
   const isEdit = Boolean(data);
   const id = data.id.toString();
   const { form, onSubmit, isLoading } = useFormAplicativos(data, setOpen, isEdit, id);
@@ -41,7 +45,43 @@ export function ActionCell({ data }: { data: AplicativosTypeModel }) {
         loading={isLoading}
         className="sm:max-w-2xl"
       >
-        <FormularioAplicativos form={form} onSubmit={onSubmit} />
+        <div className="space-y-6">
+          <FormularioAplicativos form={form} onSubmit={onSubmit} />
+          {isEdit && (
+            <div className="border-t pt-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2">Gestión de App Key</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Gestiona la clave de aplicación para autenticación externa. La clave se almacena cifrada y solo se muestra una vez al generarla.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setOpenAppKeyInfo(true);
+                  }}
+                  className="flex-1"
+                >
+                  <Key className="mr-2 h-4 w-4" />
+                  Ver App Key
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setOpenGenerateAppKey(true);
+                  }}
+                  className="flex-1"
+                >
+                  <Key className="mr-2 h-4 w-4" />
+                  Generar App Key
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </AlertModal>
       <AlertModal
         title="Desactivar Aplicativo"
@@ -107,6 +147,18 @@ export function ActionCell({ data }: { data: AplicativosTypeModel }) {
           </div>
         </div>
       </AlertModal>
+      <ModalAppKeyInfo
+        isOpen={openAppKeyInfo}
+        onClose={() => setOpenAppKeyInfo(false)}
+        aplicativoId={id}
+        aplicativoNombre={data.nombre}
+      />
+      <ModalGenerateAppKey
+        isOpen={openGenerateAppKey}
+        onClose={() => setOpenGenerateAppKey(false)}
+        aplicativoId={id}
+        aplicativoNombre={data.nombre}
+      />
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon">
