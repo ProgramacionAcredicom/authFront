@@ -2,7 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
 import { CellActionsGrupos } from "./cell-actions-grupos";
 
-export const columnsGrupos: ColumnDef<GruposTypeModel>[] = [
+export const getColumnsGrupos = (onEdit?: (id: number) => void): ColumnDef<GruposTypeModel>[] => [
   {
     accessorKey: "aplicativos",
     header: "Aplicativos",
@@ -43,10 +43,13 @@ export const columnsGrupos: ColumnDef<GruposTypeModel>[] = [
     id: "actions",
     header: "Acciones",
     cell: ({ row }) => {
-      return <CellActionsGrupos id={row.original.id} />;
+      return <CellActionsGrupos id={row.original.id} onEdit={onEdit} />;
     },
     enableSorting: false,
     enableHiding: false,
   },
 ];
+
+// Mantener compatibilidad con código existente
+export const columnsGrupos = getColumnsGrupos();
 

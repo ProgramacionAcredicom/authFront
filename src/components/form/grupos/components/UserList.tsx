@@ -38,17 +38,7 @@ export function UserList({
   };
 
   return (
-    <CommandList
-      className="h-[300px] max-h-[300px]"
-      onWheel={(e) => {
-        e.stopPropagation();
-        e.nativeEvent.stopImmediatePropagation();
-      }}
-      onTouchMove={(e) => {
-        e.stopPropagation();
-        e.nativeEvent.stopImmediatePropagation();
-      }}
-    >
+    <CommandList className="h-[150px] max-h-[150px] overflow-y-auto">
       <CommandEmpty>
         {isFetchingNextPage ? (
           <div className="flex items-center justify-center gap-2 py-6">
@@ -59,17 +49,19 @@ export function UserList({
           <TypographyMuted text="No se encontraron usuarios" className="py-6 text-center" />
         )}
       </CommandEmpty>
-      <CommandGroup>
-        {users.map((user) => (
-          <UserListItem
-            key={user.id}
-            user={user}
-            isSelected={isUserSelected(user.id)}
-            onSelect={() => handleUserSelect(user)}
-            onMouseDown={handleMouseDown}
-          />
-        ))}
-      </CommandGroup>
+      {users.length > 0 && (
+        <CommandGroup>
+          {users.map((user) => (
+            <UserListItem
+              key={user.id}
+              user={user}
+              isSelected={isUserSelected(user.id)}
+              onSelect={() => handleUserSelect(user)}
+              onMouseDown={handleMouseDown}
+            />
+          ))}
+        </CommandGroup>
+      )}
       <div ref={scrollRef} className="py-2">
         {isFetchingNextPage && (
           <div className="flex items-center justify-center gap-2">

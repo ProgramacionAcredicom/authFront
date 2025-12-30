@@ -9,29 +9,40 @@ import type { UseFormReturn } from "react-hook-form";
 import { useInView } from "react-intersection-observer";
 import { useQueryPermisos } from "@/hooks/permisos/useQueryPermisos";
 import { CrearGrupoSchema } from "@/schemas/grupos/grupos.schema";
-import { PermisoModel } from "@/interfaces/grupos.interfaces";
+import { ResultModel } from "@/interfaces/permisos.interfaces";
 import { Switch } from "../ui/switch";
+import { Badge } from "../ui/badge";
 
 export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn<CrearGrupoSchema>; onSubmit: (data: CrearGrupoSchema) => void }) {
   const [searchNombre, setSearchNombre] = useState("");
-  const [draggedPermiso, setDraggedPermiso] = useState<PermisoModel | null>(null);
+  const [draggedPermiso, setDraggedPermiso] = useState<ResultModel | null>(null);
 
-  // -------------- Hook infinito para permisos “disponibles” (columna izquierda) --------------
+  // -------------- Hook infinito para permisos "disponibles" (columna izquierda) --------------
   const { useInfinitePermisos } = useQueryPermisos(undefined, searchNombre);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfinitePermisos;
   const { ref, inView } = useInView();
 
   // Este estado acumulará **todos** los permisos que se hayan descargado en cualquiera de las páginas:
-  const [todosLosCargados, setTodosLosCargados] = useState<PermisoModel[]>([]);
+  // Se limpia cuando cambia la búsqueda para mostrar solo los resultados de la búsqueda actual
+  const [todosLosCargados, setTodosLosCargados] = useState<ResultModel[]>([]);
+  
+  // Cache separado para permisos seleccionados que NO se limpia con la búsqueda
+  const [selectedItemsCache, setSelectedItemsCache] = useState<ResultModel[]>([]);
 
   // IDs actualmente seleccionados en el formulario
   const selectedPermisos = form.watch("permisos") || [];
 
   // Estado local para los objetos completos de los permisos seleccionados
-  const [selectedItems, setSelectedItems] = useState<PermisoModel[]>([]);
+  const [selectedItems, setSelectedItems] = useState<ResultModel[]>([]);
 
-  // ──────────── 1) Cada vez que “data” cambie, actualizamos el cache “todosLosCargados” ────────────
+  // ──────────── 1) Limpiar cache de disponibles cuando cambia la búsqueda ────────────
+  useEffect(() => {
+    setTodosLosCargados([]);
+  }, [searchNombre]);
+
+  // ──────────── 2) Cada vez que "data" cambie, actualizamos el cache "todosLosCargados" ────────────
   //     Esto concatena nuevas páginas a nuestro arreglo y evita duplicados.
+  //     Solo para permisos disponibles (no seleccionados).
   useEffect(() => {
     if (!data) return;
 
@@ -47,20 +58,70 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
       return combinados;
     });
   }, [data]);
-
-  // ──────────── 2) Inicializar “selectedItems” (solo una vez que tengamos ambos: el form & el cache total) ────────────
-  // En este useEffect, usamos “todosLosCargados” para filtrar por IDs que ya venían en defaultValues.
-  // Al depender de [todosLosCargados, selectedPermisos], este efecto se disparará:
-  //   • la primera vez que “todosLosCargados” se llene con algo
-  //   • o cada vez que cambie selectedPermisos (al agregar/quitar).
+  
+  // ──────────── 2.5) Mantener cache de permisos seleccionados ────────────
+  //     Este cache NO se limpia con la búsqueda, solo se actualiza cuando se agregan/quitan permisos
   useEffect(() => {
-    // Si todavía no hay nada en el cache, salimos
-    if (todosLosCargados.length === 0) return;
+    if (!data) return;
+    
+    const nuevos = data.pages.flatMap((page) => page.results);
+    // Solo agregar a selectedItemsCache los permisos que están seleccionados
+    const nuevosSeleccionados = nuevos.filter((p) => selectedPermisos.includes(p.id));
+    
+    if (nuevosSeleccionados.length > 0) {
+      setSelectedItemsCache((prev) => {
+        const combinados = [...prev];
+        nuevosSeleccionados.forEach((p) => {
+          if (!combinados.some((x) => x.id === p.id)) {
+            combinados.push(p);
+          }
+        });
+        return combinados;
+      });
+    }
+  }, [data, selectedPermisos]);
 
-    // Filtramos SOLO los permisos cuyo ID esté en selectedPermisos
-    const iniciales = todosLosCargados.filter((p) => selectedPermisos.includes(p.id));
-    setSelectedItems(iniciales);
-  }, [todosLosCargados, selectedPermisos]);
+  // ──────────── 3) Actualizar "selectedItems" desde el cache de seleccionados ────────────
+  //     Los permisos seleccionados se mantienen en selectedItemsCache que NO se limpia con la búsqueda
+  useEffect(() => {
+    if (selectedPermisos.length === 0) {
+      setSelectedItems([]);
+      return;
+    }
+
+    // Usar el cache de seleccionados que no se limpia con la búsqueda
+    const iniciales = selectedItemsCache.filter((p) => selectedPermisos.includes(p.id));
+    
+    // Si hay permisos seleccionados pero no todos están en el cache,
+    // intentamos cargarlos desde todosLosCargados o buscar más páginas
+    const permisosFaltantes = selectedPermisos.filter((id) => !iniciales.some((p) => p.id === id));
+    
+    if (permisosFaltantes.length > 0) {
+      // Primero intentar encontrarlos en todosLosCargados (puede que estén en la búsqueda actual)
+      const encontradosEnDisponibles = todosLosCargados.filter((p) => permisosFaltantes.includes(p.id));
+      if (encontradosEnDisponibles.length > 0) {
+        setSelectedItemsCache((prev) => {
+          const combinados = [...prev];
+          encontradosEnDisponibles.forEach((p) => {
+            if (!combinados.some((x) => x.id === p.id)) {
+              combinados.push(p);
+            }
+          });
+          return combinados;
+        });
+      }
+      
+      // Si aún faltan y hay más páginas, cargar más
+      const aunFaltantes = permisosFaltantes.filter((id) => !encontradosEnDisponibles.some((p) => p.id === id));
+      if (aunFaltantes.length > 0 && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    }
+    
+    // Actualizar selectedItems con todos los permisos seleccionados del cache
+    const todosSeleccionados = selectedItemsCache.filter((p) => selectedPermisos.includes(p.id));
+    setSelectedItems(todosSeleccionados);
+  }, [selectedItemsCache, selectedPermisos, todosLosCargados, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // ──────────── 3) Scroll infinito para seguir cargando páginas “disponibles” ────────────
   useEffect(() => {
@@ -75,7 +136,7 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
   const availablePermisos = filteredPermisos.filter((p) => !selectedPermisos.includes(p.id));
 
   // ──────────── 5) Drag & drop y click para mover entre columnas ────────────
-  const handleDragStart = (e: React.DragEvent, permiso: PermisoModel) => {
+  const handleDragStart = (e: React.DragEvent, permiso: ResultModel) => {
     setDraggedPermiso(permiso);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -84,19 +145,22 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
     e.dataTransfer.dropEffect = "move";
   };
 
-  // Suelta sobre “Selected” (columna derecha). Solo agregamos si no existía ya
+  // Suelta sobre "Selected" (columna derecha). Solo agregamos si no existía ya
   const handleDropToSelected = (e: React.DragEvent) => {
     e.preventDefault();
     if (draggedPermiso && !selectedPermisos.includes(draggedPermiso.id)) {
       // 1) actualizamos el array de IDs en el form
       form.setValue("permisos", [...selectedPermisos, draggedPermiso.id], { shouldValidate: true });
-      // 2) actualizamos nuestro estado local “selectedItems”
-      setSelectedItems((prev) => [...prev, draggedPermiso]);
+      // 2) actualizamos el cache de seleccionados
+      setSelectedItemsCache((prev) => {
+        if (prev.some((p) => p.id === draggedPermiso.id)) return prev;
+        return [...prev, draggedPermiso];
+      });
     }
     setDraggedPermiso(null);
   };
 
-  // Suelta sobre “Available” (columna izquierda). Solo quitamos si estaba en selectedPermisos
+  // Suelta sobre "Available" (columna izquierda). Solo quitamos si estaba en selectedPermisos
   const handleDropToAvailable = (e: React.DragEvent) => {
     e.preventDefault();
     if (draggedPermiso && selectedPermisos.includes(draggedPermiso.id)) {
@@ -106,42 +170,53 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
         selectedPermisos.filter((id) => id !== draggedPermiso.id),
         { shouldValidate: true },
       );
-      // 2) actualizamos selectedItems quitando ese objeto
-      setSelectedItems((prev) => prev.filter((p) => p.id !== draggedPermiso.id));
+      // 2) No eliminamos del cache, solo se filtra en selectedItems por selectedPermisos
     }
     setDraggedPermiso(null);
   };
 
-  // Click en un permiso de la columna izquierda → lo agregamos a “Selected”
-  const moveToSelected = (permiso: PermisoModel) => {
+  // Click en un permiso de la columna izquierda → lo agregamos a "Selected"
+  const moveToSelected = (permiso: ResultModel) => {
     if (!selectedPermisos.includes(permiso.id)) {
       form.setValue("permisos", [...selectedPermisos, permiso.id], { shouldValidate: true });
-      setSelectedItems((prev) => [...prev, permiso]);
+      // Agregar al cache de seleccionados
+      setSelectedItemsCache((prev) => {
+        if (prev.some((p) => p.id === permiso.id)) return prev;
+        return [...prev, permiso];
+      });
     }
   };
 
-  // Click en un permiso de la columna derecha → lo quitamos de “Selected”
-  const moveToAvailable = (permiso: PermisoModel) => {
+  // Click en un permiso de la columna derecha → lo quitamos de "Selected"
+  const moveToAvailable = (permiso: ResultModel) => {
     form.setValue(
       "permisos",
       selectedPermisos.filter((id) => id !== permiso.id),
       { shouldValidate: true },
     );
-    setSelectedItems((prev) => prev.filter((p) => p.id !== permiso.id));
+    // No eliminamos del cache, solo se filtra en selectedItems por selectedPermisos
   };
 
-  // Mover todos los disponibles a “Selected”
+  // Mover todos los disponibles a "Selected"
   const moveAllToSelected = () => {
     const allIds = filteredPermisos.map((permiso) => permiso.id);
     form.setValue("permisos", allIds, { shouldValidate: true });
-    // Actualizamos selectedItems con todos los objetos que vinieron en filteredPermisos
-    setSelectedItems(filteredPermisos);
+    // Actualizamos el cache de seleccionados con todos los objetos que vinieron en filteredPermisos
+    setSelectedItemsCache((prev) => {
+      const combinados = [...prev];
+      filteredPermisos.forEach((p) => {
+        if (!combinados.some((x) => x.id === p.id)) {
+          combinados.push(p);
+        }
+      });
+      return combinados;
+    });
   };
 
   // Quitar todos los seleccionados
   const moveAllToAvailable = () => {
     form.setValue("permisos", [], { shouldValidate: true });
-    setSelectedItems([]);
+    // No limpiamos el cache, solo se filtra en selectedItems por selectedPermisos
   };
 
   // ──────────── 6) Render ────────────
@@ -200,7 +275,7 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
                   onChange={(e) => setSearchNombre(e.target.value)}
                 />
               </div>
-              <div className="h-96 overflow-y-auto rounded-lg border bg-gray-50 dark:bg-neutral-900/50 p-2" onDragOver={handleDragOver} onDrop={handleDropToAvailable}>
+              <div className="h-62 mt-3 overflow-y-auto rounded-lg border bg-gray-50 dark:bg-neutral-900/50 p-2" onDragOver={handleDragOver} onDrop={handleDropToAvailable}>
                 {availablePermisos.map((permiso) => (
                   <div
                     key={permiso.id}
@@ -209,8 +284,11 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
                     onClick={() => moveToSelected(permiso)}
                     className="mb-2 cursor-pointer rounded-md border bg-white dark:bg-neutral-800 p-3 transition-all hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm"
                   >
-                    <div className="text-sm font-medium">{permiso.aplicativo.nombre}</div>
-                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{permiso.descripcion}</div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs">{permiso.aplicativo.nombre}</Label>
+                      <Badge variant="outline" className="text-xs">{permiso.nombre}</Badge>
+                    </div>
+                    <Label className="mt-1 text-xs text-gray-500 dark:text-gray-400">{permiso.descripcion}</Label>
                   </div>
                 ))}
                 {availablePermisos.length === 0 && (
@@ -251,7 +329,7 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
                 </div>
               </div>
               <div className="mb-2 h-9" /> {/* Spacer para alinear con el input de búsqueda */}
-              <div className="h-96 overflow-y-auto rounded-lg border bg-gray-50 dark:bg-neutral-900/50 p-2" onDragOver={handleDragOver} onDrop={handleDropToSelected}>
+              <div className="h-62 overflow-y-auto rounded-lg border bg-gray-50 dark:bg-neutral-900/50 p-2" onDragOver={handleDragOver} onDrop={handleDropToSelected}>
                 {selectedItems.length > 0 ? (
                   selectedItems.map((permiso) => (
                     <div
@@ -261,8 +339,11 @@ export default function FormCrearGrupo({ form, onSubmit }: { form: UseFormReturn
                       onClick={() => moveToAvailable(permiso)}
                       className="mb-2 cursor-pointer rounded-md border bg-white dark:bg-neutral-800 p-3 transition-all hover:border-red-300 dark:hover:border-red-600 hover:shadow-sm"
                     >
-                      <div className="text-sm font-medium">{permiso.aplicativo.nombre}</div>
-                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{permiso.descripcion}</div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">{permiso.aplicativo.nombre}</Label>
+                        <Badge variant="outline" className="text-xs">{permiso.nombre}</Badge>
+                      </div>
+                      <Label className="mt-1 text-xs text-gray-500 dark:text-gray-400">{permiso.descripcion}</Label>
                     </div>
                   ))
                 ) : (

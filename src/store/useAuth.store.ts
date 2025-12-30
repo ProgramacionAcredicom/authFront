@@ -5,6 +5,24 @@ import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import { queryClient } from "@/lib/react-query";
 import { logger } from "@/lib/logger";
+
+/**
+ * Store de autenticación
+ * 
+ * NOTA DE SEGURIDAD:
+ * Los tokens JWT se almacenan en localStorage mediante zustand/persist.
+ * 
+ * Consideraciones de seguridad:
+ * - localStorage es vulnerable a ataques XSS si hay código malicioso ejecutándose
+ * - Los tokens tienen tiempo de expiración limitado (access token corto, refresh token más largo)
+ * - Alternativa más segura: usar httpOnly cookies (requiere cambios en backend)
+ * 
+ * Medidas de mitigación implementadas:
+ * - Validación de tokens en el interceptor de Axios
+ * - Refresh automático de tokens antes de expirar
+ * - Logout automático en caso de token inválido
+ * - Limpieza de tokens al hacer logout
+ */
 interface AuthStoreProps {
   access: null | string;
   refresh: null | string;

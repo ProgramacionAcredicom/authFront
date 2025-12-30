@@ -8,6 +8,9 @@ import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
+import { handleApiError } from "@/lib/error-handler";
+import { AxiosError } from "axios";
 
 interface ModalAppKeyInfoProps {
   isOpen: boolean;
@@ -22,30 +25,24 @@ export const ModalAppKeyInfo = ({ isOpen, onClose, aplicativoId, aplicativoNombr
   // Forzar refetch cuando el modal se abre
   useEffect(() => {
     if (isOpen && aplicativoId) {
-      console.log("Modal abierto, refetching App Key Info para aplicativo:", aplicativoId);
+      logger.debug("Modal abierto, refetching App Key Info para aplicativo:", aplicativoId);
       // Usar setTimeout para asegurar que el modal esté completamente montado
       const timeoutId = setTimeout(() => {
         queryAppKeyInfo.refetch().catch((error) => {
-          console.error("Error al refetch App Key Info:", error);
+          logger.errorWithContext("Error al refetch App Key Info", error, {
+            aplicativoId,
+          });
         });
       }, 100);
       return () => clearTimeout(timeoutId);
     }
-  }, [isOpen, aplicativoId]);
-
-  // Debug: Log para ver qué está pasando
-  if (queryAppKeyInfo.data) {
-    console.log("App Key Info Data:", queryAppKeyInfo.data);
-  }
-  if (queryAppKeyInfo.error) {
-    console.error("App Key Info Error:", queryAppKeyInfo.error);
-  }
+  }, [isOpen, aplicativoId, queryAppKeyInfo]);
 
   return (
     <Modal title="Información de App Key" description={`Información de la App Key para ${aplicativoNombre}`} isOpen={isOpen} onClose={onClose} className="sm:max-w-2xl">
       {queryAppKeyInfo.isLoading ? (
-        <div className="flex justify-center p-6">
-          <Loader2 className="h-6 w-6 animate-spin" />
+        <div className="flex justify-center p-6" role="status" aria-label="Cargando información de App Key">
+          <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
         </div>
       ) : queryAppKeyInfo.error ? (
         <div className="space-y-4">
@@ -56,18 +53,16 @@ export const ModalAppKeyInfo = ({ isOpen, onClose, aplicativoId, aplicativoNombr
                 <p className="text-destructive text-sm font-medium">Error</p>
                 <p className="text-muted-foreground text-sm">
                   {(() => {
-                    const error = queryAppKeyInfo.error as any;
-                    if (error?.response?.data?.error) {
-                      return error.response.data.error;
-                    }
-                    if (error?.response?.status === 404) {
-                      return "Aplicativo no encontrado";
-                    }
-                    if (error?.response?.status === 403) {
-                      return "No tiene permisos para realizar esta acción";
-                    }
-                    if (error?.response?.status === 401) {
-                      return "No autorizado. Por favor, inicie sesión nuevamente";
+                    const error = queryAppKeyInfo.error;
+                    if (error instanceof AxiosError) {
+                      return handleApiError(error, {
+                        showToast: false,
+                        errorMessages: {
+                          "404": "Aplicativo no encontrado",
+                          "403": "No tiene permisos para realizar esta acción",
+                          "401": "No autorizado. Por favor, inicie sesión nuevamente",
+                        },
+                      });
                     }
                     if (error instanceof Error) {
                       return error.message;

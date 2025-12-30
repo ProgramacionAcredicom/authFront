@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
-import { Edit, Users, Power } from "lucide-react";
+import { Edit, Users, Power, CheckCircle2, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useMutationEliminarGrupo } from "@/hooks/grupos/useMutationGrupos";
 import { useState } from "react";
 import {
@@ -22,9 +23,10 @@ import {
 
 interface CardGruposProps {
   grupo: GruposTypeModel;
+  onEdit?: (grupoId: number) => void; // Mantener para compatibilidad, pero usar Link es preferido
 }
 
-export const CardGrupos = ({ grupo }: CardGruposProps) => {
+export const CardGrupos = ({ grupo, onEdit }: CardGruposProps) => {
   const { nombre, users = [], aplicativos = [], id, state, users_count } = grupo;
   // Usar users_count si está disponible (del endpoint optimizado), sino usar users.length como fallback
   const totalUsers = users_count ?? users.length;
@@ -44,16 +46,38 @@ export const CardGrupos = ({ grupo }: CardGruposProps) => {
 
   return (
     <>
-      <Card className={`group relative flex flex-col transition-shadow hover:shadow-md ${
-        !isActive ? "opacity-60 grayscale" : ""
-      }`}>
+      <Card className={cn(
+        "group relative flex flex-col transition-all duration-200 hover:shadow-lg hover:scale-[1.02]",
+        !isActive && "opacity-60 grayscale border-dashed"
+      )}>
         <CardHeader className="flex flex-row items-start justify-between pb-3">
-          <div className="flex flex-col gap-1 flex-1 min-w-0">
-            <TypographyMuted 
-              text={`Total ${totalUsers} ${totalUsers === 1 ? "usuario" : "usuarios"}`}
-              className="text-xs font-medium text-muted-foreground"
-            />
-            <TypographyH3 text={nombre} className="text-lg font-semibold truncate" />
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <TypographyMuted 
+                text={`Total ${totalUsers} ${totalUsers === 1 ? "usuario" : "usuarios"}`}
+                className="text-xs font-medium text-muted-foreground"
+              />
+              <Badge 
+                variant={isActive ? "default" : "outline"} 
+                className={cn(
+                  "text-xs h-5 px-1.5",
+                  isActive ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                )}
+              >
+                {isActive ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Activo
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3 mr-1" />
+                    Inactivo
+                  </>
+                )}
+              </Badge>
+            </div>
+            <TypographyH3 text={nombre} className="text-lg font-semibold truncate group-hover:text-primary transition-colors" />
           </div>
           {isActive && (
             <TooltipProvider>
@@ -62,7 +86,7 @@ export const CardGrupos = ({ grupo }: CardGruposProps) => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive shrink-0"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -145,12 +169,17 @@ export const CardGrupos = ({ grupo }: CardGruposProps) => {
             ))}
           </div>
         )}
-        <Link to={`editar/${id}`} state={{ modal: true }}>
-          <Button variant="outline" className="w-full" size="sm">
+        <Button 
+          variant="outline" 
+          className="w-full group-hover:border-primary group-hover:text-primary transition-colors" 
+          size="sm"
+          asChild
+        >
+          <Link to={`/grupos/editar/${id}`}>
             <Edit className="mr-2 h-4 w-4" />
             Editar Grupo
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </CardContent>
     </Card>
 

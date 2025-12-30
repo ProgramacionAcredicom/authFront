@@ -8,6 +8,7 @@ import { useMutationGenerateAppKey } from "@/hooks/aplicativos/useMutationAplica
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
+import { logger } from "@/lib/logger";
 
 interface ModalGenerateAppKeyProps {
   isOpen: boolean;
@@ -43,7 +44,9 @@ export const ModalGenerateAppKey = ({ isOpen, onClose, aplicativoId, aplicativoN
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (error) {
-        console.error("Error al copiar:", error);
+        logger.errorWithContext("Error al copiar al portapapeles", error, {
+          aplicativoId,
+        });
       }
     }
   };
@@ -126,19 +129,22 @@ export const ModalGenerateAppKey = ({ isOpen, onClose, aplicativoId, aplicativoN
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">App Key</label>
+                <label htmlFor="app-key-input" className="text-sm font-medium">App Key</label>
                 <div className="flex gap-2">
                   <Input
+                    id="app-key-input"
                     type="text"
                     value={generatedKey}
                     readOnly
                     className="font-mono text-sm"
+                    aria-label="App Key generada"
                   />
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={handleCopy}
                     title="Copiar al portapapeles"
+                    aria-label={copied ? "Copiado al portapapeles" : "Copiar al portapapeles"}
                   >
                     {copied ? (
                       <Check className="h-4 w-4 text-green-600" />

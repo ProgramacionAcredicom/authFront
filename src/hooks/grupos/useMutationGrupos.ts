@@ -21,9 +21,10 @@ export const useMutationGrupos = () => {
       toast.error(errorMessage);
     },
     onSettled: () => {
-      // Invalidar todas las queries de grupos (paginadas y sin paginar)
+      // Invalidar todas las queries de grupos (paginadas, sin paginar e infinite)
       queryClient.invalidateQueries({ queryKey: ["grupos"] });
       queryClient.invalidateQueries({ queryKey: ["grupos-sinPaginacion"] });
+      queryClient.invalidateQueries({ queryKey: ["grupos-infinite"] });
     },
     onSuccess: (data: GruposTypeModel) => {
       toast.success(`Grupo ${data.nombre} creado correctamente`);
@@ -61,9 +62,10 @@ export const useMutationUpdateGrupo = () => {
       navigate("..", { replace: true });
     },
     onSettled: () => {
-      // Invalidar todas las queries de grupos (paginadas y sin paginar)
+      // Invalidar todas las queries de grupos (paginadas, sin paginar e infinite)
       queryClient.invalidateQueries({ queryKey: ["grupos"] });
       queryClient.invalidateQueries({ queryKey: ["grupos-sinPaginacion"] });
+      queryClient.invalidateQueries({ queryKey: ["grupos-infinite"] });
     },
   });
   return { mutationUpdateGrupo, isLoading: mutationUpdateGrupo.isPending };
@@ -88,9 +90,10 @@ export const useMutationEliminarGrupo = (shouldNavigate = true) => {
       }
     },
     onSettled: () => {
-      // Invalidar todas las queries de grupos (paginadas y sin paginar)
+      // Invalidar todas las queries de grupos (paginadas, sin paginar e infinite)
       queryClient.invalidateQueries({ queryKey: ["grupos"] });
       queryClient.invalidateQueries({ queryKey: ["grupos-sinPaginacion"] });
+      queryClient.invalidateQueries({ queryKey: ["grupos-infinite"] });
     },
   });
   return { mutationEliminarGrupo, isLoading: mutationEliminarGrupo.isPending };
