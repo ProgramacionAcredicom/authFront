@@ -5,10 +5,7 @@ import { env } from "@/config/env";
 import { StatisticsResponse } from "@/interfaces/statistics.interfaces";
 
 export const login = async (credentials: { username: string; password: string }): Promise<{ access: string; refresh: string }> => {
-  const response = await axios.post(`${env.VITE_HOST_AUTH_DEV}/auth/login/`, {
-    ...credentials,
-    aplicativo_id: env.VITE_APLICATIVO_ID,
-  });
+  const response = await axios.post(`${env.VITE_HOST_AUTH_DEV}/api/v1/login/`, credentials);
   return {
     ...response.data,
   };
@@ -20,14 +17,12 @@ export const logout = async (refresh: { refresh: string | null }) => {
 };
 
 export const refreshToken = async ({ refresh }: { refresh: string }) => {
-  const response = await apiServices.post(`${env.VITE_HOST_AUTH_DEV}/auth/token/refresh/`, { refresh });
+  const response = await apiServices.post(`${env.VITE_HOST_AUTH_DEV}/api/v1/token/refresh/`, { refresh });
   return response.data;
 };
 
 export const getProfile = async () => {
-  const response = await apiServices.post("/auth/info/", {
-    aplicativo_id: env.VITE_APLICATIVO_ID,
-  });
+  const response = await apiServices.post("/api/v1/info/");
   const perfilUsuario = localPerfilUsuarioMapper(response.data);
   return perfilUsuario;
 };

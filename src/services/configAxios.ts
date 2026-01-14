@@ -58,9 +58,28 @@ apiServices.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Verificar si el error viene directamente del endpoint de refresh token
+    const isRefreshTokenEndpoint = originalRequest.url?.includes("/api/v1/token/refresh/") ||
+      originalRequest.url?.includes("/auth/token/refresh/");
+    
+    const responseData = error.response?.data as { detail?: string; code?: string; error?: string } | undefined;
+    const isTokenInvalidOrExpired =
+      responseData?.detail === "Token is invalid or expired" ||
+      responseData?.code === "token_not_valid" ||
+      responseData?.detail?.includes("Token is invalid or expired");
+
+    // Si el error viene del endpoint de refresh y el token está inválido/expirado, hacer logout directamente
+    if (isRefreshTokenEndpoint && error.response?.status === 401 && isTokenInvalidOrExpired) {
+      logger.warn("Refresh token inválido o expirado, cerrando sesión y redirigiendo al login");
+      authStore.logout();
+      window.location.href = "/auth/login";
+      return Promise.reject(error);
+    }
+
     // Manejar sesión expirada o token inválido
+    const errorData = error.response?.data as { error?: string } | undefined;
     const isSessionExpired =
-      error.response?.data?.error?.includes("La sesión ha expirado o no es válida.") ||
+      errorData?.error?.includes("La sesión ha expirado o no es válida.") ||
       error.response?.status === 401;
 
     if (isSessionExpired && !originalRequest._retry) {
@@ -105,13 +124,20 @@ apiServices.interceptors.response.use(
         refreshTokenRetryCount.delete(originalRequest);
 
         if (refreshError instanceof AxiosError) {
-          const isNoActiveSession = refreshError.response?.data?.error?.includes(
+          const refreshResponseData = refreshError.response?.data as { detail?: string; code?: string; error?: string } | undefined;
+          const isNoActiveSession = refreshResponseData?.error?.includes(
             "No hay sesión activa para este usuario.",
           );
+          const isTokenInvalidOrExpired =
+            refreshResponseData?.detail === "Token is invalid or expired" ||
+            refreshResponseData?.code === "token_not_valid" ||
+            refreshResponseData?.detail?.includes("Token is invalid or expired");
 
-          if (isNoActiveSession) {
-            logger.warn("No hay sesión activa, cerrando sesión");
+          if (isNoActiveSession || isTokenInvalidOrExpired) {
+            logger.warn("Refresh token inválido o expirado, cerrando sesión y redirigiendo al login");
             authStore.logout();
+            // Redirigir al login
+            window.location.href = "/auth/login";
           } else {
             logger.errorWithContext("Error al refrescar token", refreshError, {
               originalUrl: originalRequest.url,

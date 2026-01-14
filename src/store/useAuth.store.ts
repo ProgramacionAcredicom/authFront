@@ -1,4 +1,4 @@
-import { login, logout } from "@/services/auth/auth.services";
+import { login } from "@/services/auth/auth.services";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 import { create, type StateCreator } from "zustand";
@@ -73,16 +73,10 @@ const authStore: StateCreator<AuthStoreProps & AuthActionsProps> = (set, get) =>
     return loginPromise;
   },
 
-  logout: async () => {
-    try {
-      await logout({ refresh: get().refresh });
-      set({ ...AuthStoreInit });
-    } catch (error) {
-      set({ ...AuthStoreInit });
-      throw error;
-    } finally {
-      queryClient.clear();
-    }
+  logout: () => {
+    // Solo limpiar tokens del localStorage, no hacer petición al backend
+    set({ ...AuthStoreInit });
+    queryClient.clear();
   },
   setAccessToken: (access) => set({ access }),
 });
