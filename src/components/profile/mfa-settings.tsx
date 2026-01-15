@@ -42,6 +42,11 @@ const authenticatorApps = [
     androidUrl: "https://play.google.com/store/apps/details?id=com.authy.authy",
     iosUrl: "https://apps.apple.com/app/authy/id494168017",
   },
+  {
+    name: "Bitwarden",
+    androidUrl: "https://play.google.com/store/apps/details?id=com.bitwarden.authenticator",
+    iosUrl: "https://apps.apple.com/app/bitwarden-password-manager/id1137397744",
+  },
 ];
 
 export const MFASettings = () => {
@@ -322,15 +327,15 @@ export const MFASettings = () => {
               {authenticatorApps.map((app, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between rounded-lg border bg-card p-3 transition-all hover:bg-muted/50"
+                  className="flex items-center justify-between rounded-lg border bg-card p-2 transition-all hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                      <Smartphone className="h-5 w-5 text-primary" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                      <Smartphone className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">{app.name}</p>
-                      <p className="text-muted-foreground text-xs">Disponible para Android e iOS</p>
+                      <p className="font-medium text-xs">{app.name}</p>
+                      <p className="text-muted-foreground text-[10px]">Disponible para Android e iOS</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
