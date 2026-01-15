@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeftIcon, Key, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeftIcon, Key, Loader2, Clock } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import logoAcredicom from "@/assets/img/Logo_acredicom_azul_horizontal.webp";
 import { TypographyMuted } from "@/components/ui/typography";
@@ -34,8 +34,12 @@ export const FormMFAVerify = () => {
   const clearPendingCredentials = useAuthStore((state) => state.clearPendingCredentials);
   const pendingCredentials = useAuthStore((state) => state.pendingCredentials);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const getPendingCredentialsTimeRemaining = useAuthStore((state) => state.getPendingCredentialsTimeRemaining);
+  const arePendingCredentialsExpired = useAuthStore((state) => state.arePendingCredentialsExpired);
   const [errorMessage, setErrorMessage] = useState("");
   const [isBackupCode, setIsBackupCode] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
   const navigate = useNavigate();
 
   // Obtener información del usuario para determinar redirección
@@ -46,13 +50,50 @@ export const FormMFAVerify = () => {
     staleTime: 1000 * 60 * 60,
   });
 
-  // Verificar si hay credenciales pendientes
+  // Verificar si hay credenciales pendientes y monitorear expiración
   useEffect(() => {
     if (!pendingCredentials) {
       // Si no hay credenciales pendientes, redirigir al login
       navigate("/auth/login");
+      return;
     }
-  }, [pendingCredentials, navigate]);
+
+    // Verificar si ya están expiradas
+    if (arePendingCredentialsExpired()) {
+      setIsExpired(true);
+      setErrorMessage("Las credenciales han expirado. Por favor, inicie sesión nuevamente.");
+      // Redirigir después de 3 segundos
+      const timer = setTimeout(() => {
+        clearPendingCredentials();
+        navigate("/auth/login");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+
+    // Actualizar tiempo restante cada segundo
+    const updateTimer = () => {
+      const remaining = getPendingCredentialsTimeRemaining();
+      setTimeRemaining(remaining);
+      
+      if (remaining !== null && remaining <= 0) {
+        setIsExpired(true);
+        setErrorMessage("Las credenciales han expirado. Por favor, inicie sesión nuevamente.");
+        // Redirigir después de 3 segundos
+        setTimeout(() => {
+          clearPendingCredentials();
+          navigate("/auth/login");
+        }, 3000);
+      }
+    };
+
+    // Actualizar inmediatamente
+    updateTimer();
+
+    // Actualizar cada segundo
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [pendingCredentials, navigate, arePendingCredentialsExpired, getPendingCredentialsTimeRemaining, clearPendingCredentials]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -74,10 +115,23 @@ export const FormMFAVerify = () => {
         await loginWithMFA(data.code);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        const errorMsg = error?.error || error?.detail || "Código de verificación inválido. Por favor, intente nuevamente.";
-        setErrorMessage(errorMsg);
-        // Limpiar el campo de código para permitir reintento
-        form.setValue("code", "");
+        // Verificar si el error es por credenciales expiradas
+        const errorMsg = error?.error || error?.detail || error?.message || "Código de verificación inválido. Por favor, intente nuevamente.";
+        
+        // Detectar si es error de expiración
+        if (errorMsg.includes("expirado") || errorMsg.includes("expired") || arePendingCredentialsExpired()) {
+          setIsExpired(true);
+          setErrorMessage("Las credenciales han expirado. Por favor, inicie sesión nuevamente.");
+          // Redirigir después de 3 segundos
+          setTimeout(() => {
+            clearPendingCredentials();
+            navigate("/auth/login");
+          }, 3000);
+        } else {
+          setErrorMessage(errorMsg);
+          // Limpiar el campo de código para permitir reintento
+          form.setValue("code", "");
+        }
       }
     },
     [loginWithMFA, form]
@@ -121,10 +175,20 @@ export const FormMFAVerify = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Contador de tiempo restante */}
+        {timeRemaining !== null && timeRemaining > 0 && !isExpired && (
+          <Alert className="mb-4 border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/20">
+            <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-800 dark:text-blue-300">
+              <strong>Tiempo restante:</strong> {Math.floor(timeRemaining / 60000)}:{(Math.floor((timeRemaining % 60000) / 1000)).toString().padStart(2, '0')} minutos
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {errorMessage && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant={isExpired ? "destructive" : "destructive"} className="mb-4">
             <AlertCircle className="size-8" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>{isExpired ? "Credenciales Expiradas" : "Error"}</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
@@ -200,7 +264,7 @@ export const FormMFAVerify = () => {
             <Button
               className="mt-5 rounded-full"
               type="submit"
-              disabled={isSubmitting || !code || (isBackupCode ? code.length !== 8 : code.length !== 6)}
+              disabled={isSubmitting || isExpired || !code || (isBackupCode ? code.length !== 8 : code.length !== 6)}
               variant="custom2"
             >
               {isSubmitting ? (

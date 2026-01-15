@@ -38,6 +38,8 @@ interface AuthActionsProps {
   clearPendingCredentials: () => void;
   logout: () => void;
   setAccessToken: (access: string) => void;
+  getPendingCredentialsTimeRemaining: () => number | null;
+  arePendingCredentialsExpired: () => boolean;
 }
 
 // Timeout para credenciales temporales (5 minutos)
@@ -163,6 +165,25 @@ const authStore: StateCreator<AuthStoreProps & AuthActionsProps> = (set, get) =>
     queryClient.clear();
   },
   setAccessToken: (access) => set({ access }),
+  
+  getPendingCredentialsTimeRemaining: () => {
+    const state = get();
+    if (!state.pendingCredentials) {
+      return null;
+    }
+    const elapsed = Date.now() - state.pendingCredentials.timestamp;
+    const remaining = PENDING_CREDENTIALS_TIMEOUT - elapsed;
+    return Math.max(0, remaining);
+  },
+  
+  arePendingCredentialsExpired: () => {
+    const state = get();
+    if (!state.pendingCredentials) {
+      return true;
+    }
+    const elapsed = Date.now() - state.pendingCredentials.timestamp;
+    return elapsed > PENDING_CREDENTIALS_TIMEOUT;
+  },
 });
 
 export const useAuthStore = create(
