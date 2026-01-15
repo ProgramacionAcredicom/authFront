@@ -13,14 +13,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeftIcon, Key, Loader2, Clock } from "lucide-react";
+import { AlertCircle, ArrowLeftIcon, Key, Loader2, Clock, Mail, RefreshCw } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import logoAcredicom from "@/assets/img/Logo_acredicom_azul_horizontal.webp";
 import { TypographyMuted } from "@/components/ui/typography";
 import { useAuthStore } from "@/store/useAuth.store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useQuery } from "@tanstack/react-query";
-import { getProfile } from "@/services/auth/auth.services";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getProfile, sendMFAEmailCode } from "@/services/auth/auth.services";
+import { toast } from "sonner";
 
 export const FormMFAVerify = () => {
   const form = useForm<{ code: string }>({
@@ -38,9 +39,22 @@ export const FormMFAVerify = () => {
   const arePendingCredentialsExpired = useAuthStore((state) => state.arePendingCredentialsExpired);
   const [errorMessage, setErrorMessage] = useState("");
   const [isBackupCode, setIsBackupCode] = useState(false);
+  const [isEmailMFA, setIsEmailMFA] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isExpired, setIsExpired] = useState(false);
   const navigate = useNavigate();
+
+  // Mutation para reenviar código por email
+  const resendCodeMutation = useMutation({
+    mutationFn: sendMFAEmailCode,
+    onSuccess: () => {
+      toast.success("Código de verificación reenviado. Revisa tu correo electrónico.");
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || error?.response?.data?.detail || error?.message || "Error al reenviar código";
+      toast.error(errorMessage);
+    },
+  });
 
   // Obtener información del usuario para determinar redirección
   const { data: user } = useQuery({
@@ -134,8 +148,20 @@ export const FormMFAVerify = () => {
         }
       }
     },
-    [loginWithMFA, form]
+    [loginWithMFA, form, arePendingCredentialsExpired, clearPendingCredentials, navigate]
   );
+
+  // Detectar si es MFA por email basándose en el mensaje de error o en el flujo
+  useEffect(() => {
+    // Si el mensaje de error menciona email, es MFA por email
+    if (errorMessage && (errorMessage.includes("email") || errorMessage.includes("correo"))) {
+      setIsEmailMFA(true);
+    }
+  }, [errorMessage]);
+
+  const handleResendEmailCode = () => {
+    resendCodeMutation.mutate();
+  };
 
   const handleBackToLogin = () => {
     clearPendingCredentials();
@@ -169,7 +195,13 @@ export const FormMFAVerify = () => {
         <CardTitle className="flex flex-col items-center justify-center gap-2 text-center text-4xl">
           <img src={logoAcredicom} alt="Logo Acredicom" />
           <TypographyMuted
-            text={isBackupCode ? "Código de respaldo" : "Verificación de dos factores"}
+            text={
+              isBackupCode 
+                ? "Código de respaldo" 
+                : isEmailMFA 
+                ? "Verificación por correo electrónico" 
+                : "Verificación de dos factores"
+            }
             className="text-custom/85 text-2xl"
           />
         </CardTitle>
@@ -203,6 +235,8 @@ export const FormMFAVerify = () => {
                     <FormLabel>
                       {isBackupCode
                         ? "Código de respaldo (8 caracteres)"
+                        : isEmailMFA
+                        ? "Código recibido por correo (6 dígitos)"
                         : "Código de verificación (6 dígitos)"}
                     </FormLabel>
                     <FormControl>
@@ -211,6 +245,8 @@ export const FormMFAVerify = () => {
                         placeholder={
                           isBackupCode
                             ? "Ingrese código de respaldo"
+                            : isEmailMFA
+                            ? "Ingrese código del correo"
                             : "Ingrese código de 6 dígitos"
                         }
                         startContent={<Key />}
@@ -238,17 +274,40 @@ export const FormMFAVerify = () => {
                   </FormItem>
                 )}
               />
-              <div className="text-center">
-                <Button
-                  type="button"
-                  variant="link"
-                  className="text-sm text-blue-600"
-                  onClick={toggleCodeType}
-                >
-                  {isBackupCode
-                    ? "Usar código de autenticador (6 dígitos)"
-                    : "Usar código de respaldo (8 caracteres)"}
-                </Button>
+              <div className="text-center space-y-2">
+                {!isEmailMFA && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-blue-600"
+                    onClick={toggleCodeType}
+                  >
+                    {isBackupCode
+                      ? "Usar código de autenticador (6 dígitos)"
+                      : "Usar código de respaldo (8 caracteres)"}
+                  </Button>
+                )}
+                {isEmailMFA && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-blue-600 flex items-center gap-2"
+                    onClick={handleResendEmailCode}
+                    disabled={resendCodeMutation.isPending}
+                  >
+                    {resendCodeMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Reenviando...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4" />
+                        Reenviar código por correo
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -256,6 +315,8 @@ export const FormMFAVerify = () => {
                 text={
                   isBackupCode
                     ? "Ingrese uno de sus códigos de respaldo de 8 caracteres"
+                    : isEmailMFA
+                    ? "Revisa tu correo electrónico y ingresa el código de 6 dígitos que recibiste. El código expira en 10 minutos."
                     : "Ingrese el código de 6 dígitos de su aplicación autenticadora (Google Authenticator, Authy, etc.)"
                 }
                 className="text-center text-sm"

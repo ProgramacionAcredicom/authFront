@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getProfile, enableMFA, disableMFA } from "@/services/auth/auth.services";
+import { getProfile, enableMFA, disableMFA, sendMFAEmailCode } from "@/services/auth/auth.services";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, ShieldCheck, ShieldOff, QrCode, Key, Copy, Check, Smartphone, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Shield, ShieldCheck, ShieldOff, QrCode, Key, Copy, Check, Smartphone, ExternalLink, Mail, RefreshCw } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { MFAMethodSelector } from "./mfa-method-selector";
+import { MFAMethod } from "@/interfaces/auth/mfa.interfaces";
 
 /**
  * Componente para gestionar la configuraci?n MFA del usuario
@@ -48,13 +50,18 @@ export const MFASettings = () => {
   const [otpCode, setOtpCode] = useState("");
   const [showQR, setShowQR] = useState(false);
   const [showAppSelection, setShowAppSelection] = useState(false);
+  const [showMethodSelection, setShowMethodSelection] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<MFAMethod>('totp');
   const [appDownloaded, setAppDownloaded] = useState(false);
   const [mfaData, setMfaData] = useState<{
-    qr_image_base64: string;
-    backup_codes: string[];
-    otp_url: string;
+    qr_image_base64?: string;
+    backup_codes?: string[];
+    otp_url?: string;
+    email?: string;
+    method?: MFAMethod;
   } | null>(null);
   const [copiedCode, setCopiedCode] = useState<number | null>(null);
+  const [isSendingDisableCode, setIsSendingDisableCode] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ["info_user"],
@@ -63,16 +70,25 @@ export const MFASettings = () => {
   });
 
   const enableMutation = useMutation({
-    mutationFn: () => enableMFA(),
+    mutationFn: (method: MFAMethod) => enableMFA(method),
     onSuccess: (data) => {
       setMfaData({
         qr_image_base64: data.qr_image_base64,
         backup_codes: data.backup_codes || [],
         otp_url: data.otp_url,
+        email: data.email,
+        method: data.method,
       });
-      setShowQR(true);
+      
       queryClient.invalidateQueries({ queryKey: ["info_user"] });
-      toast.success("MFA habilitado correctamente. Escanea el c?digo QR con tu app autenticadora.");
+      
+      if (data.method === 'totp') {
+        setShowQR(true);
+        toast.success("MFA habilitado correctamente. Escanea el código QR con tu app autenticadora.");
+      } else {
+        setShowMethodSelection(false);
+        toast.success(`MFA por email habilitado correctamente. Los códigos se enviarán a ${data.email}`);
+      }
     },
     onError: (error: any) => {
       const errorMessage = error?.response?.data?.error || error?.message || "Error al habilitar MFA";
@@ -87,6 +103,7 @@ export const MFASettings = () => {
       toast.success("MFA deshabilitado correctamente");
       setShowDisableDialog(false);
       setOtpCode("");
+      setIsSendingDisableCode(false);
     },
     onError: (error: any) => {
       const errorMessage = error?.response?.data?.detail || error?.message || "Error al deshabilitar MFA";
@@ -94,9 +111,27 @@ export const MFASettings = () => {
     },
   });
 
+  const resendDisableCodeMutation = useMutation({
+    mutationFn: sendMFAEmailCode,
+    onSuccess: () => {
+      toast.success("Código de verificación reenviado. Revisa tu correo electrónico.");
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || error?.response?.data?.detail || error?.message || "Error al reenviar código";
+      toast.error(errorMessage);
+    },
+  });
+
   const handleEnableMFA = () => {
-    // Primero mostrar el diálogo de selección de apps
-    setShowAppSelection(true);
+    // Mostrar selector de método MFA
+    setShowMethodSelection(true);
+    setSelectedMethod('totp'); // Default a TOTP
+  };
+
+  const handleMethodSelected = (method: MFAMethod) => {
+    // Solo actualizar el método seleccionado, NO habilitar
+    // La habilitación ocurrirá cuando el usuario presione "Continuar"
+    setSelectedMethod(method);
   };
 
   const handleContinueAfterAppSelection = () => {
@@ -104,10 +139,11 @@ export const MFASettings = () => {
       toast.error("Por favor, confirma que has descargado al menos una aplicación");
       return;
     }
-    // Cerrar diálogo de apps y llamar a la API
+    // Cerrar diálogo de apps y llamar a la API con método TOTP
     setShowAppSelection(false);
+    setShowMethodSelection(false);
     setAppDownloaded(false);
-    enableMutation.mutate();
+    enableMutation.mutate('totp');
   };
 
   const handleCloseAppSelection = () => {
@@ -117,7 +153,7 @@ export const MFASettings = () => {
 
   const handleDisableMFA = () => {
     if (!otpCode || otpCode.length !== 6) {
-      toast.error("Por favor, ingresa un c?digo OTP v?lido de 6 d?gitos");
+      toast.error("Por favor, ingresa un código OTP válido de 6 dígitos");
       return;
     }
     disableMutation.mutate(otpCode);
@@ -126,13 +162,39 @@ export const MFASettings = () => {
   const handleCopyBackupCode = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(index);
-    toast.success("C?digo copiado al portapapeles");
+    toast.success("Código copiado al portapapeles");
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
   const handleCloseQR = () => {
     setShowQR(false);
     setMfaData(null);
+  };
+
+  // Obtener método MFA activo directamente del usuario
+  const activeMFAMethod = user?.mfa_method || null;
+
+  // Enviar código automáticamente cuando se abre el diálogo de deshabilitación
+  // y el método activo es email
+  useEffect(() => {
+    if (showDisableDialog && user?.otp_enabled && activeMFAMethod === 'email' && !isSendingDisableCode) {
+      setIsSendingDisableCode(true);
+      sendMFAEmailCode()
+        .then(() => {
+          toast.success("Se ha enviado un código de verificación a tu correo electrónico.");
+        })
+        .catch((error: any) => {
+          const errorMessage = error?.response?.data?.error || error?.response?.data?.detail || error?.message || "Error al enviar código";
+          toast.error(`No se pudo enviar el código: ${errorMessage}`);
+        })
+        .finally(() => {
+          setIsSendingDisableCode(false);
+        });
+    }
+  }, [showDisableDialog, user?.otp_enabled, activeMFAMethod, isSendingDisableCode]);
+
+  const handleResendDisableCode = () => {
+    resendDisableCodeMutation.mutate();
   };
 
   const isMFAEnabled = user?.otp_enabled || false;
@@ -146,7 +208,7 @@ export const MFASettings = () => {
             Autenticación de Dos Factores (MFA)
           </CardTitle>
           <CardDescription>
-            Protege tu cuenta con autenticación de dos factores usando una app autenticadora
+            Protege tu cuenta con autenticación de dos factores usando app autenticadora o correo electrónico
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -227,7 +289,7 @@ export const MFASettings = () => {
               <ShieldCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
               <AlertDescription className="text-green-800 dark:text-green-300">
                 <strong>Protección activa:</strong> Tu cuenta está protegida con autenticación de dos factores.
-                Necesitarás un código de tu app autenticadora cada vez que inicies sesión.
+                Necesitarás un código de verificación cada vez que inicies sesión.
               </AlertDescription>
             </Alert>
           ) : (
@@ -361,21 +423,41 @@ export const MFASettings = () => {
               Deshabilitar Autenticación de Dos Factores
             </DialogTitle>
             <DialogDescription>
-              Para deshabilitar MFA, necesitas ingresar un código OTP válido de tu app autenticadora. Esto
-              asegura que eres el propietario de la cuenta.
+              {activeMFAMethod === 'email' 
+                ? "Se ha enviado un código de verificación a tu correo electrónico. Ingresa el código recibido para deshabilitar MFA."
+                : "Para deshabilitar MFA, necesitas ingresar un código OTP válido. Esto asegura que eres el propietario de la cuenta."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <Alert variant="destructive" className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20">
               <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
               <AlertDescription className="text-red-800 dark:text-red-300">
-                <strong>Advertencia:</strong> Al deshabilitar MFA, tu cuenta ser? menos segura. Solo hazlo si
+                <strong>Advertencia:</strong> Al deshabilitar MFA, tu cuenta será menos segura. Solo hazlo si
                 es absolutamente necesario.
               </AlertDescription>
             </Alert>
+            
+            {activeMFAMethod === 'email' && (
+              <Alert className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/20">
+                <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <AlertDescription className="text-blue-800 dark:text-blue-300">
+                  <strong>Método activo:</strong> Correo electrónico
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isSendingDisableCode && (
+              <Alert className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/20">
+                <Loader2 className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-spin" />
+                <AlertDescription className="text-blue-800 dark:text-blue-300">
+                  <strong>Enviando código...</strong> Por favor espera mientras se envía el código de verificación a tu correo electrónico.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="otp-code" className="text-base font-medium">
-                C?digo OTP
+                {activeMFAMethod === 'email' ? 'Código recibido por correo' : 'Código OTP'}
               </Label>
               <Input
                 id="otp-code"
@@ -389,16 +471,42 @@ export const MFASettings = () => {
                   setOtpCode(value);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && otpCode.length === 6) {
+                  if (e.key === "Enter" && otpCode.length === 6 && !isSendingDisableCode) {
                     handleDisableMFA();
                   }
                 }}
                 className="text-center text-2xl tracking-widest font-mono"
                 autoFocus
+                disabled={isSendingDisableCode}
               />
               <p className="text-muted-foreground text-xs">
-                Ingresa el c?digo de 6 d?gitos de tu app autenticadora
+                {activeMFAMethod === 'email' 
+                  ? "Ingresa el código de 6 dígitos que recibiste por correo electrónico"
+                  : "Ingresa el código de 6 dígitos de tu app autenticadora"}
               </p>
+              {activeMFAMethod === 'email' && !isSendingDisableCode && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-blue-600 flex items-center gap-2"
+                    onClick={handleResendDisableCode}
+                    disabled={resendDisableCodeMutation.isPending}
+                  >
+                    {resendDisableCodeMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Reenviando...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4" />
+                        Reenviar código por correo
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -407,12 +515,17 @@ export const MFASettings = () => {
               onClick={() => {
                 setShowDisableDialog(false);
                 setOtpCode("");
+                setIsSendingDisableCode(false);
               }}
-              disabled={disableMutation.isPending}
+              disabled={disableMutation.isPending || isSendingDisableCode}
             >
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleDisableMFA} disabled={disableMutation.isPending || otpCode.length !== 6}>
+            <Button 
+              variant="destructive" 
+              onClick={handleDisableMFA} 
+              disabled={disableMutation.isPending || otpCode.length !== 6 || isSendingDisableCode}
+            >
               {disableMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -429,7 +542,66 @@ export const MFASettings = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para mostrar QR code y códigos de respaldo */}
+      {/* Dialog para selección de método MFA */}
+      <Dialog open={showMethodSelection} onOpenChange={setShowMethodSelection}>
+        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              Seleccionar Método MFA
+            </DialogTitle>
+            <DialogDescription>
+              Elige el método de autenticación de dos factores que prefieres usar
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <MFAMethodSelector
+              selectedMethod={selectedMethod}
+              onMethodChange={handleMethodSelected}
+              disabled={enableMutation.isPending}
+            />
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowMethodSelection(false);
+                setSelectedMethod('totp');
+              }}
+              disabled={enableMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedMethod === 'totp') {
+                  setShowMethodSelection(false);
+                  setShowAppSelection(true);
+                } else {
+                  enableMutation.mutate('email');
+                }
+              }}
+              disabled={enableMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              {enableMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Habilitando...
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Continuar
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para mostrar QR code y códigos de respaldo (solo para TOTP) */}
       <Dialog open={showQR} onOpenChange={handleCloseQR}>
         <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-4xl lg:max-w-5xl max-h-[90vh] flex flex-col">
           <DialogHeader>
@@ -465,7 +637,7 @@ export const MFASettings = () => {
                       </p>
                       <div className="flex w-full items-center gap-2">
                         <Input
-                          value={mfaData.otp_url}
+                          value={mfaData.otp_url || ''}
                           readOnly
                           className="font-mono text-xs"
                           onClick={(e) => (e.target as HTMLInputElement).select()}
@@ -475,8 +647,10 @@ export const MFASettings = () => {
                           variant="outline"
                           size="icon"
                           onClick={() => {
-                            navigator.clipboard.writeText(mfaData.otp_url);
-                            toast.success("Clave copiada al portapapeles");
+                            if (mfaData.otp_url) {
+                              navigator.clipboard.writeText(mfaData.otp_url);
+                              toast.success("Clave copiada al portapapeles");
+                            }
                           }}
                           className="flex-shrink-0"
                         >
@@ -510,7 +684,7 @@ export const MFASettings = () => {
                   <div className="space-y-2">
                     <Label className="text-sm sm:text-base font-semibold">Códigos de respaldo</Label>
                     <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto">
-                      {mfaData.backup_codes.map((code, index) => (
+                      {(mfaData.backup_codes || []).map((code, index) => (
                         <div
                           key={index}
                           className="group flex items-center justify-between rounded-md border-2 border-dashed bg-muted/50 p-2 sm:p-3 transition-all hover:border-primary hover:bg-muted"
@@ -538,9 +712,12 @@ export const MFASettings = () => {
                       size="sm"
                       className="w-full text-xs sm:text-sm"
                       onClick={() => {
-                        const allCodes = mfaData.backup_codes.join("\n");
-                        navigator.clipboard.writeText(allCodes);
-                        toast.success("Todos los códigos copiados al portapapeles");
+                        const backupCodes = mfaData?.backup_codes;
+                        if (backupCodes && backupCodes.length > 0) {
+                          const allCodes = backupCodes.join("\n");
+                          navigator.clipboard.writeText(allCodes);
+                          toast.success("Todos los códigos copiados al portapapeles");
+                        }
                       }}
                     >
                       <Copy className="mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5" />

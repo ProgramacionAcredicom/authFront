@@ -18,6 +18,7 @@ interface UsuarioType {
   is_staff: boolean;
   is_superuser: boolean;
   otp_enabled: boolean;
+  mfa_method?: 'totp' | 'email' | null;
 }
 
 interface Agency {
@@ -80,5 +81,6 @@ export const localPerfilUsuarioMapper = (perfilUsuario: UsuarioType) => {
     is_staff: perfilUsuario.is_staff,
     is_superuser: perfilUsuario.is_superuser,
     otp_enabled: perfilUsuario.otp_enabled,
+    mfa_method: perfilUsuario.mfa_method,
   });
 };

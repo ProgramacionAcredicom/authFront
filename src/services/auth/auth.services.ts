@@ -110,16 +110,52 @@ export const getStatistics = async (): Promise<StatisticsResponse> => {
 
 /**
  * Habilita MFA (Multi-Factor Authentication) para el usuario autenticado
- * @returns Datos de configuración MFA incluyendo QR code y códigos de respaldo
+ * @param method Método MFA a habilitar: 'totp' para app autenticadora, 'email' para correo electrónico
+ * @returns Datos de configuración MFA según el método seleccionado
  */
-export const enableMFA = async (): Promise<{
+export const enableMFA = async (method: 'totp' | 'email' = 'totp'): Promise<{
   detail: string;
-  otp_url: string;
-  qr_image_base64: string;
-  backup_codes: string[];
+  method: 'totp' | 'email';
+  otp_url?: string;
+  qr_image_base64?: string;
+  backup_codes?: string[];
+  email?: string;
   message: string;
 }> => {
-  const response = await apiServices.post("/user/otp/enable/", { enable_otp: true });
+  const response = await apiServices.post("/user/otp/enable/", { 
+    enable_otp: true,
+    method 
+  });
+  return response.data;
+};
+
+/**
+ * Habilita MFA por email específicamente
+ * @returns Datos de configuración MFA por email
+ */
+export const enableEmailMFA = async (): Promise<{
+  detail: string;
+  method: 'email';
+  email: string;
+  message: string;
+}> => {
+  return enableMFA('email') as Promise<{
+    detail: string;
+    method: 'email';
+    email: string;
+    message: string;
+  }>;
+};
+
+/**
+ * Solicita reenvío de código MFA por correo electrónico
+ * @returns Mensaje de confirmación
+ */
+export const sendMFAEmailCode = async (): Promise<{
+  detail: string;
+  message: string;
+}> => {
+  const response = await apiServices.post("/user/otp/resend-email-code/");
   return response.data;
 };
 
