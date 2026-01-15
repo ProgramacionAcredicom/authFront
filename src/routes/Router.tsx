@@ -1,10 +1,15 @@
 import { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ProtectedRoute } from "@/components/protected-route/ProtectedRoute";
+import { StaffRoute } from "@/components/protected-route/StaffRoute";
 import Page404 from "@/app/404/page404";
+import LayoutAdmin from "@/app/admin/layout";
 import { adminRoutes } from "./admin.routes";
 import { authRoutes } from "./auth.routes";
 import { Loader2 } from "lucide-react";
+
+// Lazy load de página de perfil
+const ProfilePage = lazy(() => import("@/app/profile/page").then((m) => ({ default: m.default })));
 
 // Componente de carga para lazy loading
 const LoadingFallback = () => (
@@ -22,18 +27,35 @@ const routes = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     errorElement: <Page404 />,
-    children: adminRoutes.map((route) => ({
-      ...route,
-      element: route.element ? <SuspenseWrapper>{route.element}</SuspenseWrapper> : route.element,
-      children: route.children?.map((child) => ({
-        ...child,
-        element: child.element ? <SuspenseWrapper>{child.element}</SuspenseWrapper> : child.element,
-        children: child.children?.map((grandchild) => ({
-          ...grandchild,
-          element: grandchild.element ? <SuspenseWrapper>{grandchild.element}</SuspenseWrapper> : grandchild.element,
+    children: [
+      // Ruta de perfil accesible para todos los usuarios autenticados
+      {
+        path: "profile",
+        element: <LayoutAdmin />,
+        children: [
+          {
+            index: true,
+            element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper>,
+          },
+        ],
+      },
+      // Rutas admin protegidas con StaffRoute
+      {
+        element: <StaffRoute />,
+        children: adminRoutes.map((route) => ({
+          ...route,
+          element: route.element ? <SuspenseWrapper>{route.element}</SuspenseWrapper> : route.element,
+          children: route.children?.map((child) => ({
+            ...child,
+            element: child.element ? <SuspenseWrapper>{child.element}</SuspenseWrapper> : child.element,
+            children: child.children?.map((grandchild) => ({
+              ...grandchild,
+              element: grandchild.element ? <SuspenseWrapper>{grandchild.element}</SuspenseWrapper> : grandchild.element,
+            })),
+          })),
         })),
-      })),
-    })),
+      },
+    ],
   },
   ...authRoutes.map((route) => ({
     ...route,

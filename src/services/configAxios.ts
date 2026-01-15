@@ -27,6 +27,13 @@ apiServices.interceptors.request.use(
     if (authStore.access) {
       config.headers.Authorization = `Bearer ${authStore.access}`;
     }
+    
+    // Si el data es FormData, eliminar Content-Type para que el navegador lo establezca automáticamente
+    // con el boundary correcto para multipart/form-data
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
+    
     return config;
   },
   (error) => {

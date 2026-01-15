@@ -7,6 +7,7 @@ import { GuestRoute } from "@/components/protected-route/GuestRoute";
 const LoginPage = lazy(() => import("@/app/auth/login/page").then((m) => ({ default: m.default })));
 const ForgotPasswordPage = lazy(() => import("@/app/auth/forgot-password/page").then((m) => ({ default: m.default })));
 const CodeOtpPage = lazy(() => import("@/app/auth/code-otp/page").then((m) => ({ default: m.default })));
+const MFAVerifyPage = lazy(() => import("@/app/auth/mfa-verify/page").then((m) => ({ default: m.default })));
 
 /**
  * Rutas de autenticación (solo para invitados)
@@ -30,6 +31,10 @@ export const authRoutes: RouteObject[] = [
           {
             path: "code-otp",
             element: <CodeOtpPage />,
+          },
+          {
+            path: "mfa-verify",
+            element: <MFAVerifyPage />,
           },
         ],
       },
