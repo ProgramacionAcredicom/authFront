@@ -50,8 +50,9 @@ export interface PermisoModel {
 }
 
 export interface GruposPaginationType {
-  count: number;
-  next: string | null;
-  previous: string | null;
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
   results: GruposType[];
 }

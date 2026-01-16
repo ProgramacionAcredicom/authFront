@@ -1,4 +1,4 @@
-import { SessionResponse, CloseSessionsRequest, CloseSessionsResponse } from "@/interfaces/sessions.interfaces";
+import { SessionResponse, CloseSessionsRequest, CloseSessionsResponse, Session } from "@/interfaces/sessions.interfaces";
 import apiServices from "@/services/configAxios";
 
 export const getUserSessions = async (
@@ -48,13 +48,23 @@ export const closeSessions = async (sessionIds: number[]): Promise<CloseSessions
     sessions: sessionIds,
   };
 
-  const res = await apiServices.patch<CloseSessionsResponse>("/auth/sessions/", body);
+  // Usar el endpoint RESTful para usuarios autenticados que permite cerrar solo sus propias sesiones
+  const res = await apiServices.patch<CloseSessionsResponse>("/user/sessions/", body);
   
   // Validar formato de respuesta del servidor
   if (!res.data || !res.data.message) {
     throw new Error("Invalid response format from server");
   }
   
+  return res.data;
+};
+
+/**
+ * Obtiene las sesiones activas del usuario autenticado
+ * @returns Lista de sesiones activas del usuario
+ */
+export const getActiveSessions = async (): Promise<{ results: Session[]; count: number }> => {
+  const res = await apiServices.get<{ results: Session[]; count: number }>("/user/sessions/");
   return res.data;
 };
 

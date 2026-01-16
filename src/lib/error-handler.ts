@@ -56,11 +56,12 @@ export function handleApiError(error: unknown, options: ErrorHandlerOptions = {}
     });
 
     // Manejar errores específicos por código de estado
-    if (status === 401) {
+    // Si hay customMessage, usarlo solo si no hay un status code específico que requiera un mensaje específico
+    if (status === 401 && !customMessage) {
       errorMessage = "No autorizado. Por favor, inicia sesión nuevamente.";
-    } else if (status === 403) {
+    } else if (status === 403 && !customMessage) {
       errorMessage = "No tienes permisos para realizar esta acción.";
-    } else if (status === 404) {
+    } else if (status === 404 && !customMessage) {
       errorMessage = "El recurso solicitado no fue encontrado.";
     } else if (status === 422) {
       // Errores de validación
@@ -69,14 +70,16 @@ export function handleApiError(error: unknown, options: ErrorHandlerOptions = {}
       } else if (data?.detail) {
         errorMessage = data.detail;
       }
-    } else if (status === 500) {
+    } else if (status === 500 && !customMessage) {
       errorMessage = "Error interno del servidor. Por favor, intenta más tarde.";
-    } else if (data?.error) {
+    } else if (data?.error && !customMessage) {
       // Mensaje de error del servidor
-      errorMessage = Array.isArray(data.error) ? data.error.join(", ") : data.error;
-    } else if (data?.message) {
+      if (!customMessage) {
+        errorMessage = Array.isArray(data.error) ? data.error.join(", ") : data.error;
+      }
+    } else if (data?.message && !customMessage) {
       errorMessage = data.message;
-    } else if (data?.detail) {
+    } else if (data?.detail && !customMessage) {
       errorMessage = data.detail;
     }
 
@@ -112,7 +115,8 @@ export function handleApiError(error: unknown, options: ErrorHandlerOptions = {}
   } else if (error instanceof Error) {
     // Error estándar de JavaScript
     logger.errorWithContext("Error de JavaScript", error);
-    errorMessage = error.message || customMessage || "Ha ocurrido un error";
+    // Si hay customMessage, usarlo; sino usar el mensaje del error
+    errorMessage = customMessage || error.message || "Ha ocurrido un error";
   } else {
     // Error desconocido
     logger.errorWithContext("Error desconocido", error);

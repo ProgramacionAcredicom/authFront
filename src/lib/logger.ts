@@ -5,16 +5,19 @@
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
-const isDevelopment = import.meta.env.DEV;
-const isProduction = import.meta.env.PROD;
-
 class Logger {
   private shouldLog(level: LogLevel): boolean {
+    // Leer variables de entorno dinámicamente para que los tests funcionen
+    // En tests, import.meta.env puede no reflejar los cambios de vi.stubEnv
+    // Por eso verificamos tanto PROD como MODE
+    const isProduction = import.meta.env.PROD || import.meta.env.MODE === "production";
+    const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === "development";
+    
     // En producción, solo mostrar warn y error
-    if (isProduction) {
+    if (isProduction && !isDevelopment) {
       return level === "warn" || level === "error";
     }
-    // En desarrollo, mostrar todos los logs
+    // En desarrollo o tests, mostrar todos los logs
     return true;
   }
 

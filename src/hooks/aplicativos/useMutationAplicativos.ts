@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { AplicativosTypeModel } from "@/interfaces/aplicativos.interfaces";
-import { createAplicativo, deleteAplicativo, updateAplicativo } from "@/services/aplicativos/aplicativos.services";
+import { AplicativosTypeModel, AppKeyInfoResponse, GenerateAppKeyResponse } from "@/interfaces/aplicativos.interfaces";
+import { createAplicativo, deleteAplicativo, updateAplicativo, generateAppKey, getAppKeyInfo } from "@/services/aplicativos/aplicativos.services";
 import { logger } from "@/lib/logger";
 type MutationContext = {
   previousAplicativos: AplicativosTypeModel[] | undefined;
@@ -100,4 +100,39 @@ export const useMutationDeleteAplicativo = () => {
   });
 
   return { mutation, isLoading: mutation.isPending };
+};
+
+export const useMutationGenerateAppKey = () => {
+  const mutation = useMutation<GenerateAppKeyResponse, Error, { id: string }>({
+    mutationFn: ({ id }: { id: string }) => generateAppKey(id),
+    onSuccess: (data: GenerateAppKeyResponse) => {
+      toast.success(data.message || "App Key generada exitosamente");
+    },
+    onError: (error) => {
+      if (error instanceof AxiosError) {
+        const axiosError = error as AxiosError<{ error?: string }>;
+        const errorMessage = axiosError.response?.data?.error || error.message;
+        toast.error(errorMessage);
+      } else {
+        toast.error("Error al generar App Key");
+      }
+      logger.errorWithContext("Error al generar App Key", error);
+    },
+  });
+
+  return { mutation, isLoading: mutation.isPending };
+};
+
+export const useQueryAppKeyInfo = (id: string, enabled: boolean = true) => {
+  const queryAppKeyInfo = useQuery<AppKeyInfoResponse>({
+    queryKey: ["app-key-info", id],
+    queryFn: () => getAppKeyInfo(id),
+    enabled: enabled && !!id,
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch
+    gcTime: 0, // No cachear los datos
+  });
+
+  return { queryAppKeyInfo };
 };

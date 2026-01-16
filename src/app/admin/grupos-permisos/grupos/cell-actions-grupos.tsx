@@ -11,7 +11,12 @@ import {
 import { Ellipsis, Edit, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export const CellActionsGrupos = ({ id }: { id: number }) => {
+interface CellActionsGruposProps {
+  id: number;
+  onEdit?: (id: number) => void;
+}
+
+export const CellActionsGrupos = ({ id, onEdit }: CellActionsGruposProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -24,7 +29,7 @@ export const CellActionsGrupos = ({ id }: { id: number }) => {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link to={`/grupos/editar/${id}`} state={{ modal: true }} className="flex items-center gap-2">
+            <Link to={`/grupos/editar/${id}`} className="flex items-center gap-2">
               <Edit className="size-4" /> Editar
             </Link>
           </DropdownMenuItem>

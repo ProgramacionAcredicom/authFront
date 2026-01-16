@@ -16,6 +16,7 @@ export interface UsuarioType {
   is_staff: boolean;
   is_superuser: boolean;
   otp_enabled: boolean;
+  mfa_method?: 'totp' | 'email' | null;
 }
 
 export interface Agency {

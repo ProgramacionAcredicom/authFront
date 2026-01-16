@@ -11,6 +11,7 @@ export const getAllGrupos = async (params?: {
   grupo?: string;
   aplicativo?: string;
   ordering?: string;
+  state?: boolean;
 }): Promise<GruposPaginationType> => {
   const queryParams: Record<string, any> = {};
   if (params?.page) {
@@ -33,6 +34,9 @@ export const getAllGrupos = async (params?: {
   }
   if (params?.ordering?.trim().length) {
     queryParams.ordering = params.ordering.trim();
+  }
+  if (params?.state !== undefined) {
+    queryParams.state = params.state;
   }
   const res = await apiServices.get<GruposPaginationType>("/grupos/", { params: queryParams });
   return res.data;

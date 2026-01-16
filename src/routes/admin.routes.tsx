@@ -4,7 +4,7 @@ import LayoutAdmin from "@/app/admin/layout";
 import { ColaboradorLoader } from "@/app/admin/colaboradores/editarColaborador/loader";
 import { AplicativoLoader } from "@/app/admin/grupos-permisos/aplicativos/loader";
 import { PermisoLoader } from "@/app/admin/grupos-permisos/permisos/loader";
-import { GrupoLoader } from "@/app/admin/grupos-permisos/grupos/loader";
+import { GrupoLoader, EditarGrupoLoader } from "@/app/admin/grupos-permisos/grupos/loader";
 
 // Lazy load de páginas admin
 const AdminPage = lazy(() => import("@/app/admin/page").then((m) => ({ default: m.default })));
@@ -20,8 +20,8 @@ const ModalAsignarAplicativo = lazy(() => import("@/components/modal/aplicativos
 const ModalEliminarAplicativo = lazy(() => import("@/components/modal/aplicativos/modal-eliminar-aplicativo").then((m) => ({ default: m.ModalEliminarAplicativo })));
 const ModalEditarPermiso = lazy(() => import("@/components/modal/permisos/modal-editar-permiso").then((m) => ({ default: m.ModalEditarPermiso })));
 const ModalEliminarPermiso = lazy(() => import("@/components/modal/permisos/modal-eliminar-permiso").then((m) => ({ default: m.ModalEliminarPermiso })));
-const ModalEditarGrupo = lazy(() => import("@/components/modal/grupos/modal-editar-grupo").then((m) => ({ default: m.ModalEditarGrupo })));
 const ModalEliminarGrupo = lazy(() => import("@/components/modal/grupos/modal-eliminar-grupo").then((m) => ({ default: m.ModalEliminarGrupo })));
+const EditarGrupoPage = lazy(() => import("@/app/admin/grupos-permisos/grupos/editar-grupo/page").then((m) => ({ default: m.EditarGrupoPage })));
 
 /**
  * Rutas de administración (requieren autenticación)
@@ -70,8 +70,8 @@ export const adminRoutes: RouteObject[] = [
       },
       {
         path: "editar/:id",
-        element: <ModalEditarGrupo />,
-        loader: GrupoLoader,
+        element: <EditarGrupoPage />,
+        loader: EditarGrupoLoader,
       },
       {
         path: "eliminar/:id",

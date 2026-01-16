@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { TypographyH3 } from "@/components/ui/typography";
-import { Separator } from "@/components/ui/separator";
 import { useInfiniteColaboradores } from "@/hooks/colaboradores/useInfiniteColaboradores";
 import { Result as ColaboradorResult } from "@/interfaces/colaboradores.interfaces";
 import { useInView } from "react-intersection-observer";
@@ -67,11 +65,7 @@ export const SelectUsuariosGrupo = ({ selectedUsers, setSelectedUsers, userIds, 
   const selectedUserIds = useMemo(() => selectedUsers.map((u) => u.id), [selectedUsers]);
 
   return (
-    <div className="flex flex-col gap-4 mt-6">
-      <div className="flex flex-col gap-2">
-        <TypographyH3 text="Usuarios asignados" className="text-custom-foreground text-lg font-semibold" />
-        <Separator />
-      </div>
+    <div className="flex flex-col gap-2">
       <div className="flex items-center gap-4 justify-between">
         <UserSelectorPopover
           selectedUsers={selectedUsers}

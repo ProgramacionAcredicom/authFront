@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { g } from "node_modules/nuqs/dist/parsers-U3P6hK0x";
 
 interface GruposSeleccionadosProps {
   selectedGroups: GruposTypeModel[];
@@ -108,13 +109,13 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
 
     const isSelected = isGroupSelected(groupId);
     // Usar el estado de las teclas capturado o del evento
-    const isMultiSelect = event 
+    const isMultiSelect = event
       ? (event.metaKey || event.ctrlKey)
       : (keyStateRef.current.metaKey || keyStateRef.current.ctrlKey);
 
     // Marcar que el usuario ha modificado los grupos
     userHasModifiedRef.current = true;
-    
+
     if (isSelected) {
       // Si está seleccionado, quitarlo (siempre se puede quitar)
       const newGroups = selectedGroups.filter((g: GruposTypeModel) => g.id !== groupId);
@@ -132,7 +133,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
       if (selectedGroups.some((g: GruposTypeModel) => g.id === groupId)) {
         return;
       }
-      
+
       if (isMultiSelect) {
         // Con Cmd/Ctrl: agregar a la selección existente (mantener popover abierto)
         const newGroups = [...selectedGroups, group];
@@ -158,17 +159,17 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
     if (userHasModifiedRef.current && initializedRef.current) {
       return;
     }
-    
+
     // Verificar si los groupIds han cambiado (nuevo usuario cargado)
     const groupIdsString = JSON.stringify(groupIds?.sort() || []);
     const previousGroupIdsString = JSON.stringify(previousGroupIdsRef.current?.sort() || []);
     const groupIdsChanged = groupIdsString !== previousGroupIdsString;
-    
+
     // Si los groupIds no han cambiado y ya se inicializó, no hacer nada (evitar sobrescribir cambios del usuario)
     if (!groupIdsChanged && initializedRef.current) {
       return;
     }
-    
+
     if (!groupIds || groupIds.length === 0) {
       // Si no hay groupIds y cambiaron, limpiar
       if (groupIdsChanged) {
@@ -178,12 +179,12 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
       initializedRef.current = true;
       return;
     }
-    
+
     if (queryGruposSinPaginacion.data && queryGruposSinPaginacion.data.length > 0) {
       // Solo inicializar si los groupIds cambiaron (nuevo usuario) o es la primera carga
       if (groupIdsChanged || !initializedRef.current) {
         const initialSelected = queryGruposSinPaginacion.data.filter((g: GruposTypeModel) => groupIds.includes(g.id));
-        
+
         // Solo actualizar si:
         // 1. Los groupIds cambiaron (nuevo usuario) - siempre actualizar
         // 2. Es la primera carga Y el usuario no ha modificado los grupos
@@ -195,7 +196,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
           // Primera carga: solo actualizar si el usuario no ha modificado los grupos
           setSelectedGroups(initialSelected);
         }
-        
+
         // Expandir automáticamente los aplicativos que tienen grupos seleccionados
         const aplicativosWithGroups = new Set<string>();
         initialSelected.forEach((group: GruposTypeModel) => {
@@ -203,10 +204,10 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
           aplicativosWithGroups.add(aplicativoKey);
         });
         setExpandedAplicativos(aplicativosWithGroups);
-        
+
         initializedRef.current = true;
       }
-      
+
       previousGroupIdsRef.current = groupIds;
     }
   }, [groupIds, queryGruposSinPaginacion.data, setSelectedGroups]);
@@ -228,23 +229,23 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
   const groupedSelectedGroups = useMemo(() => {
     // Crear un mapa para agrupar por aplicativo
     const groupsByAplicativo = new Map<string, GruposTypeModel[]>();
-    
+
     selectedGroups.forEach((group) => {
       // Si el grupo tiene aplicativos, usar el primer aplicativo como clave
       // Si no tiene aplicativos, usar "Sin aplicativo"
       const aplicativoKey = group.aplicativos?.[0]?.nombre || "Sin aplicativo";
-      
+
       if (!groupsByAplicativo.has(aplicativoKey)) {
         groupsByAplicativo.set(aplicativoKey, []);
       }
       groupsByAplicativo.get(aplicativoKey)!.push(group);
     });
-    
+
     // Ordenar grupos dentro de cada aplicativo por nombre
     groupsByAplicativo.forEach((groups) => {
       groups.sort((a, b) => a.nombre.localeCompare(b.nombre));
     });
-    
+
     // Convertir a array y ordenar por nombre de aplicativo
     return Array.from(groupsByAplicativo.entries())
       .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
@@ -259,90 +260,90 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
       </div>
       <div className="flex items-center md:gap-24 gap-4 justify-between">
         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
+          <PopoverTrigger asChild>
             <Button
-                type="button"
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal"
+              type="button"
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal"
             >
-                <span className="truncate">
+              <span className="truncate">
                 {selectedGroups.length > 0
-                    ? `${selectedGroups.length} grupo(s) seleccionado(s)`
-                    : "Seleccionar grupos..."}
-                </span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  ? `${selectedGroups.length} grupo(s) seleccionado(s)`
+                  : "Seleccionar grupos..."}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" side="bottom">
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" side="bottom">
             <Command shouldFilter={false}>
-                <CommandInput
+              <CommandInput
                 placeholder="Buscar por nombre de grupo o aplicativo..."
                 value={searchFilter}
                 onValueChange={setSearchFilter}
-                />
-                <CommandList className="h-[200px] max-h-[200px]">
+              />
+              <CommandList className="h-[200px] max-h-[200px]">
                 <CommandEmpty>
-                    {queryGruposSinPaginacion.isLoading ? (
+                  {queryGruposSinPaginacion.isLoading ? (
                     <div className="flex items-center justify-center gap-2 py-6">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <TypographyMuted text="Cargando..." />
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <TypographyMuted text="Cargando..." />
                     </div>
-                    ) : (
+                  ) : (
                     <TypographyMuted text="No se encontraron grupos" className="py-6 text-center" />
-                    )}
+                  )}
                 </CommandEmpty>
                 {groupedByAplicativo.map(([aplicativo, groups]) => (
-                    <CommandGroup key={aplicativo} heading={aplicativo}>
+                  <CommandGroup key={aplicativo} heading={aplicativo}>
                     {groups.map((group) => {
-                        const isSelected = isGroupSelected(group.id);
-                        return (
+                      const isSelected = isGroupSelected(group.id);
+                      return (
                         <CommandItem
-                            key={group.id}
-                            value={`${group.nombre}-${aplicativo}`}
-                            onSelect={(value) => {
+                          key={group.id}
+                          value={`${group.nombre}-${aplicativo}`}
+                          onSelect={(value) => {
                             // Usar onSelect que es el evento principal de CommandItem
                             // Prevenir el comportamiento por defecto del Command
                             handleGroupToggle(group.id);
-                            }}
-                            onMouseDown={(e) => {
+                          }}
+                          onMouseDown={(e) => {
                             // Capturar el estado de las teclas antes del click
                             e.stopPropagation();
                             keyStateRef.current = {
-                                metaKey: e.metaKey,
-                                ctrlKey: e.ctrlKey,
+                              metaKey: e.metaKey,
+                              ctrlKey: e.ctrlKey,
                             };
-                            }}
-                            onKeyDown={(e) => {
+                          }}
+                          onKeyDown={(e) => {
                             // Capturar el estado de las teclas para navegación con teclado
                             keyStateRef.current = {
-                                metaKey: e.metaKey,
-                                ctrlKey: e.ctrlKey,
+                              metaKey: e.metaKey,
+                              ctrlKey: e.ctrlKey,
                             };
-                            }}
-                            onClick={(e) => {
+                          }}
+                          onClick={(e) => {
                             // También manejar onClick como respaldo
                             e.preventDefault();
                             e.stopPropagation();
-                            }}
-                            className={cn(
+                          }}
+                          className={cn(
                             "cursor-pointer",
                             isSelected && "bg-green-50 text-green-900 dark:bg-green-950 dark:text-green-50"
-                            )}
+                          )}
                         >
-                            <div className="flex w-full items-center justify-between">
+                          <div className="flex w-full items-center justify-between">
                             <span className="font-medium">{group.nombre}</span>
                             {isSelected && <Check className="ml-2 h-4 w-4 shrink-0" />}
-                            </div>
+                          </div>
                         </CommandItem>
-                        );
+                      );
                     })}
-                    </CommandGroup>
+                  </CommandGroup>
                 ))}
-                </CommandList>
+              </CommandList>
             </Command>
-            </PopoverContent>
+          </PopoverContent>
         </Popover>
         {selectedGroups.length > 0 && (
           <Button
@@ -396,20 +397,33 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
                   });
                 }}
               >
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex w-full items-center justify-between rounded-lg p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <TypographyH3 text={aplicativo} className="text-custom-gray text-sm font-semibold dark:text-neutral-400" />
-                      <Badge variant="secondary" className="text-xs">
-                        {groups.length}
-                      </Badge>
-                    </div>
-                    {isOpen ? <ChevronUp className="h-4 w-4 text-neutral-600" /> : <ChevronDown className="h-4 w-4 text-neutral-600" />}
+                <div className="flex items-center justify-between">
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="flex w-full items-center justify-between rounded-lg p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <TypographyH3 text={aplicativo} className="text-custom-gray text-sm font-semibold dark:text-neutral-400" />
+                        <Badge variant="secondary" className="text-xs">
+                          {groups.length}
+                        </Badge>
+                      </div>
+                      {isOpen ? <ChevronUp className="h-4 w-4 text-neutral-600" /> : <ChevronDown className="h-4 w-4 text-neutral-600" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <Button type="button" variant="ghost" size="sm" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const newGroups = selectedGroups.filter((g: GruposTypeModel) => !groups.includes(g));
+                    setSelectedGroups(newGroups);
+                    toast.success(`Grupos del aplicativo "${aplicativo}" eliminados`, {
+                      duration: 2000,
+                    });
+                  }}>
+                    <X className="h-3 w-3 text-red-600" />
                   </Button>
-                </CollapsibleTrigger>
+                </div>
                 <CollapsibleContent className="pt-2">
                   <div className="flex flex-wrap gap-2">
                     {groups.map((group) => (

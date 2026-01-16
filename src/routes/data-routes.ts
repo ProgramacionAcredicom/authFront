@@ -1,10 +1,11 @@
-import { type LucideIcon, Building, Group, HomeIcon, Users2, Briefcase } from "lucide-react";
+import { type LucideIcon, Building, Group, HomeIcon, Users2, Briefcase, User } from "lucide-react";
 
 interface Props {
   navMain: {
     title: string;
     url: string;
     icon: LucideIcon;
+    requiresStaff?: boolean; // Si es true, solo se muestra para usuarios staff
     items?: {
       title: string;
       url: string;
@@ -15,19 +16,27 @@ interface Props {
 export const dataRoutes: Props = {
   navMain: [
     {
+      title: "Mi perfil",
+      icon: User,
+      url: "/profile",
+    },
+    {
       title: "Inicio",
       icon: HomeIcon,
       url: "/",
+      requiresStaff: true,
     },
     {
       title: "Colaboradores",
       url: "/colaboradores",
       icon: Users2,
+      requiresStaff: true,
     },
     {
       title: "Unidades de trabajo",
       url: "/agencias",
       icon: Briefcase,
+      requiresStaff: true,
       items: [
         {
           title: "Gestionar agencias",
@@ -39,11 +48,11 @@ export const dataRoutes: Props = {
         },
       ],
     },
-
     {
       title: "Gestión de grupos",
       url: "/grupos",
       icon: Group,
+      requiresStaff: true,
       items: [
         {
           title: "Grupos",
@@ -59,6 +68,7 @@ export const dataRoutes: Props = {
       title: "Aplicativos",
       url: "/aplicativos",
       icon: Group,
+      requiresStaff: true,
     },
   ],
 };

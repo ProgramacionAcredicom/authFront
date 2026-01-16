@@ -20,6 +20,9 @@ import logoAcredicom from "@/assets/img/Logo_acredicom_azul_horizontal.webp";
 import { TypographyMuted } from "@/components/ui/typography";
 import { useAuthStore } from "@/store/useAuth.store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { MFARequiredError } from "@/services/auth/auth.services";
+import { useQuery } from "@tanstack/react-query";
+import { getProfile } from "@/services/auth/auth.services";
 
 export const FormLogin = () => {
   const form = useForm<loginSchemaType>({
@@ -31,22 +34,46 @@ export const FormLogin = () => {
     mode: "onChange",
   });
   const loginAuth = useAuthStore((state) => state.login);
+  const setPendingCredentials = useAuthStore((state) => state.setPendingCredentials);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
+  // Obtener información del usuario para determinar redirección
+  const { data: user } = useQuery({
+    queryKey: ["info_user"],
+    queryFn: getProfile,
+    enabled: isAuthenticated, // Solo ejecutar si está autenticado
+    staleTime: 1000 * 60 * 60,
+  });
+
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/");
+    if (isAuthenticated && user) {
+      // Si el usuario es staff, redirigir a dashboard admin
+      // Si no es staff, redirigir a perfil
+      if (user.is_staff) {
+        navigate("/");
+      } else {
+        navigate("/profile");
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const onSubmit = async (data: loginSchemaType) => {
     try {
+      setErrorMessage("");
       await loginAuth(data);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      setErrorMessage(error.detail);
+      // Si es error de MFA requerido, guardar credenciales y redirigir
+      if (error instanceof MFARequiredError || error?.name === "MFARequiredError") {
+        setPendingCredentials(data.username, data.password);
+        navigate("/auth/mfa-verify");
+        return;
+      }
+      // Para otros errores, mostrar mensaje
+      setErrorMessage(error?.detail || error?.error || "Error al iniciar sesión");
     }
   };
 

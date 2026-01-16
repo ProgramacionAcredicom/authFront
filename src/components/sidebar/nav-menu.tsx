@@ -13,6 +13,8 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@radix-ui/r
 import { ChevronRight, type LucideIcon } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getProfile } from "@/services/auth/auth.services";
 
 interface NavMenuProps {
   label: string;
@@ -20,6 +22,7 @@ interface NavMenuProps {
     title: string;
     url: string;
     icon?: LucideIcon;
+    requiresStaff?: boolean;
     items?: {
       title: string;
       url: string;
@@ -30,6 +33,7 @@ type NavItem = {
   title: string;
   url: string;
   icon?: LucideIcon;
+  requiresStaff?: boolean;
   items?: NavItem[]; // Recursivo para menús anidados
 };
 const getNavLinkClass = (isActive: boolean): string =>
@@ -78,17 +82,37 @@ const SidebarMenuItemSimple = ({ item }: { item: NavItem }) => (
   </SidebarMenuItem>
 );
 
-export const NavMenu = ({ items, label }: NavMenuProps) => (
-  <SidebarGroup>
-    <SidebarGroupLabel>{label}</SidebarGroupLabel>
-    <SidebarMenu>
-      {items.map((item) =>
-        item.items?.length ? (
-          <SidebarMenuItemWithChildren key={item.title} item={item} />
-        ) : (
-          <SidebarMenuItemSimple key={item.title} item={item} />
-        ),
-      )}
-    </SidebarMenu>
-  </SidebarGroup>
-);
+export const NavMenu = ({ items, label }: NavMenuProps) => {
+  // Obtener información del usuario para filtrar menú
+  const { data: user } = useQuery({
+    queryKey: ["info_user"],
+    queryFn: getProfile,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const isStaff = user?.is_staff || false;
+
+  // Filtrar items basado en is_staff
+  const filteredItems = items.filter((item) => {
+    // Si requiere staff y el usuario no es staff, ocultar
+    if (item.requiresStaff && !isStaff) {
+      return false;
+    }
+    return true;
+  });
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarMenu>
+        {filteredItems.map((item) =>
+          item.items?.length ? (
+            <SidebarMenuItemWithChildren key={item.title} item={item} />
+          ) : (
+            <SidebarMenuItemSimple key={item.title} item={item} />
+          ),
+        )}
+      </SidebarMenu>
+    </SidebarGroup>
+  );
+};
