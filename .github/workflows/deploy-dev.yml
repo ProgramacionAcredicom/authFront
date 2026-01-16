@@ -50,6 +50,14 @@ jobs:
             pnpm build
             echo "✅ Aplicación compilada"
 
+            # Limpiar la carpeta de despliegue
+            rm -rf ${{ secrets.PA_DEPLOY_DIRECTORY }}/*
+            echo "✅ Carpeta de despliegue limpiada"
+
+            # Crear la carpeta de despliegue
+            mkdir -p ${{ secrets.PA_DEPLOY_DIRECTORY }}
+            echo "✅ Carpeta de despliegue creada"
+
             # Mover los archivos de la aplicación a la carpeta de Hostinger
             mv dist/* ${{ secrets.PA_DEPLOY_DIRECTORY }}
             echo "✅ Archivos de la aplicación copiados"
