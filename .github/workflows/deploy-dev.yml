@@ -1,0 +1,55 @@
+name: Redeploy to Hostinger
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: develop-environment
+    timeout-minutes: 15
+    steps:
+      - name: Deploy a Hostinger
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PA_SSH_HOST }}
+          username: ${{ secrets.PA_SSH_USERNAME }}
+          password: ${{ secrets.PA_SSH_PASSWORD }}
+          port: ${{ secrets.PA_SSH_PORT || 22 }}
+          timeout: 600s
+          script: |
+            set -e
+            set -o pipefail
+            
+            echo "🚀 Iniciando despliegue en Hostinger..."
+
+            cd ${{ secrets.PA_WORKING_DIRECTORY }}
+            echo "📁 Directorio de trabajo: $(pwd)"
+
+            # Verificar que pnpm está instalado
+            if ! command -v pnpm &> /dev/null; then
+              echo "❌ Error: pnpm no está instalado"
+              exit 1
+            fi
+
+            # Descargar cambios sin commit
+            git reset --hard origin/${GITHUB_REF_NAME}
+            git clean -fd
+
+            # Descargar la última versión de la aplicación
+            git pull origin ${GITHUB_REF_NAME}
+            echo "✅ Aplicación actualizada"
+
+            # Instalar dependencias
+            pnpm install
+            echo "✅ Dependencias instaladas"
+
+            # Build la aplicación
+            pnpm build
+            echo "✅ Aplicación compilada"
+
+            # Mover los archivos de la aplicación a la carpeta de Hostinger
+            mv dist/* ${{ secrets.PA_DEPLOY_DIRECTORY }}
+            echo "✅ Archivos de la aplicación copiados"
