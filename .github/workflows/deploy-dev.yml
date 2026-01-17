@@ -25,14 +25,52 @@ jobs:
             
             echo "🚀 Iniciando despliegue en Hostinger..."
 
+            # Cargar el perfil del shell para tener acceso al PATH completo
+            if [ -f ~/.bashrc ]; then
+              source ~/.bashrc
+            fi
+            if [ -f ~/.bash_profile ]; then
+              source ~/.bash_profile
+            fi
+            if [ -f ~/.profile ]; then
+              source ~/.profile
+            fi
+            if [ -f ~/.zshrc ]; then
+              source ~/.zshrc
+            fi
+
+            # Asegurar que el PATH incluye ubicaciones comunes de pnpm
+            export PATH="$HOME/.local/share/pnpm:$PATH"
+            export PATH="$HOME/.npm-global/bin:$PATH"
+            export PATH="$(npm config get prefix 2>/dev/null)/bin:$PATH" || true
+
             cd ${{ secrets.PA_WORKING_DIRECTORY }}
             echo "📁 Directorio de trabajo: $(pwd)"
 
             # Verificar que pnpm está instalado
-            if ! command -v pnpm &> /dev/null; then
-              echo "❌ Error: pnpm no está instalado"
+            echo "🔍 Buscando pnpm..."
+            echo "PATH actual: $PATH"
+            
+            # Intentar encontrar pnpm en varias ubicaciones
+            PNPM_CMD=""
+            if command -v pnpm &> /dev/null; then
+              PNPM_CMD="pnpm"
+            elif [ -f ~/.local/share/pnpm/pnpm ]; then
+              PNPM_CMD="~/.local/share/pnpm/pnpm"
+            elif [ -f "$(npm config get prefix 2>/dev/null)/bin/pnpm" ]; then
+              PNPM_CMD="$(npm config get prefix)/bin/pnpm"
+            elif [ -f /usr/local/bin/pnpm ]; then
+              PNPM_CMD="/usr/local/bin/pnpm"
+            fi
+
+            if [ -z "$PNPM_CMD" ]; then
+              echo "❌ Error: pnpm no está instalado o no se encuentra en el PATH"
+              echo "💡 Intenta ejecutar: npm install -g pnpm"
               exit 1
             fi
+
+            echo "✅ pnpm encontrado: $PNPM_CMD"
+            $PNPM_CMD -v
 
             # Descargar cambios sin commit
             git reset --hard origin/${GITHUB_REF_NAME}
@@ -43,11 +81,11 @@ jobs:
             echo "✅ Aplicación actualizada"
 
             # Instalar dependencias
-            pnpm install
+            $PNPM_CMD install
             echo "✅ Dependencias instaladas"
 
             # Build la aplicación
-            pnpm build
+            $PNPM_CMD build
             echo "✅ Aplicación compilada"
 
             # Limpiar la carpeta de despliegue
