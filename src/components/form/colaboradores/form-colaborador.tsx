@@ -29,7 +29,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GruposSeleccionados } from "./grupos-seleccionados";
 import { splitName } from "@/lib/splitName";
 import { logger } from "@/lib/logger";
+import { useNavigate } from "react-router-dom";
 export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { selectedGroups: GruposTypeModel[]; setSelectedGroups: (groups: GruposTypeModel[]) => void; user?: ColaboradorIDType }) => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
@@ -180,8 +182,13 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
         });
         toast.success("Colaborador actualizado correctamente");
       } else {
-        await createColaborador(formData, config);
+        const response = await createColaborador(formData, config);
         toast.success("Colaborador creado correctamente");
+        
+        // Redirigir a la página de edición con el ID del usuario creado
+        if (response?.id) {
+          navigate(`/colaboradores/editar/${response.id}`);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
