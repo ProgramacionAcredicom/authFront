@@ -175,12 +175,47 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
       const config = { headers: { "Content-Type": "multipart/form-data" } };
 
       if (isEdit) {
-        await mutation.mutateAsync({
+        const response = await mutation.mutateAsync({
           id: Number(user!.id),
           data: formData,
           config,
         });
         toast.success("Colaborador actualizado correctamente");
+        
+        // Mostrar información de webhooks si está disponible
+        if (response?.webhooks && Array.isArray(response.webhooks) && response.webhooks.length > 0) {
+          const successful = response.webhooks.filter((w: { ok: boolean }) => w.ok);
+          const failed = response.webhooks.filter((w: { ok: boolean }) => !w.ok);
+          
+          const WebhookList = () => (
+            <div className="mt-2 space-y-1">
+              {successful.map((w: { aplicativo_nombre: string }, index: number) => (
+                <div key={`success-${index}`} className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span>{w.aplicativo_nombre}</span>
+                </div>
+              ))}
+              {failed.map((w: { aplicativo_nombre: string }, index: number) => (
+                <div key={`failed-${index}`} className="flex items-center gap-2 text-sm">
+                  <X className="h-4 w-4 text-red-600" />
+                  <span>{w.aplicativo_nombre}</span>
+                </div>
+              ))}
+            </div>
+          );
+          
+          if (failed.length > 0) {
+            toast.error("Sincronización de webhooks", {
+              description: <WebhookList />,
+              duration: 5000,
+            });
+          } else {
+            toast.success("Sincronización de webhooks", {
+              description: <WebhookList />,
+              duration: 5000,
+            });
+          }
+        }
       } else {
         const response = await createColaborador(formData, config);
         toast.success("Colaborador creado correctamente");
