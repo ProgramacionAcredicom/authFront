@@ -1,14 +1,14 @@
-name: Deploy (Develop) to Hostinger
+name: Deploy (Production) to Hostinger
 
 on:
   push:
     branches:
-      - develop
+      - production
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: develop-environment
+    environment: production-environment
     timeout-minutes: 15
     steps:
       - name: Deploy a Hostinger
