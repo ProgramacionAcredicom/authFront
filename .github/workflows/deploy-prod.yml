@@ -21,6 +21,7 @@ jobs:
           password: ${{ secrets.PA_SSH_PASSWORD }}
           port: ${{ secrets.PA_SSH_PORT || 22 }}
           timeout: 600s
+          envs: BRANCH_NAME
           script: |
             set -e
             set -o pipefail
@@ -75,7 +76,7 @@ jobs:
             $PNPM_CMD -v
 
             # Obtener el nombre de la rama desde la variable de entorno
-            BRANCH_NAME="${BRANCH_NAME:-develop}"
+            BRANCH_NAME="${BRANCH_NAME:-production}"
             echo "🌿 Rama: $BRANCH_NAME"
 
             # Asegurar que tenemos la referencia remota actualizada
