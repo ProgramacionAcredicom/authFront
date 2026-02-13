@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getProfile, enableMFA, disableMFA, sendMFAEmailCode } from "@/services/auth/auth.services";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Shield, ShieldCheck, ShieldOff, QrCode, Key, Copy, Check, Smartphone, ExternalLink, Mail, RefreshCw } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -179,10 +179,14 @@ export const MFASettings = () => {
   // Obtener método MFA activo directamente del usuario
   const activeMFAMethod = user?.mfa_method || null;
 
+  // Ref para evitar reenvíos automáticos después del primer envío exitoso
+  const hasSentDisableCode = useRef(false);
+
   // Enviar código automáticamente cuando se abre el diálogo de deshabilitación
-  // y el método activo es email
+  // y el método activo es email (solo una vez por apertura del diálogo)
   useEffect(() => {
-    if (showDisableDialog && user?.otp_enabled && activeMFAMethod === 'email' && !isSendingDisableCode) {
+    if (showDisableDialog && user?.otp_enabled && activeMFAMethod === 'email' && !hasSentDisableCode.current) {
+      hasSentDisableCode.current = true;
       setIsSendingDisableCode(true);
       sendMFAEmailCode()
         .then(() => {
@@ -196,7 +200,12 @@ export const MFASettings = () => {
           setIsSendingDisableCode(false);
         });
     }
-  }, [showDisableDialog, user?.otp_enabled, activeMFAMethod, isSendingDisableCode]);
+
+    // Resetear cuando se cierre el diálogo para permitir envío en futuras aperturas
+    if (!showDisableDialog) {
+      hasSentDisableCode.current = false;
+    }
+  }, [showDisableDialog, user?.otp_enabled, activeMFAMethod]);
 
   const handleResendDisableCode = () => {
     resendDisableCodeMutation.mutate();
