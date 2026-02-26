@@ -1,5 +1,5 @@
 import { Title } from "@/components/title/Title";
-import PageContainer from "@/components/layout/page-container";
+import { PageShell } from "@/components/layout/page-shell";
 import ColaboradoresTablePage from "@/components/tables/colaboradores/page";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
@@ -15,7 +15,7 @@ export const ColaboradoresPage = () => {
           <Loader2 className="size-12 animate-spin" />
         </div>
       ) : (
-        <PageContainer scrollable={false}>
+        <PageShell>
           <div className="flex flex-1 flex-col space-y-4">
             <div className="flex items-start justify-between">
               <Title text="Colaboradores" />
@@ -27,7 +27,7 @@ export const ColaboradoresPage = () => {
             </div>
             <ColaboradoresTablePage />
           </div>
-        </PageContainer>
+        </PageShell>
       )}
     </>
   );

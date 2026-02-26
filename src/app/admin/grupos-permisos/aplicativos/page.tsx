@@ -1,5 +1,5 @@
 import { Title } from "@/components/title/Title";
-import PageContainer from "@/components/layout/page-container";
+import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import AplicativosTablePage from "@/components/tables/asignacionAplicativos/page";
@@ -24,7 +24,7 @@ export const AplicativosPage = () => {
       >
         <FormularioAplicativos form={form} onSubmit={onSubmit} />
       </AlertModal>
-      <PageContainer scrollable={false}>
+      <PageShell>
         <div className="flex flex-1 flex-col space-y-4">
           <div className="flex items-start justify-between">
             <Title text="Aplicativos" />
@@ -34,7 +34,7 @@ export const AplicativosPage = () => {
           </div>
           <AplicativosTablePage />
         </div>
-      </PageContainer>
+      </PageShell>
     </>
   );
 };

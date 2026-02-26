@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useState, useMemo, useEffect } from "react";
 import FormCrearGrupo from "@/components/form/formulario-crear-grupo";
 import { useFormGrupos } from "@/hooks/formularios/grupos/useFormGrupos";
-import { UserInGroup } from "@/interfaces/grupos.interfaces";
+import { GruposTypeModel, UserInGroup } from "@/interfaces/grupos.interfaces";
 import { SelectUsuariosGrupo } from "@/components/form/grupos/select-usuarios-grupo";
 import { Result as ColaboradorResult, UserType } from "@/interfaces/colaboradores.interfaces";
 import { PermisosByIDType } from "@/interfaces/permisos.interfaces";
@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 
 export const EditarGrupoPage = () => {
   const { grupo, permisosResponse } = useLoaderData() as {
-    grupo: any;
+    grupo: GruposTypeModel | null;
     permisosResponse: PermisosByIDType;
   };
   const navigate = useNavigate();
@@ -126,7 +126,7 @@ export const EditarGrupoPage = () => {
     <div className="flex min-h-screen flex-col">
       {/* Header con navegación */}
       <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex items-center gap-4 px-6 py-2">
+        <div className="flex w-full items-center gap-4 py-2">
           <Button
             size="icon"
             variant="ghost"
@@ -145,7 +145,7 @@ export const EditarGrupoPage = () => {
       </div>
 
       {/* Contenido principal */}
-      <div className="container mx-auto flex-1 px-6 py-2">
+      <div className="flex w-full flex-1 py-2">
         <div className="mx-auto max-w-6xl space-y-6">
           {/* Card: Información básica del grupo */}
           <Card className="gap-2">
@@ -199,7 +199,7 @@ export const EditarGrupoPage = () => {
 
       {/* Footer sticky con acciones */}
       <div className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-6 py-4">
+        <div className="w-full py-4">
           <div className="mx-auto flex max-w-6xl items-center justify-end gap-3">
             <Button
               type="button"
@@ -239,4 +239,3 @@ export const EditarGrupoPage = () => {
     </div>
   );
 };
-

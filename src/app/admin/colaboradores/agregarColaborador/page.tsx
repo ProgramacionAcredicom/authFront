@@ -5,13 +5,14 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
+import { PageShell } from "@/components/layout/page-shell";
 
 export const AgregarColaboradorPage = () => {
   const navigate = useNavigate();
   const [selectedGroups, setSelectedGroups] = useState<GruposTypeModel[]>([]);
 
   return (
-    <>
+    <PageShell>
       <div className="flex items-center">
         <Button size="icon" onClick={() => navigate(-1)} className="text-custom-gray cursor-pointer bg-transparent hover:bg-transparent">
           <ArrowLeft />
@@ -21,6 +22,6 @@ export const AgregarColaboradorPage = () => {
       <div className="flex flex-col gap-12 w-full">
         <FormColaborador selectedGroups={selectedGroups} setSelectedGroups={setSelectedGroups} />
       </div>
-    </>
+    </PageShell>
   );
 };

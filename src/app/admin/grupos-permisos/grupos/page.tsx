@@ -1,12 +1,10 @@
-import { Title } from "@/components/title/Title";
+import { PageShell } from "@/components/layout/page-shell";
 import TabGrupos from "./tab-grupos";
 
 export const GruposPage = () => {
   return (
-    <>
-      <Title text="Grupos" />
+    <PageShell>
       <TabGrupos />
-    </>
+    </PageShell>
   );
 };
-

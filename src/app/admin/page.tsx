@@ -8,15 +8,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageShell } from "@/components/layout/page-shell";
 
 export default function AdminPage() {
   const { queryStatistics } = useQueryStatistics();
   const { data, isLoading, isError, error, refetch } = queryStatistics;
 
   return (
-    <section className="animate-in fade-in-0 duration-500">
+    <PageShell>
       <Title />
-      <article className="mt-8 md:mt-10">
+      <article className="mt-6 md:mt-8">
         <div className="mb-6 flex items-center justify-between">
           <TypographyH2 text="Estadísticas" />
           {!isLoading && !isError && data && (
@@ -115,6 +116,6 @@ export default function AdminPage() {
           </div>
         )}
       </article>
-    </section>
+    </PageShell>
   );
 }
