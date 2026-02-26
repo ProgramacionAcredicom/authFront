@@ -20,7 +20,6 @@ export default function ProfilePage() {
         <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
           <ProfileInfo />
         </div>
-
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] 2xl:items-start">
           <div className="animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-100">
             <MFASettings />

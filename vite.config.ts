@@ -42,37 +42,8 @@ export default defineConfig(({ mode }) => {
       // Chunk splitting strategy
       rollupOptions: {
         output: {
-          // Separar vendor chunks inteligentemente
-          manualChunks: (id) => {
-            if (id.includes("node_modules")) {
-              if (id.includes("@tanstack")) {
-                return "vendor-tanstack";
-              }
-              if (id.includes("@uiw/react-codemirror") || id.includes("@codemirror")) {
-                return "vendor-codemirror";
-              }
-              if (id.includes("filepond") || id.includes("react-filepond")) {
-                return "vendor-filepond";
-              }
-              if (id.includes("react-icons") || id.includes("lucide-react")) {
-                return "vendor-icons";
-              }
-              if (id.includes("@radix-ui")) {
-                return "vendor-radix";
-              }
-              if (id.includes("react-router-dom") || id.includes("react-router")) {
-                return "vendor-router";
-              }
-              if (id.includes("react-dom") || id.includes("react")) {
-                return "vendor-react";
-              }
-              if (id.includes("axios")) {
-                return "vendor-axios";
-              }
-              // Vendors restantes caen acá
-              return "vendor";
-            }
-          },
+          // Dejar que Rollup resuelva chunks compartidos evita ciclos de
+          // importación entre vendors (p. ej. radix <-> react-hook-form).
           // Nombres de archivos con hash para cache busting
           chunkFileNames: "assets/js/[name]-[hash].js",
           entryFileNames: "assets/js/[name]-[hash].js",
