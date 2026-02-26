@@ -158,7 +158,17 @@ apiServices.interceptors.response.use(
       }
     }
 
-    // Para otros errores 401, hacer logout
+    // Si el request ya fue reintentado y sigue devolviendo 401, cerrar sesión para evitar estado zombie
+    if (error.response?.status === 401 && originalRequest._retry) {
+      logger.warn("Request reintentado sigue respondiendo 401, cerrando sesión", {
+        url: originalRequest.url,
+      });
+      authStore.logout();
+      window.location.href = "/auth/login";
+      return Promise.reject(error);
+    }
+
+    // Para otros errores 401 no recuperables, hacer logout
     if (error.response?.status === 401 && !isSessionExpired) {
       logger.warn("Error 401 no relacionado con sesión expirada, cerrando sesión");
       authStore.logout();

@@ -1,5 +1,5 @@
 import apiServices from "./configAxios";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosRequestConfig } from "axios";
 
 /**
  * Clase base para servicios API
@@ -152,4 +152,3 @@ export abstract class PaginatedService<T, TCreate = Partial<T>, TUpdate = Partia
     return allItems;
   }
 }
-

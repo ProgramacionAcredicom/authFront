@@ -5,7 +5,7 @@ import { Save, X, Loader2 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import FormCrearGrupo from "@/components/form/formulario-crear-grupo";
 import { useFormGrupos } from "@/hooks/formularios/grupos/useFormGrupos";
-import { UserInGroup } from "@/interfaces/grupos.interfaces";
+import { GruposTypeModel, UserInGroup } from "@/interfaces/grupos.interfaces";
 import { SelectUsuariosGrupo } from "@/components/form/grupos/select-usuarios-grupo";
 import { Result as ColaboradorResult, UserType } from "@/interfaces/colaboradores.interfaces";
 import { getGrupoById } from "@/services/grupos/grupos.services";
@@ -20,7 +20,7 @@ interface ModalEditarGrupoProps {
 }
 
 export const ModalEditarGrupo = ({ open, onOpenChange, grupoId }: ModalEditarGrupoProps) => {
-  const [grupo, setGrupo] = useState<any>(null);
+  const [grupo, setGrupo] = useState<GruposTypeModel | null>(null);
   const [permisosIds, setPermisosIds] = useState<number[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<ColaboradorResult[]>([]);

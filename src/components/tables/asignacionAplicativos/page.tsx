@@ -5,7 +5,7 @@ import { useQueryAplicativos } from "@/hooks/aplicativos/useQueryAplicativos";
 
 export default function AplicativosTablePage() {
   const { queryAplicativos } = useQueryAplicativos();
-  const [globalFilter, setGlobalFilter] = useQueryState("search", parseAsString.withDefault(""));
+  const [, setGlobalFilter] = useQueryState("search", parseAsString.withDefault(""));
   const data = queryAplicativos.data ?? [];
   return <AplicativosTable data={data} totalItems={data.length} columns={columnsAplicativos} onSearch={setGlobalFilter} />;
 }

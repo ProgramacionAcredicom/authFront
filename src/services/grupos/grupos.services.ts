@@ -13,7 +13,7 @@ export const getAllGrupos = async (params?: {
   ordering?: string;
   state?: boolean;
 }): Promise<GruposPaginationType> => {
-  const queryParams: Record<string, any> = {};
+  const queryParams: Record<string, unknown> = {};
   if (params?.page) {
     queryParams.page = params.page;
   }
@@ -78,10 +78,11 @@ export const getAllGruposSinPaginacion = async (): Promise<GruposTypeModel[]> =>
       }
       
       page++;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as { response?: { status?: number } };
       // Si recibimos un 404 u otro error, significa que no hay más páginas
       // Salir del bucle y devolver los grupos obtenidos hasta ahora
-      if (error?.response?.status === 404 || error?.response?.status === 400) {
+      if (apiError.response?.status === 404 || apiError.response?.status === 400) {
         break;
       }
       // Si es otro error, relanzarlo

@@ -7,7 +7,7 @@ export const getAllPermisos = async (
   { pageIndex, pageSize }: { pageIndex: number; pageSize: number },
   globalFilter?: string,
 ): Promise<PermisosModel> => {
-  const params: Record<string, any> = {
+  const params: Record<string, unknown> = {
     page: pageIndex + 1,
     page_size: pageSize,
   };

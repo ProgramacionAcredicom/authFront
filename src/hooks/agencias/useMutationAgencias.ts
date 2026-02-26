@@ -1,7 +1,7 @@
 import { createAgencia, updateAgencia } from "@/services/agencias/agencias.services";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AgenciasSchema } from "@/schemas/agencias/agencias.schemas";
-import { AgenciasModelTypes, Chif } from "@/interfaces/agencias.interfaces";
+import { AgenciasModelTypes } from "@/interfaces/agencias.interfaces";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { generateTempId } from "@/lib/id-generator";

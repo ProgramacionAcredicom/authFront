@@ -26,7 +26,7 @@ interface CardGruposProps {
   onEdit?: (grupoId: number) => void; // Mantener para compatibilidad, pero usar Link es preferido
 }
 
-export const CardGrupos = ({ grupo, onEdit }: CardGruposProps) => {
+export const CardGrupos = ({ grupo }: CardGruposProps) => {
   const { nombre, users = [], aplicativos = [], id, state, users_count } = grupo;
   // Usar users_count si está disponible (del endpoint optimizado), sino usar users.length como fallback
   const totalUsers = users_count ?? users.length;
@@ -207,4 +207,3 @@ export const CardGrupos = ({ grupo, onEdit }: CardGruposProps) => {
     </>
   );
 };
-

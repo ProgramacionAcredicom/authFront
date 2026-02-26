@@ -54,7 +54,7 @@ export const SelectUsuariosGrupo = ({ selectedUsers, setSelectedUsers, userIds, 
   }, [allUsers, filterAgencia, filterPuesto]);
 
   // Hook para manejar la selección de usuarios
-  const { isUserSelected, handleUserToggle, removeUser } = useUserSelection({
+  const { handleUserToggle, removeUser } = useUserSelection({
     selectedUsers,
     setSelectedUsers,
     userIds,
@@ -89,4 +89,3 @@ export const SelectUsuariosGrupo = ({ selectedUsers, setSelectedUsers, userIds, 
     </div>
   );
 };
-

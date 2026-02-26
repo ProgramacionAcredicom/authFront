@@ -20,7 +20,7 @@ export function UserListItem({ user, isSelected, onSelect, onMouseDown }: UserLi
   return (
     <CommandItem
       value={`${user.name}-${user.id}`}
-      onSelect={(value) => {
+      onSelect={() => {
         // En selección múltiple, no queremos cerrar el popover automáticamente
         // Llamar a onSelect que manejará la selección
         onSelect();
@@ -47,4 +47,3 @@ export function UserListItem({ user, isSelected, onSelect, onMouseDown }: UserLi
     </CommandItem>
   );
 }
-

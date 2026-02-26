@@ -13,18 +13,19 @@ import { getProfile } from "@/services/auth/auth.services";
 export const StaffRoute = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // Si no está autenticado, redirigir al login
-  if (!isAuthenticated) {
-    return <Navigate to="/auth/login" replace />;
-  }
-
   // Obtener información del usuario para verificar is_staff
   const { data: user, isLoading } = useQuery({
     queryKey: ["info_user"],
     queryFn: getProfile,
     staleTime: 1000 * 60 * 60, // 1 hora
     retry: false,
+    enabled: isAuthenticated,
   });
+
+  // Si no está autenticado, redirigir al login
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" replace />;
+  }
 
   // Mostrar loading mientras se obtiene la información
   if (isLoading) {

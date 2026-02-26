@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeftIcon, Key, Loader2, Clock, Mail, RefreshCw } from "lucide-react";
+import { AlertCircle, ArrowLeftIcon, Key, Loader2, Clock, RefreshCw } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import logoAcredicom from "@/assets/img/Logo_acredicom_azul_horizontal.webp";
 import { TypographyMuted } from "@/components/ui/typography";
@@ -22,6 +22,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getProfile, sendMFAEmailCode } from "@/services/auth/auth.services";
 import { toast } from "sonner";
+
+type ErrorWithResponseData = {
+  response?: {
+    data?: {
+      error?: string;
+      detail?: string;
+    };
+  };
+  message?: string;
+};
 
 export const FormMFAVerify = () => {
   const form = useForm<{ code: string }>({
@@ -50,8 +60,10 @@ export const FormMFAVerify = () => {
     onSuccess: () => {
       toast.success("Código de verificación reenviado. Revisa tu correo electrónico.");
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.error || error?.response?.data?.detail || error?.message || "Error al reenviar código";
+    onError: (error: unknown) => {
+      const apiError = error as ErrorWithResponseData;
+      const errorMessage =
+        apiError.response?.data?.error || apiError.response?.data?.detail || apiError.message || "Error al reenviar código";
       toast.error(errorMessage);
     },
   });
@@ -127,10 +139,14 @@ export const FormMFAVerify = () => {
       try {
         setErrorMessage("");
         await loginWithMFA(data.code);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const apiError = error as ErrorWithResponseData;
         // Verificar si el error es por credenciales expiradas
-        const errorMsg = error?.error || error?.detail || error?.message || "Código de verificación inválido. Por favor, intente nuevamente.";
+        const errorMsg =
+          (apiError as { error?: string; detail?: string }).error ||
+          (apiError as { error?: string; detail?: string }).detail ||
+          apiError.message ||
+          "Código de verificación inválido. Por favor, intente nuevamente.";
         
         // Detectar si es error de expiración
         if (errorMsg.includes("expirado") || errorMsg.includes("expired") || arePendingCredentialsExpired()) {

@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useState } from "react";
 
 interface AplicativoSessionsGroupProps {
-  aplicativoId: number;
   aplicativoNombre: string;
   sessions: Session[];
   onCloseSession: (sessionId: number) => void;
@@ -19,7 +18,6 @@ interface AplicativoSessionsGroupProps {
 }
 
 export const AplicativoSessionsGroup = ({
-  aplicativoId,
   aplicativoNombre,
   sessions,
   onCloseSession,
@@ -135,4 +133,3 @@ export const AplicativoSessionsGroup = ({
     </>
   );
 };
-

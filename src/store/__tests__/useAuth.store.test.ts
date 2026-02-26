@@ -2,6 +2,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useAuthStore } from "../useAuth.store";
 
+vi.mock("zustand/middleware", async () => {
+  const actual = await vi.importActual<typeof import("zustand/middleware")>("zustand/middleware");
+  return {
+    ...actual,
+    persist: ((stateCreator: unknown) =>
+      stateCreator as typeof import("zustand").StateCreator<unknown>) as typeof actual.persist,
+  };
+});
+
 // Mock de los servicios
 vi.mock("@/services/auth/auth.services", () => ({
   login: vi.fn(),
@@ -45,12 +54,16 @@ describe("useAuthStore", () => {
   beforeEach(async () => {
     // Resetear el store antes de cada test
     vi.clearAllMocks();
-    await useAuthStore.getState().logout();
+    await act(async () => {
+      useAuthStore.getState().logout();
+    });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Limpiar el store después de cada test
-    useAuthStore.getState().logout();
+    await act(async () => {
+      useAuthStore.getState().logout();
+    });
   });
 
   describe("login", () => {
@@ -90,7 +103,7 @@ describe("useAuthStore", () => {
             username: "testuser",
             password: "wrongpass",
           });
-        } catch (error) {
+        } catch {
           // Error esperado
         }
       });
@@ -146,4 +159,3 @@ describe("useAuthStore", () => {
     });
   });
 });
-

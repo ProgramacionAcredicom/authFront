@@ -1,21 +1,38 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv, PluginOption } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
   const isProduction = mode === "production";
 
+  const pluginsConfig: PluginOption[] = [react(), tailwindcss()];
+
+  if (process.env.ANALYZE) {
+    pluginsConfig.push(
+      visualizer({
+        open: true,
+        filename: "bundle-analysis.html",
+        gzipSize: true,
+        brotliSize: true,
+      }) as PluginOption
+    );
+  }
+
   return {
-    plugins: [react(), tailwindcss()],
-    base: process.env.VITE_BASE || "/",
+    plugins: pluginsConfig,
+    base: env.VITE_BASE || "/",
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
     },
     build: {
+      // Activar transpilation coherente
+      target: "es2022",
       // Minificación y optimización
       minify: "esbuild",
       // Source maps: ocultos en producción para seguridad
@@ -25,31 +42,34 @@ export default defineConfig(({ mode }) => {
       // Chunk splitting strategy
       rollupOptions: {
         output: {
-          // Separar vendor chunks
+          // Separar vendor chunks inteligentemente
           manualChunks: (id) => {
-            // Vendor chunks
             if (id.includes("node_modules")) {
-              // React y React DOM juntos
-              if (id.includes("react") || id.includes("react-dom")) {
-                return "vendor-react";
+              if (id.includes("@tanstack")) {
+                return "vendor-tanstack";
               }
-              // React Router
-              if (id.includes("react-router")) {
-                return "vendor-router";
+              if (id.includes("@uiw/react-codemirror") || id.includes("@codemirror")) {
+                return "vendor-codemirror";
               }
-              // TanStack Query
-              if (id.includes("@tanstack/react-query")) {
-                return "vendor-query";
+              if (id.includes("filepond") || id.includes("react-filepond")) {
+                return "vendor-filepond";
               }
-              // Radix UI components
+              if (id.includes("react-icons") || id.includes("lucide-react")) {
+                return "vendor-icons";
+              }
               if (id.includes("@radix-ui")) {
                 return "vendor-radix";
               }
-              // Axios
+              if (id.includes("react-router-dom") || id.includes("react-router")) {
+                return "vendor-router";
+              }
+              if (id.includes("react-dom") || id.includes("react")) {
+                return "vendor-react";
+              }
               if (id.includes("axios")) {
                 return "vendor-axios";
               }
-              // Otros vendors
+              // Vendors restantes caen acá
               return "vendor";
             }
           },

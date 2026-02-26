@@ -5,7 +5,6 @@ import { useQueryUserSessions } from "@/hooks/sessions/useQuerySessions";
 import { useMutationCloseSessions } from "@/hooks/sessions/useMutationSessions";
 import { AplicativoSessionsGroup } from "./aplicativo-sessions-group";
 import { useState } from "react";
-import { Session } from "@/interfaces/sessions.interfaces";
 
 interface ModalAdminSesionesProps {
   isOpen: boolean;
@@ -107,7 +106,6 @@ export const ModalAdminSesiones = ({ isOpen, onClose, userId, userName }: ModalA
                   return (
                     <AplicativoSessionsGroup
                       key={aplicativoId}
-                      aplicativoId={Number(aplicativoId)}
                       aplicativoNombre={aplicativo.nombre}
                       sessions={sessions}
                       onCloseSession={handleCloseSession}
@@ -125,4 +123,3 @@ export const ModalAdminSesiones = ({ isOpen, onClose, userId, userName }: ModalA
     </Dialog>
   );
 };
-

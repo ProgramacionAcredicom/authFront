@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import axios from "axios";
-import { login, logout, refreshToken, getProfile } from "../auth.services";
+import { login, refreshToken, getProfile } from "../auth.services";
 import { env } from "@/config/env";
 
 // Mock de axios
@@ -47,11 +47,10 @@ describe("Auth Services", () => {
       });
 
       expect(axios.post).toHaveBeenCalledWith(
-        `${env.VITE_HOST_AUTH_DEV}/auth/login/`,
+        `${env.VITE_HOST_AUTH_DEV}/api/v1/login/`,
         {
           username: "testuser",
           password: "testpass",
-          aplicativo_id: env.VITE_APLICATIVO_ID,
         },
       );
 
@@ -88,7 +87,7 @@ describe("Auth Services", () => {
       const result = await refreshToken({ refresh: "refresh-token" });
 
       expect(apiServices.default.post).toHaveBeenCalledWith(
-        `${env.VITE_HOST_AUTH_DEV}/auth/token/refresh/`,
+        `${env.VITE_HOST_AUTH_DEV}/api/v1/token/refresh/`,
         { refresh: "refresh-token" },
       );
 
@@ -113,12 +112,9 @@ describe("Auth Services", () => {
 
       const result = await getProfile();
 
-      expect(apiServices.default.post).toHaveBeenCalledWith("/auth/info/", {
-        aplicativo_id: env.VITE_APLICATIVO_ID,
-      });
+      expect(apiServices.default.post).toHaveBeenCalledWith("/api/v1/info/");
 
       expect(result).toEqual(mockResponse.data);
     });
   });
 });
-

@@ -1,7 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { CellActions } from "./cell-actions";
 import { Button } from "@/components/ui/button";
 import { X, Plus, Check } from "lucide-react";

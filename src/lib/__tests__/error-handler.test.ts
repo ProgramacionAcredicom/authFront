@@ -19,7 +19,7 @@ describe("handleApiError", () => {
     error.response = {
       status: 401,
       data: {},
-    } as any;
+    } as AxiosError["response"];
 
     const message = handleApiError(error);
     expect(message).toBe("No autorizado. Por favor, inicia sesión nuevamente.");
@@ -31,7 +31,7 @@ describe("handleApiError", () => {
     error.response = {
       status: 403,
       data: {},
-    } as any;
+    } as AxiosError["response"];
 
     const message = handleApiError(error);
     expect(message).toBe("No tienes permisos para realizar esta acción.");
@@ -43,7 +43,7 @@ describe("handleApiError", () => {
     error.response = {
       status: 404,
       data: {},
-    } as any;
+    } as AxiosError["response"];
 
     const message = handleApiError(error);
     expect(message).toBe("El recurso solicitado no fue encontrado.");
@@ -55,7 +55,7 @@ describe("handleApiError", () => {
     error.response = {
       status: 500,
       data: {},
-    } as any;
+    } as AxiosError["response"];
 
     const message = handleApiError(error);
     expect(message).toBe("Error interno del servidor. Por favor, intenta más tarde.");
@@ -69,7 +69,7 @@ describe("handleApiError", () => {
       data: {
         error: "Error personalizado del servidor",
       },
-    } as any;
+    } as AxiosError["response"];
 
     const message = handleApiError(error);
     expect(message).toBe("Error personalizado del servidor");
@@ -97,4 +97,3 @@ describe("handleApiError", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 });
-

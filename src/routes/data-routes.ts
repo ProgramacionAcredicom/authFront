@@ -1,4 +1,4 @@
-import { type LucideIcon, Building, Group, HomeIcon, Users2, Briefcase, User } from "lucide-react";
+import { type LucideIcon, Group, HomeIcon, Users2, Briefcase, User } from "lucide-react";
 
 interface Props {
   navMain: {

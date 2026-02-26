@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { NewUser } from "@/interfaces/statistics.interfaces";
 import { UserPlus, Building2, Briefcase } from "lucide-react";
-import { TypographyP, TypographySmall } from "@/components/ui/typography";
+import { TypographyP } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -153,4 +153,3 @@ export const NewUsersList = ({ users }: NewUsersListProps) => {
     </Card>
   );
 };
-

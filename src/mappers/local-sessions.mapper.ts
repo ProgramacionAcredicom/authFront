@@ -1,4 +1,4 @@
-import { SessionResponse, Session, SessionsByAplicativo, groupSessionsByAplicativo } from "@/interfaces/sessions.interfaces";
+import { SessionResponse, groupSessionsByAplicativo } from "@/interfaces/sessions.interfaces";
 
 export const localSessionsMapper = (data: SessionResponse): SessionResponse => {
   return {
@@ -11,4 +11,3 @@ export const localSessionsMapper = (data: SessionResponse): SessionResponse => {
 };
 
 export { groupSessionsByAplicativo };
-

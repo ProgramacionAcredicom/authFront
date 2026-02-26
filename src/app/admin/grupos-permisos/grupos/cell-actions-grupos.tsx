@@ -16,7 +16,7 @@ interface CellActionsGruposProps {
   onEdit?: (id: number) => void;
 }
 
-export const CellActionsGrupos = ({ id, onEdit }: CellActionsGruposProps) => {
+export const CellActionsGrupos = ({ id }: CellActionsGruposProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -44,4 +44,3 @@ export const CellActionsGrupos = ({ id, onEdit }: CellActionsGruposProps) => {
     </DropdownMenu>
   );
 };
-
