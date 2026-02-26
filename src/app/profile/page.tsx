@@ -2,6 +2,7 @@ import { Title } from "@/components/title/Title";
 import { ProfileInfo } from "@/components/profile/profile-info";
 import { MFASettings } from "@/components/profile/mfa-settings";
 import { ActiveSessions } from "@/components/profile/active-sessions";
+import { PageIntro, PageShell } from "@/components/layout/page-shell";
 
 /**
  * Página de perfil del usuario
@@ -9,16 +10,18 @@ import { ActiveSessions } from "@/components/profile/active-sessions";
  */
 export default function ProfilePage() {
   return (
-    <section className="animate-in fade-in-0 duration-500 p-4 sm:p-6 md:p-8">
-      <Title />
-      <article className="mt-4 sm:mt-6 md:mt-8 space-y-4 sm:space-y-6 md:space-y-8">
-        {/* Información del usuario con foto de perfil - Ocupa todo el ancho */}
+    <PageShell>
+      <PageIntro
+        title={<Title />}
+        description="Administra tu información personal, seguridad de acceso y sesiones activas desde una sola vista."
+      />
+
+      <article className="space-y-4 sm:space-y-6 md:space-y-8">
         <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
           <ProfileInfo />
         </div>
 
-        {/* MFA y Sesiones Activas - Grid adaptativo: 1 columna móvil, 2 columnas desktop */}
-        <div className="grid gap-4 sm:gap-6 md:gap-6 grid-cols-1 md:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] 2xl:items-start">
           <div className="animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-100">
             <MFASettings />
           </div>
@@ -27,6 +30,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </article>
-    </section>
+    </PageShell>
   );
 }

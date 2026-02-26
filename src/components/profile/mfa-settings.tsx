@@ -49,6 +49,16 @@ const authenticatorApps = [
   },
 ];
 
+type MFAApiError = {
+  response?: {
+    data?: {
+      error?: string;
+      detail?: string;
+    };
+  };
+  message?: string;
+};
+
 export const MFASettings = () => {
   const queryClient = useQueryClient();
   const [showDisableDialog, setShowDisableDialog] = useState(false);
@@ -95,8 +105,9 @@ export const MFASettings = () => {
         toast.success(`MFA por email habilitado correctamente. Los códigos se enviarán a ${data.email}`);
       }
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.error || error?.message || "Error al habilitar MFA";
+    onError: (error: unknown) => {
+      const apiError = error as MFAApiError;
+      const errorMessage = apiError.response?.data?.error || apiError.message || "Error al habilitar MFA";
       toast.error(errorMessage);
     },
   });
@@ -110,8 +121,9 @@ export const MFASettings = () => {
       setOtpCode("");
       setIsSendingDisableCode(false);
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.detail || error?.message || "Error al deshabilitar MFA";
+    onError: (error: unknown) => {
+      const apiError = error as MFAApiError;
+      const errorMessage = apiError.response?.data?.detail || apiError.message || "Error al deshabilitar MFA";
       toast.error(errorMessage);
     },
   });
@@ -121,8 +133,10 @@ export const MFASettings = () => {
     onSuccess: () => {
       toast.success("Código de verificación reenviado. Revisa tu correo electrónico.");
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.error || error?.response?.data?.detail || error?.message || "Error al reenviar código";
+    onError: (error: unknown) => {
+      const apiError = error as MFAApiError;
+      const errorMessage =
+        apiError.response?.data?.error || apiError.response?.data?.detail || apiError.message || "Error al reenviar código";
       toast.error(errorMessage);
     },
   });
@@ -192,8 +206,10 @@ export const MFASettings = () => {
         .then(() => {
           toast.success("Se ha enviado un código de verificación a tu correo electrónico.");
         })
-        .catch((error: any) => {
-          const errorMessage = error?.response?.data?.error || error?.response?.data?.detail || error?.message || "Error al enviar código";
+        .catch((error: unknown) => {
+          const apiError = error as MFAApiError;
+          const errorMessage =
+            apiError.response?.data?.error || apiError.response?.data?.detail || apiError.message || "Error al enviar código";
           toast.error(`No se pudo enviar el código: ${errorMessage}`);
         })
         .finally(() => {
@@ -215,8 +231,8 @@ export const MFASettings = () => {
 
   return (
     <>
-      <Card>
-        <CardHeader>
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader className="border-b border-border/40 pb-4">
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
             Autenticación de Dos Factores (MFA)
@@ -225,7 +241,7 @@ export const MFASettings = () => {
             Protege tu cuenta con autenticación de dos factores usando app autenticadora o correo electrónico
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-5">
           {/* Estado y acci?n principal */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">

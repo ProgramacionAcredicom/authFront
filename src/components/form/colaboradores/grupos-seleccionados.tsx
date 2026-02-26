@@ -11,7 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { g } from "node_modules/nuqs/dist/parsers-U3P6hK0x";
 
 interface GruposSeleccionadosProps {
   selectedGroups: GruposTypeModel[];
@@ -302,7 +301,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
                         <CommandItem
                           key={group.id}
                           value={`${group.nombre}-${aplicativo}`}
-                          onSelect={(value) => {
+                          onSelect={() => {
                             // Usar onSelect que es el evento principal de CommandItem
                             // Prevenir el comportamiento por defecto del Command
                             handleGroupToggle(group.id);
@@ -475,4 +474,3 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
     </div>
   );
 };
-

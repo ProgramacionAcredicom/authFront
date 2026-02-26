@@ -8,6 +8,7 @@ import { Check, ChevronsUpDown, Crown, Eye, EyeOff, IdCard, Loader2, LockKeyhole
 import { Button } from "@/components/ui/button";
 import { useRef, useState, useEffect } from "react";
 import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
+import { useInView } from "react-intersection-observer";
 import { useQueryRoles } from "@/hooks/roles/useQueryRoles";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
 import { toast } from "sonner";
@@ -30,12 +31,81 @@ import { GruposSeleccionados } from "./grupos-seleccionados";
 import { splitName } from "@/lib/splitName";
 import { logger } from "@/lib/logger";
 import { useNavigate } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { selectedGroups: GruposTypeModel[]; setSelectedGroups: (groups: GruposTypeModel[]) => void; user?: ColaboradorIDType }) => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
+  const [scrollContainerEl, setScrollContainerEl] = useState<HTMLDivElement | null>(null);
   const isEdit = Boolean(user);
+
+  const [activeTab, setActiveTab] = useState("personal");
+  const observerOptions = { threshold: 0.15, root: scrollContainerEl, rootMargin: "-8% 0px -65% 0px" } as const;
+  const { ref: personalRef, inView: personalInView } = useInView(observerOptions);
+  const { ref: trabajoRef, inView: trabajoInView } = useInView(observerOptions);
+  const { ref: credencialesRef, inView: credencialesInView } = useInView(observerOptions);
+  const { ref: gruposRef, inView: gruposInView } = useInView(observerOptions);
+
+  useEffect(() => {
+    if (!scrollContainerEl) return;
+
+    const sectionIds = ["personal", "trabajo", "credenciales", "grupos"] as const;
+    const activationOffset = 20;
+
+    const updateActiveTabFromScroll = () => {
+      const containerRect = scrollContainerEl.getBoundingClientRect();
+      let nextActive: (typeof sectionIds)[number] = "personal";
+
+      for (const id of sectionIds) {
+        const section = document.getElementById(id);
+        if (!section) continue;
+
+        const top = section.getBoundingClientRect().top - containerRect.top;
+        if (top <= activationOffset) {
+          nextActive = id;
+        } else {
+          break;
+        }
+      }
+
+      setActiveTab((prev) => (prev === nextActive ? prev : nextActive));
+    };
+
+    updateActiveTabFromScroll();
+    scrollContainerEl.addEventListener("scroll", updateActiveTabFromScroll, { passive: true });
+    window.addEventListener("resize", updateActiveTabFromScroll);
+
+    return () => {
+      scrollContainerEl.removeEventListener("scroll", updateActiveTabFromScroll);
+      window.removeEventListener("resize", updateActiveTabFromScroll);
+    };
+  }, [scrollContainerEl]);
+
+  useEffect(() => {
+    // Priorizar la sección más profunda visible para evitar que "Trabajo"
+    // se mantenga activo cuando ya se está viendo "Credenciales".
+    if (gruposInView) setActiveTab("grupos");
+    else if (credencialesInView) setActiveTab("credenciales");
+    else if (trabajoInView) setActiveTab("trabajo");
+    else if (personalInView) setActiveTab("personal");
+  }, [personalInView, trabajoInView, credencialesInView, gruposInView]);
+
+  const handleTabClick = (val: string) => {
+    setActiveTab(val);
+    const section = document.getElementById(val);
+    if (!section) return;
+
+    if (scrollContainerEl) {
+      const containerRect = scrollContainerEl.getBoundingClientRect();
+      const sectionRect = section.getBoundingClientRect();
+      const nextTop = scrollContainerEl.scrollTop + (sectionRect.top - containerRect.top) - 8;
+      scrollContainerEl.scrollTo({ top: Math.max(nextTop, 0), behavior: "smooth" });
+      return;
+    }
+
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const form = useForm<ColaboradorSchema>({
     resolver: zodResolver(colaboradorSchema),
@@ -50,7 +120,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
       confirm_password: isEdit ? "" : "",
       picture: user?.picture ?? null,
       grup: [],
-      user_type: isEdit 
+      user_type: isEdit
         ? (user?.user_type ? user.user_type.toUpperCase() : "")
         : "USUARIO",
       is_active: user?.is_active ?? true,
@@ -67,8 +137,8 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
   const { queryAgencias } = useQueryAgencias();
   const dataAgencias = queryAgencias.data;
   // Manejar tanto array directo como objeto con results
-  const areasData = Array.isArray(queryAreasSinPaginacion.data) 
-    ? queryAreasSinPaginacion.data 
+  const areasData = Array.isArray(queryAreasSinPaginacion.data)
+    ? queryAreasSinPaginacion.data
     : queryAreasSinPaginacion.data?.results || [];
   const { queryRoles } = useQueryRoles();
   const queryClient = useQueryClient();
@@ -78,6 +148,36 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
   const watchedName = form.watch("name");
   const userHasEditedEmail = useRef(false);
   const userHasEditedUsername = useRef(false);
+
+  // React Hook Form no actualiza defaultValues cuando cambia el prop `user`
+  useEffect(() => {
+    form.reset({
+      name: user?.name ?? "",
+      username: user?.username ?? "",
+      cif: user?.cif ?? "",
+      email: user?.email ?? "",
+      agency: user?.agency ? user.agency.id.toString() : "",
+      role: user?.role ? user.role.id.toString() : "",
+      password: "",
+      confirm_password: "",
+      picture: user?.picture ?? null,
+      grup: [],
+      user_type: isEdit
+        ? (user?.user_type ? user.user_type.toUpperCase() : "")
+        : "USUARIO",
+      is_active: user?.is_active ?? true,
+      is_staff: user?.is_staff ?? false,
+      is_superuser: user?.is_superuser ?? false,
+      dpi: user?.dpi ?? "",
+      area: user?.area?.id.toString() ?? "",
+      executive_number: user?.ejecutivo_principal ?? null,
+    });
+
+    userHasEditedEmail.current = false;
+    userHasEditedUsername.current = false;
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  }, [user?.id, isEdit, form, user]);
 
   // Normalizar caracteres especiales (quitar tildes y convertir ñ a n)
   const normalizeString = (str: string): string => {
@@ -131,7 +231,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
       toast.error("Debe seleccionar al menos un grupo");
       return;
     }
-    
+
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("dpi", data.dpi);
@@ -152,18 +252,18 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
     if (data.executive_number != null) {
       formData.append("executive_number", String(data.executive_number));
     }
-    
+
     // Contraseña (solo si aplica)
     if (!isEdit || (data.password && data.confirm_password)) {
       formData.append("password", data.password!);
       formData.append("confirm_password", data.confirm_password!);
     }
-    
+
     // Grupos
     selectedGroups.forEach((g) => {
       formData.append("grup", String(g.id));
     });
-    
+
     // Imagen
     if (data.picture instanceof File) {
       formData.append("picture", data.picture);
@@ -181,12 +281,12 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
           config,
         });
         toast.success("Colaborador actualizado correctamente");
-        
+
         // Mostrar información de webhooks si está disponible
         if (response?.webhooks && Array.isArray(response.webhooks) && response.webhooks.length > 0) {
           const successful = response.webhooks.filter((w: { ok: boolean }) => w.ok);
           const failed = response.webhooks.filter((w: { ok: boolean }) => !w.ok);
-          
+
           const WebhookList = () => (
             <div className="mt-2 space-y-1">
               {successful.map((w: { aplicativo_nombre: string }, index: number) => (
@@ -203,7 +303,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
               ))}
             </div>
           );
-          
+
           if (failed.length > 0) {
             toast.error("Sincronización de webhooks", {
               description: <WebhookList />,
@@ -219,7 +319,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
       } else {
         const response = await createColaborador(formData, config);
         toast.success("Colaborador creado correctamente");
-        
+
         // Redirigir a la página de edición con el ID del usuario creado
         if (response?.id) {
           navigate(`/colaboradores/editar/${response.id}`);
@@ -273,42 +373,33 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 px-4 md:px-6 lg:px-8">
+    <div className="flex h-full min-h-0 w-full flex-col gap-4 pb-2">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-6" encType="multipart/form-data">
-          <Card className="border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-none xl:mx-8 2xl:mx-12 border-0">
-            <CardContent className="pt-6">
-              {/* Indicador de progreso */}
-              {(() => {
-                const requiredFields = ['name', 'dpi', 'cif', 'username', 'email', 'agency', 'role', 'user_type'];
-                const filledFields = requiredFields.filter(field => {
-                  const value = form.watch(field as keyof ColaboradorSchema);
-                  return value !== '' && value !== null && value !== undefined;
-                });
-                const progress = Math.round((filledFields.length / requiredFields.length) * 100);
-                return (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <TypographyMuted text="Progreso del formulario" className="text-sm" />
-                      <TypographyMuted text={`${progress}%`} className="text-sm font-medium" />
-                    </div>
-                    <div className="h-2 w-full bg-neutral-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-custom-green to-custom-gray transition-all duration-300 rounded-full"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className="flex flex-col gap-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full min-h-0 flex-1 flex-col" encType="multipart/form-data">
+          <Card className="flex h-full min-h-0 flex-col border-neutral-200 bg-white shadow-none dark:border-neutral-800 dark:bg-neutral-950 py-0">
+            <div className="flex-shrink-0 border-b border-border/40 px-6 pt-6 pb-4">
+              <Tabs value={activeTab} onValueChange={handleTabClick} className="w-full">
+                <div className="overflow-x-auto">
+                  <TabsList className="inline-flex h-auto min-w-max gap-1 rounded-xl bg-muted p-1">
+                    <TabsTrigger value="personal" className="rounded-lg px-3 py-2">Personal</TabsTrigger>
+                    <TabsTrigger value="trabajo" className="rounded-lg px-3 py-2">Trabajo</TabsTrigger>
+                    <TabsTrigger value="credenciales" className="rounded-lg px-3 py-2">Credenciales</TabsTrigger>
+                    <TabsTrigger value="grupos" className="rounded-lg px-3 py-2">Grupos y permisos</TabsTrigger>
+                  </TabsList>
+                </div>
+              </Tabs>
+            </div>
+
+            <div ref={setScrollContainerEl} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+              <CardContent className="p-6 pb-6">
+                <div className="mt-0 flex flex-col gap-6">
                 {/* Información personal */}
-                <div className="flex flex-col gap-4">
+                <div id="personal" ref={personalRef} className="scroll-mt-2 flex flex-col gap-4 rounded-xl border border-border/60 bg-background p-4 md:p-5">
                   <div className="flex flex-col gap-2">
                     <TypographyH3 text="Información personal" className="text-custom-foreground text-lg font-semibold" />
                     <Separator />
                   </div>
-                  
+
                   {/* Layout horizontal: Foto a la izquierda, campos a la derecha */}
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
                     {/* Foto de perfil */}
@@ -336,10 +427,10 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                                       <AvatarFallback className="text-lg">
                                         {user?.name
                                           ? user.name
-                                              .split(" ")
-                                              .slice(0, 2)
-                                              .map((n) => n[0])
-                                              .join("")
+                                            .split(" ")
+                                            .slice(0, 2)
+                                            .map((n) => n[0])
+                                            .join("")
                                           : "AC"}
                                       </AvatarFallback>
                                     </Avatar>
@@ -347,11 +438,10 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                                   <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 flex gap-1.5 items-center z-10">
                                     <Badge
                                       variant={form.watch("is_active") ? "default" : "secondary"}
-                                      className={`cursor-pointer transition-all ${
-                                        form.watch("is_active")
-                                          ? "bg-green-500 text-white hover:bg-green-600 border-green-600"
-                                          : "bg-gray-400 text-white hover:bg-gray-500 border-gray-500"
-                                      }`}
+                                      className={`cursor-pointer transition-all ${form.watch("is_active")
+                                        ? "bg-green-500 text-white hover:bg-green-600 border-green-600"
+                                        : "bg-gray-400 text-white hover:bg-gray-500 border-gray-500"
+                                        }`}
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         const newStatus = !form.watch("is_active");
@@ -370,13 +460,12 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                                     </Badge>
                                     <Badge
                                       variant="secondary"
-                                      className={`transition-all flex items-center gap-1 ${
-                                        !form.watch("is_active")
-                                          ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-50"
-                                          : form.watch("is_staff")
-                                            ? "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/40 cursor-pointer font-medium"
-                                            : "bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-300 opacity-60 cursor-pointer"
-                                      }`}
+                                      className={`transition-all flex items-center gap-1 ${!form.watch("is_active")
+                                        ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-50"
+                                        : form.watch("is_staff")
+                                          ? "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/40 cursor-pointer font-medium"
+                                          : "bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-300 opacity-60 cursor-pointer"
+                                        }`}
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         // No permitir cambiar si está inactivo
@@ -394,13 +483,12 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                                     </Badge>
                                     <Badge
                                       variant="secondary"
-                                      className={`transition-all flex items-center gap-1 ${
-                                        !form.watch("is_active")
-                                          ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-50"
-                                          : form.watch("is_superuser")
-                                            ? "bg-yellow-300 text-yellow-900 border-yellow-400 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800 hover:bg-yellow-200 dark:hover:bg-yellow-900/40 cursor-pointer font-medium"
-                                            : "bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-300 opacity-60 cursor-pointer"
-                                      }`}
+                                      className={`transition-all flex items-center gap-1 ${!form.watch("is_active")
+                                        ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-50"
+                                        : form.watch("is_superuser")
+                                          ? "bg-yellow-300 text-yellow-900 border-yellow-400 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800 hover:bg-yellow-200 dark:hover:bg-yellow-900/40 cursor-pointer font-medium"
+                                          : "bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-300 opacity-60 cursor-pointer"
+                                        }`}
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         // No permitir cambiar si está inactivo
@@ -513,7 +601,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                 </div>
 
                 {/* Unidad de trabajo */}
-                <div className="flex flex-col gap-4">
+                <div id="trabajo" ref={trabajoRef} className="scroll-mt-2 flex flex-col gap-4 rounded-xl border border-border/60 bg-background p-4 md:p-5">
                   <div className="flex flex-col gap-2">
                     <TypographyH3 text="Unidad de trabajo" className="text-custom-foreground text-lg font-semibold" />
                     <Separator />
@@ -525,43 +613,43 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>Agencia <span className="text-red-500">*</span></FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            {field.value ? dataAgencias?.find((a) => a.id.toString() === field.value)?.name : "Buscar y seleccionar una agencia"}
-                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-
-                      <PopoverContent className="w-full p-0" side="bottom" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar agencia…" className="h-9" />
-                          <CommandList>
-                            <CommandEmpty>Sin resultados.</CommandEmpty>
-                            <CommandGroup>
-                              {dataAgencias?.map((agencia) => (
-                                <CommandItem
-                                  key={agencia.id}
-                                  value={agencia.name.toLowerCase()}
-                                  onSelect={() => {
-                                    form.setValue("agency", agencia.id.toString());
-                                  }}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal", !field.value && "text-muted-foreground")}
                                 >
-                                  {agencia.name}
-                                  <Check className={cn("ml-auto size-4", agencia.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                                  {field.value ? dataAgencias?.find((a) => a.id.toString() === field.value)?.name : "Buscar y seleccionar una agencia"}
+                                  <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+
+                            <PopoverContent className="w-full p-0" side="bottom" align="start">
+                              <Command>
+                                <CommandInput placeholder="Buscar agencia…" className="h-9" />
+                                <CommandList>
+                                  <CommandEmpty>Sin resultados.</CommandEmpty>
+                                  <CommandGroup>
+                                    {dataAgencias?.map((agencia) => (
+                                      <CommandItem
+                                        key={agencia.id}
+                                        value={agencia.name.toLowerCase()}
+                                        onSelect={() => {
+                                          form.setValue("agency", agencia.id.toString());
+                                        }}
+                                      >
+                                        {agencia.name}
+                                        <Check className={cn("ml-auto size-4", agencia.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -572,47 +660,47 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel>Area</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal min-w-0", !field.value && "text-muted-foreground")}
-                          >
-                            <span className="min-w-0 truncate text-left">{field.value ? areasData.find((a) => a.id.toString() === field.value)?.name : "Buscar y seleccionar un área (opcional)"}</span>
-                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-
-                      <PopoverContent className="w-full p-0" side="bottom" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar area…" className="h-9" />
-                          <CommandList>
-                            <CommandEmpty>Sin resultados.</CommandEmpty>
-                            <CommandGroup>
-                              <CommandItem value="" onSelect={() => form.setValue("area", "")}>
-                                Sin Area
-                                <Check className={cn("ml-auto size-4", field.value === "" ? "opacity-100" : "opacity-0")} />
-                              </CommandItem>
-                              {areasData.map((area: { id: number; name: string }) => (
-                                <CommandItem
-                                  key={area.id}
-                                  value={area.id.toString()}
-                                  onSelect={() => {
-                                    form.setValue("area", area.id.toString());
-                                  }}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal min-w-0", !field.value && "text-muted-foreground")}
                                 >
-                                  {area.name}
-                                  <Check className={cn("ml-auto size-4", area.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                                  <span className="min-w-0 truncate text-left">{field.value ? areasData.find((a) => a.id.toString() === field.value)?.name : "Buscar y seleccionar un área (opcional)"}</span>
+                                  <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+
+                            <PopoverContent className="w-full p-0" side="bottom" align="start">
+                              <Command>
+                                <CommandInput placeholder="Buscar area…" className="h-9" />
+                                <CommandList>
+                                  <CommandEmpty>Sin resultados.</CommandEmpty>
+                                  <CommandGroup>
+                                    <CommandItem value="" onSelect={() => form.setValue("area", "")}>
+                                      Sin Area
+                                      <Check className={cn("ml-auto size-4", field.value === "" ? "opacity-100" : "opacity-0")} />
+                                    </CommandItem>
+                                    {areasData.map((area: { id: number; name: string }) => (
+                                      <CommandItem
+                                        key={area.id}
+                                        value={area.id.toString()}
+                                        onSelect={() => {
+                                          form.setValue("area", area.id.toString());
+                                        }}
+                                      >
+                                        {area.name}
+                                        <Check className={cn("ml-auto size-4", area.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -623,43 +711,43 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                       render={({ field }) => (
                         <FormItem className="flex flex-col lg:col-span-2">
                           <FormLabel>Puesto <span className="text-red-500">*</span></FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal min-w-0", !field.value && "text-muted-foreground")}
-                          >
-                            <span className="min-w-0 truncate text-left">{field.value ? queryRoles.data?.find((r) => r.id.toString() === field.value)?.role : "Buscar y seleccionar un puesto"}</span>
-                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-
-                      <PopoverContent className="w-full p-0" side="bottom" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar puesto…" className="h-9" />
-                          <CommandList>
-                            <CommandEmpty>Sin resultados.</CommandEmpty>
-                            <CommandGroup>
-                              {queryRoles.data?.map((role) => (
-                                <CommandItem
-                                  key={role.id}
-                                  value={role.role}
-                                  onSelect={() => {
-                                    form.setValue("role", role.id.toString());
-                                  }}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal min-w-0", !field.value && "text-muted-foreground")}
                                 >
-                                  {role.role}
-                                  <Check className={cn("ml-auto size-4", role.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                                  <span className="min-w-0 truncate text-left">{field.value ? queryRoles.data?.find((r) => r.id.toString() === field.value)?.role : "Buscar y seleccionar un puesto"}</span>
+                                  <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+
+                            <PopoverContent className="w-full p-0" side="bottom" align="start">
+                              <Command>
+                                <CommandInput placeholder="Buscar puesto…" className="h-9" />
+                                <CommandList>
+                                  <CommandEmpty>Sin resultados.</CommandEmpty>
+                                  <CommandGroup>
+                                    {queryRoles.data?.map((role) => (
+                                      <CommandItem
+                                        key={role.id}
+                                        value={role.role}
+                                        onSelect={() => {
+                                          form.setValue("role", role.id.toString());
+                                        }}
+                                      >
+                                        {role.role}
+                                        <Check className={cn("ml-auto size-4", role.id.toString() === field.value ? "opacity-100" : "opacity-0")} />
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -668,7 +756,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                 </div>
 
                 {/* Credenciales */}
-                <div className="flex flex-col gap-4 mt-6">
+                <div id="credenciales" ref={credencialesRef} className="scroll-mt-2 flex flex-col gap-4 rounded-xl border border-border/60 bg-background p-4 md:p-5">
                   <div className="flex flex-col gap-2">
                     <TypographyH3 text="Credenciales" className="text-custom-foreground text-lg font-semibold" />
                     <Separator />
@@ -680,43 +768,43 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel>Tipo de usuario <span className="text-red-500">*</span></FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal min-w-0", !field.value && "text-muted-foreground")}
-                          >
-                            <span className="min-w-0 truncate text-left">{field.value ? field.value : "Seleccionar tipo de usuario"}</span>
-                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-
-                      <PopoverContent className="w-full p-0" side="bottom" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar tipo de usuario…" className="h-9" />
-                          <CommandList>
-                            <CommandEmpty>Sin resultados.</CommandEmpty>
-                            <CommandGroup>
-                              {Object.values(UserType).map((role) => (
-                                <CommandItem
-                                  key={role}
-                                  value={role}
-                                  onSelect={() => {
-                                    form.setValue("user_type", role);
-                                  }}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal min-w-0", !field.value && "text-muted-foreground")}
                                 >
-                                  {role}
-                                  <Check className={cn("ml-auto size-4", role === field.value ? "opacity-100" : "opacity-0")} />
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                                  <span className="min-w-0 truncate text-left">{field.value ? field.value : "Seleccionar tipo de usuario"}</span>
+                                  <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+
+                            <PopoverContent className="w-full p-0" side="bottom" align="start">
+                              <Command>
+                                <CommandInput placeholder="Buscar tipo de usuario…" className="h-9" />
+                                <CommandList>
+                                  <CommandEmpty>Sin resultados.</CommandEmpty>
+                                  <CommandGroup>
+                                    {Object.values(UserType).map((role) => (
+                                      <CommandItem
+                                        key={role}
+                                        value={role}
+                                        onSelect={() => {
+                                          form.setValue("user_type", role);
+                                        }}
+                                      >
+                                        {role}
+                                        <Check className={cn("ml-auto size-4", role === field.value ? "opacity-100" : "opacity-0")} />
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -727,18 +815,18 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Correo <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        startContent={<Mail />}
-                        onChange={(e) => {
-                          if (!isEdit) {
-                            userHasEditedEmail.current = true;
-                          }
-                          field.onChange(e);
-                        }}
-                      />
-                    </FormControl>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              startContent={<Mail />}
+                              onChange={(e) => {
+                                if (!isEdit) {
+                                  userHasEditedEmail.current = true;
+                                }
+                                field.onChange(e);
+                              }}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -749,18 +837,18 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Usuario <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        startContent={<UserCircle />}
-                        onChange={(e) => {
-                          if (!isEdit) {
-                            userHasEditedUsername.current = true;
-                          }
-                          field.onChange(e);
-                        }}
-                      />
-                    </FormControl>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              startContent={<UserCircle />}
+                              onChange={(e) => {
+                                if (!isEdit) {
+                                  userHasEditedUsername.current = true;
+                                }
+                                field.onChange(e);
+                              }}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -771,9 +859,9 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormLabel>Numero de ejecutivo</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value ?? ""} startContent={<IdCard />} className="w-full" />
-                    </FormControl>
+                          <FormControl>
+                            <Input {...field} value={field.value ?? ""} startContent={<IdCard />} className="w-full" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -838,7 +926,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                   <Separator className="mt-6" />
                   {isEdit && (
                     <div>
-                      <TypographyMuted text="Por motivos de seguridad, se recomienda enviar una contraseña aleatoria al correo del usuario."/>
+                      <TypographyMuted text="Por motivos de seguridad, se recomienda enviar una contraseña aleatoria al correo del usuario." />
                       <Button
                         type="button"
                         onClick={handleGeneratePassword}
@@ -864,28 +952,30 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                 </div>
 
                 {/* Grupos Seleccionados */}
-                <GruposSeleccionados 
-                  selectedGroups={selectedGroups} 
-                  setSelectedGroups={setSelectedGroups}
-                  groupIds={user?.grupos?.map((g) => g.id) ?? []}
-                />
-
-                {/* Botones de acción */}
-                <div className="flex flex-col gap-4 pt-4">
-                  <Separator />
-                  <div className="flex justify-end gap-3">
-                    <Button type="button" size="sm" variant="outline" onClick={() => form.reset()}>
-                      <X />
-                      Cancelar
-                    </Button>
-                    <Button type="submit" size="sm" variant="custom2" disabled={form.formState.isSubmitting}>
-                      {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
-                      Guardar
-                    </Button>
-                  </div>
+                <div id="grupos" ref={gruposRef} className="scroll-mt-2 rounded-xl border border-border/60 bg-background p-4 md:p-5">
+                  <GruposSeleccionados
+                    selectedGroups={selectedGroups}
+                    setSelectedGroups={setSelectedGroups}
+                    groupIds={user?.grupos?.map((g) => g.id) ?? []}
+                  />
                 </div>
+                </div>
+              </CardContent>
+            </div>
+
+            {/* Botones de acción */}
+            <div className="flex-shrink-0 border-t border-border/40 bg-white/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:bg-neutral-950/95 dark:supports-[backdrop-filter]:bg-neutral-950/80">
+              <div className="flex justify-end gap-3">
+                <Button type="button" size="sm" variant="outline" onClick={() => form.reset()}>
+                  <X />
+                  Cancelar
+                </Button>
+                <Button type="submit" size="sm" variant="custom2" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
+                  Guardar
+                </Button>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </form>
       </Form>

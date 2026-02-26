@@ -148,8 +148,15 @@ export const adminRoutes: RouteObject[] = [
         path: "editar/:id",
         element: <EditarColaboradorPage />,
         loader: ColaboradorLoader,
+        shouldRevalidate: ({ currentUrl, nextUrl, currentParams, nextParams }) => {
+          // Evita recargar el colaborador cuando solo cambia el query param `q`
+          // usado por el buscador lateral dentro del editor.
+          const sameUser = currentParams.id === nextParams.id;
+          const samePath = currentUrl.pathname === nextUrl.pathname;
+          if (sameUser && samePath) return false;
+          return true;
+        },
       },
     ],
   },
 ];
-

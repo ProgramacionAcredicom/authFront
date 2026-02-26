@@ -8,6 +8,15 @@ import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { splitName } from "@/lib/splitName";
 
+type ProfilePictureUploadError = {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+  message?: string;
+};
+
 /**
  * Componente para actualizar la foto de perfil del usuario
  */
@@ -25,7 +34,7 @@ export const ProfilePictureUpload = () => {
 
   const updateMutation = useMutation({
     mutationFn: (file: File) => updateProfilePicture(file),
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidar query para refrescar datos del usuario
       queryClient.invalidateQueries({ queryKey: ["info_user"] });
       toast.success("Foto de perfil actualizada correctamente");
@@ -35,8 +44,9 @@ export const ProfilePictureUpload = () => {
         fileInputRef.current.value = "";
       }
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.error || error?.message || "Error al actualizar la foto de perfil";
+    onError: (error: unknown) => {
+      const apiError = error as ProfilePictureUploadError;
+      const errorMessage = apiError.response?.data?.error || apiError.message || "Error al actualizar la foto de perfil";
       toast.error(errorMessage);
     },
   });

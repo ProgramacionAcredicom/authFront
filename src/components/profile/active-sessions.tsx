@@ -26,6 +26,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+type SessionActionError = {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+  message?: string;
+};
+
 /**
  * Componente para mostrar y gestionar las sesiones activas del usuario
  */
@@ -49,8 +58,9 @@ export const ActiveSessions = () => {
       setShowCloseDialog(false);
       setSelectedSessionId(null);
     },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.error || error?.message || "Error al cerrar la sesión";
+    onError: (error: unknown) => {
+      const apiError = error as SessionActionError;
+      const errorMessage = apiError.response?.data?.error || apiError.message || "Error al cerrar la sesión";
       toast.error(errorMessage);
     },
   });
@@ -115,11 +125,11 @@ export const ActiveSessions = () => {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader className="border-b border-border/40 pb-4">
           <Skeleton className="h-6 w-48" />
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-5">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="space-y-2">
               <Skeleton className="h-20 w-full" />
