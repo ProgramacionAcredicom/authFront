@@ -60,6 +60,32 @@ export const closeSessions = async (sessionIds: number[]): Promise<CloseSessions
 };
 
 /**
+ * Cierra sesiones de forma administrativa.
+ * Requiere permisos de staff en backend.
+ */
+export const closeSessionsAdmin = async (sessionIds: number[]): Promise<CloseSessionsResponse> => {
+  if (!sessionIds || sessionIds.length === 0) {
+    throw new Error("No session IDs provided");
+  }
+
+  if (!sessionIds.every(id => Number.isInteger(id) && id > 0)) {
+    throw new Error("Invalid session IDs: all IDs must be positive integers");
+  }
+
+  const body: CloseSessionsRequest = {
+    sessions: sessionIds,
+  };
+
+  const res = await apiServices.patch<CloseSessionsResponse>("/auth/sessions/", body);
+
+  if (!res.data || !res.data.message) {
+    throw new Error("Invalid response format from server");
+  }
+
+  return res.data;
+};
+
+/**
  * Obtiene las sesiones activas del usuario autenticado
  * @returns Lista de sesiones activas del usuario
  */

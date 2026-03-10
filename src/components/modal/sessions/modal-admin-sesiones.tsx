@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryUserSessions } from "@/hooks/sessions/useQuerySessions";
-import { useMutationCloseSessions } from "@/hooks/sessions/useMutationSessions";
+import { useMutationCloseSessionsAdmin } from "@/hooks/sessions/useMutationSessions";
 import { AplicativoSessionsGroup } from "./aplicativo-sessions-group";
 import { useState } from "react";
 
@@ -15,7 +15,7 @@ interface ModalAdminSesionesProps {
 
 export const ModalAdminSesiones = ({ isOpen, onClose, userId, userName }: ModalAdminSesionesProps) => {
   const { groupedSessions, isLoading, error } = useQueryUserSessions(userId, isOpen);
-  const { mutation, isLoading: isClosing } = useMutationCloseSessions();
+  const { mutation, isLoading: isClosing } = useMutationCloseSessionsAdmin();
   const [loadingSessionIds, setLoadingSessionIds] = useState<Set<number>>(new Set());
   const [loadingGroupIds, setLoadingGroupIds] = useState<Set<number>>(new Set());
 
