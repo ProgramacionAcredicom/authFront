@@ -1,9 +1,73 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import { DayPicker, type DropdownProps } from "react-day-picker"
+import { es } from "date-fns/locale"
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+
+function CalendarDropdown({
+  value,
+  onChange,
+  children,
+  className,
+  style,
+  ...props
+}: DropdownProps) {
+  const options = React.Children.toArray(children)
+    .filter(React.isValidElement)
+    .map((child) => ({
+      value: String(child.props.value),
+      label: child.props.children,
+    }))
+
+  const selectedValue = value === undefined ? undefined : String(value)
+  const triggerClassName =
+    props["aria-label"]?.toLowerCase().includes("year") ||
+    props["aria-label"]?.toLowerCase().includes("año")
+      ? "w-[110px]"
+      : "w-[140px]"
+
+  return (
+    <div className={className} style={style}>
+      <span className="sr-only">{props["aria-label"]}</span>
+      <Select
+        value={selectedValue}
+        onValueChange={(nextValue) =>
+          onChange?.({
+            target: { value: nextValue } as EventTarget & HTMLSelectElement,
+            currentTarget: { value: nextValue } as EventTarget & HTMLSelectElement,
+          } as React.ChangeEvent<HTMLSelectElement>)
+        }
+      >
+        <SelectTrigger
+          aria-label={props["aria-label"]}
+          size="sm"
+          className={cn(
+            "h-8 rounded-md border border-input bg-background px-2 text-sm shadow-none focus:ring-1 focus:ring-ring",
+            triggerClassName
+          )}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="z-[80] max-h-80" position="popper">
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
 
 function Calendar({
   className,
@@ -11,14 +75,21 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
+  const currentYear = new Date().getFullYear()
+
   return (
     <DayPicker
+      locale={es}
       showOutsideDays={showOutsideDays}
+      captionLayout="dropdown"
+      fromYear={2000}
+      toYear={currentYear + 20}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row gap-2",
         month: "flex flex-col gap-4",
         caption: "flex justify-center pt-1 relative items-center w-full",
+        caption_dropdowns: "flex w-full items-center justify-center gap-2 px-1",
         caption_label: "text-sm font-medium",
         nav: "flex items-center gap-1",
         nav_button: cn(
@@ -27,6 +98,11 @@ function Calendar({
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
+        dropdown: "hidden",
+        dropdown_month: "flex",
+        dropdown_year: "flex",
+        dropdown_icon: "hidden",
+        vhidden: "sr-only",
         table: "w-full border-collapse space-x-1",
         head_row: "flex",
         head_cell:
@@ -58,6 +134,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        Dropdown: CalendarDropdown,
         IconLeft: ({ className, ...props }) => (
           <ChevronLeft className={cn("size-4", className)} {...props} />
         ),

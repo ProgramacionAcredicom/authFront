@@ -8,11 +8,19 @@ interface FilterParams {
   agencia?: string;
 }
 
+interface UseInfiniteColaboradoresOptions {
+  enabled?: boolean;
+}
+
 /**
  * Query infinita para obtener colaboradores con scroll infinito
  * staleTime: 2 minutos (datos que pueden cambiar más frecuentemente)
  */
-export const useInfiniteColaboradores = (globalFilter: string = "", filters?: FilterParams) => {
+export const useInfiniteColaboradores = (
+  globalFilter: string = "",
+  filters?: FilterParams,
+  options?: UseInfiniteColaboradoresOptions,
+) => {
   // Construir el filtro combinado
   const searchFilter = globalFilter || "";
   
@@ -20,6 +28,7 @@ export const useInfiniteColaboradores = (globalFilter: string = "", filters?: Fi
     queryKey: ["colaboradores-infinite", globalFilter, filters],
     queryFn: ({ pageParam = 1 }) => getAllColaboradores({ pageIndex: pageParam, pageSize: PAGINATION.DEFAULT_PAGE_SIZE }, searchFilter),
     initialPageParam: 1,
+    enabled: options?.enabled ?? true,
     getNextPageParam: (lastPage) => {
       const nextPage = lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined;
       return nextPage;
