@@ -1,4 +1,4 @@
-import { type LucideIcon, Group, HomeIcon, Users2, Briefcase, User } from "lucide-react";
+import { type LucideIcon, Group, HomeIcon, KeyRound, Users2, Briefcase, User } from "lucide-react";
 
 interface Props {
   navMain: {
@@ -24,6 +24,12 @@ export const dataRoutes: Props = {
       title: "Inicio",
       icon: HomeIcon,
       url: "/",
+      requiresStaff: true,
+    },
+    {
+      title: "Mi Acceso",
+      icon: KeyRound,
+      url: "/mi-acceso",
       requiresStaff: true,
     },
     {

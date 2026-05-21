@@ -8,6 +8,7 @@ import { GrupoLoader, EditarGrupoLoader } from "@/app/admin/grupos-permisos/grup
 
 // Lazy load de páginas admin
 const AdminPage = lazy(() => import("@/app/admin/page").then((m) => ({ default: m.default })));
+const MiAccesoPage = lazy(() => import("@/app/admin/mi-acceso/page").then((m) => ({ default: m.default })));
 const ColaboradoresPage = lazy(() => import("@/app/admin/colaboradores/page").then((m) => ({ default: m.ColaboradoresPage })));
 const AgenciasPage = lazy(() => import("@/app/admin/agencias/page").then((m) => ({ default: m.AgenciasPage })));
 const AreasPage = lazy(() => import("@/app/admin/areas/page").then((m) => ({ default: m.default })));
@@ -34,6 +35,16 @@ export const adminRoutes: RouteObject[] = [
       {
         index: true,
         element: <AdminPage />,
+      },
+    ],
+  },
+  {
+    path: "mi-acceso",
+    element: <LayoutAdmin />,
+    children: [
+      {
+        index: true,
+        element: <MiAccesoPage />,
       },
     ],
   },
