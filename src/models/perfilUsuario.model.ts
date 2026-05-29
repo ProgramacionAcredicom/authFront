@@ -19,6 +19,7 @@ export class PerilUsuarioModel {
   is_superuser: boolean;
   otp_enabled: boolean;
   mfa_method?: 'totp' | 'email' | null;
+  oauth_perms: string[];
   constructor(perfilUsuario: UsuarioType) {
     this.id = perfilUsuario.id;
     this.dpi = perfilUsuario.dpi;
@@ -34,6 +35,7 @@ export class PerilUsuarioModel {
     this.is_superuser = perfilUsuario.is_superuser;
     this.otp_enabled = perfilUsuario.otp_enabled;
     this.mfa_method = perfilUsuario.mfa_method;
+    this.oauth_perms = perfilUsuario.oauth_perms ?? [];
     this.picture = perfilUsuario.picture;
     this.area = perfilUsuario.area;
     this.grupos = perfilUsuario.grupos;

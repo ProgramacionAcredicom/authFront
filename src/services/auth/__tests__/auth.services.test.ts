@@ -105,6 +105,7 @@ describe("Auth Services", () => {
           id: 1,
           username: "testuser",
           email: "test@example.com",
+          oauth_perms: ["acceso_movimientos", "acceso_reporteria_movimientos"],
         },
       };
 
