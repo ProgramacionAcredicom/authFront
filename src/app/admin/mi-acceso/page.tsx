@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, ChevronDown, ClipboardList, Plus } from "lucide-react";
+import { CheckCircle2, ChevronDown, ClipboardList, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { useQueryAgencias } from "@/hooks/agencias/useQueryAgencias";
+import { useInfoUserQuery } from "@/hooks/auth/usePermissionAccess";
+import { useMutationCreateMovements } from "@/hooks/movements/useMutationMovements";
 import { useQueryRoles } from "@/hooks/roles/useQueryRoles";
+import { OAUTH_PERMISSIONS, hasAccess } from "@/lib/permissions";
 import { PageShell } from "@/components/layout/page-shell";
 import { Title } from "@/components/title/Title";
 import { Button } from "@/components/ui/button";
@@ -18,112 +21,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import {
-  ACTION_LABELS,
-  getTodayEffectiveDate,
-  type ActionType,
-  type Movement,
-  type MovementValidationErrors,
-} from "./movements-data";
+import { ACTION_LABELS, getTodayEffectiveDate, type ActionType, type Movement, type MovementValidationErrors } from "./movements-data";
 import { MovementCard } from "./movement-card";
-
-function buildMovementSummary(movements: Movement[]) {
-  const totals = movements.reduce<Record<ActionType, number>>(
-    (accumulator, movement) => {
-      accumulator[movement.actionType] += 1;
-      return accumulator;
-    },
-    {
-      alta: 0,
-      baja: 0,
-      movimiento: 0,
-      rotacion: 0,
-    },
-  );
-
-  return (Object.keys(totals) as ActionType[])
-    .filter((key) => totals[key] > 0)
-    .map((key) => `${ACTION_LABELS[key]}: ${totals[key]}`)
-    .join(" · ");
-}
-
-function validateMovement(movement: Movement): MovementValidationErrors {
-  const errors: MovementValidationErrors = {};
-
-  if (!movement.effectiveDate) {
-    errors.effectiveDate = "La fecha efectiva es requerida.";
-  }
-
-  if (movement.actionType === "alta") {
-    if (!movement.newName?.trim()) {
-      errors.newName = "El nombre completo es requerido.";
-    }
-
-    if (!movement.newDpi?.trim()) {
-      errors.newDpi = "El DPI es requerido.";
-    } else if (movement.newDpi.length !== 13) {
-      errors.newDpi = "El DPI debe contener exactamente 13 dígitos numéricos.";
-    }
-
-    if (!movement.newAgency?.trim()) {
-      errors.newAgency = "La agencia es requerida.";
-    }
-
-    if (!movement.newPosition?.trim()) {
-      errors.newPosition = "El puesto es requerido.";
-    }
-  }
-
-  if (movement.actionType === "baja") {
-    if (!movement.collaborator) {
-      errors.collaborator = "Selecciona un colaborador.";
-    }
-  }
-
-  if (movement.actionType === "movimiento") {
-    if (!movement.collaborator) {
-      errors.collaborator = "Selecciona un colaborador.";
-    }
-
-    if (!movement.newAgency?.trim()) {
-      errors.newAgency = "La agencia es requerida.";
-    }
-
-    if (!movement.newPosition?.trim()) {
-      errors.newPosition = "El puesto es requerido.";
-    }
-  }
-
-  if (movement.actionType === "rotacion") {
-    if (!movement.collaborator) {
-      errors.collaborator = "Selecciona un colaborador.";
-    }
-
-    if (!movement.newAgency?.trim()) {
-      errors.newAgency = "La agencia es requerida.";
-    }
-  }
-
-  return errors;
-}
-
-function buildValidationMap(movements: Movement[]) {
-  return movements.reduce<Record<string, MovementValidationErrors>>((accumulator, movement) => {
-    const errors = validateMovement(movement);
-
-    if (Object.keys(errors).length > 0) {
-      accumulator[movement.id] = errors;
-    }
-
-    return accumulator;
-  }, {});
-}
+import { buildMovementSummary, buildValidationMap, serializeMovementsPayload } from "./movements-utils";
 
 export default function MiAccesoPage() {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [validationErrors, setValidationErrors] = useState<Record<string, MovementValidationErrors>>({});
-  const { queryAgencias } = useQueryAgencias();
-  const { queryRoles } = useQueryRoles();
+  const { data: user } = useInfoUserQuery();
+  const canListAgencies = hasAccess(user, OAUTH_PERMISSIONS.LIST_AGENCIES);
+  const canListRoles = hasAccess(user, OAUTH_PERMISSIONS.LIST_ROLES);
+  const { queryAgencias } = useQueryAgencias({ enabled: canListAgencies });
+  const { queryRoles } = useQueryRoles({ enabled: canListRoles });
+  const { mutation: createMovementsMutation } = useMutationCreateMovements();
 
   const agencyOptions = useMemo(
     () =>
@@ -144,13 +54,17 @@ export default function MiAccesoPage() {
     [queryRoles.data],
   );
 
-  const agenciesEmptyMessage = queryAgencias.isLoading
+  const agenciesEmptyMessage = !canListAgencies
+    ? "No tienes permisos para consultar agencias."
+    : queryAgencias.isLoading
     ? "Cargando agencias..."
     : queryAgencias.isError
       ? "No se pudieron cargar las agencias."
       : "Sin agencias.";
 
-  const positionsEmptyMessage = queryRoles.isLoading
+  const positionsEmptyMessage = !canListRoles
+    ? "No tienes permisos para consultar puestos."
+    : queryRoles.isLoading
     ? "Cargando puestos..."
     : queryRoles.isError
       ? "No se pudieron cargar los puestos."
@@ -197,7 +111,7 @@ export default function MiAccesoPage() {
     ]);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (movements.length === 0) {
       toast.info("No hay movimientos para confirmar.");
       return;
@@ -211,11 +125,29 @@ export default function MiAccesoPage() {
       return;
     }
 
-    setValidationErrors({});
+    let payload;
 
-    toast.success("Movimientos listos para revisión", {
-      description: buildMovementSummary(movements),
-    });
+    try {
+      payload = serializeMovementsPayload(movements, {
+        agencies: queryAgencias.data ?? [],
+        roles: queryRoles.data ?? [],
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo preparar el lote de movimientos.";
+      toast.error(message);
+      return;
+    }
+
+    try {
+      await createMovementsMutation.mutateAsync(payload);
+      setValidationErrors({});
+      setMovements([]);
+      toast.success("Movimientos registrados correctamente", {
+        description: buildMovementSummary(movements),
+      });
+    } catch {
+      // El hook de mutation ya muestra el mensaje de error.
+    }
   };
 
   return (
@@ -223,7 +155,7 @@ export default function MiAccesoPage() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <Title text="Mi Acceso" />
+            <Title text="Movimientos" />
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
               Registra altas, bajas, movimientos y rotaciones. Todos los cambios se aplicarán en la fecha efectiva indicada.
             </p>
@@ -242,12 +174,14 @@ export default function MiAccesoPage() {
             <MovementCard
               agenciesEmptyMessage={agenciesEmptyMessage}
               agenciesOptions={agencyOptions}
+              canListAgencies={canListAgencies}
               key={movement.id}
               index={index}
               movement={movement}
               movementErrors={validationErrors[movement.id]}
               onChange={(nextMovement) => handleChange(index, nextMovement)}
               onRemove={() => handleRemove(index)}
+              canListPositions={canListRoles}
               positionsEmptyMessage={positionsEmptyMessage}
               positionsOptions={positionOptions}
             />
@@ -276,7 +210,7 @@ export default function MiAccesoPage() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button type="button" variant="outline">
+                  <Button type="button" variant="outline" disabled={createMovementsMutation.isPending}>
                     <Plus data-icon="inline-start" aria-hidden="true" />
                     Añadir movimiento
                     <ChevronDown data-icon="inline-end" aria-hidden="true" className="opacity-60" />
@@ -293,9 +227,23 @@ export default function MiAccesoPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button type="button" variant="custom2" onClick={handleConfirm}>
-                <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
-                Confirmar {movements.length} movimiento{movements.length === 1 ? "" : "s"}
+              <Button
+                type="button"
+                variant="custom2"
+                onClick={handleConfirm}
+                disabled={createMovementsMutation.isPending}
+              >
+                {createMovementsMutation.isPending ? (
+                  <>
+                    <Loader2 data-icon="inline-start" aria-hidden="true" className="animate-spin" />
+                    Confirmando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
+                    Confirmar {movements.length} movimiento{movements.length === 1 ? "" : "s"}
+                  </>
+                )}
               </Button>
             </div>
           </div>

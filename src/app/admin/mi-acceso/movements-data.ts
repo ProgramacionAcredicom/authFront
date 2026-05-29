@@ -6,7 +6,10 @@ export interface CollaboratorInfo {
   id?: number;
   name: string;
   agency: string;
+  agencyId?: number;
   position: string;
+  roleId?: number;
+  isActive?: boolean;
   username?: string;
   email?: string;
   executive?: string;
@@ -21,6 +24,10 @@ export interface Movement {
   newName?: string;
   newDpi?: string;
   newId?: string;
+  newUsername?: string;
+  newEmail?: string;
+  newPassword?: string;
+  newConfirmPassword?: string;
   newAgency?: string;
   newPosition?: string;
   observations: string;
@@ -30,9 +37,14 @@ export type MovementFieldName =
   | "collaborator"
   | "effectiveDate"
   | "newAgency"
+  | "newConfirmPassword"
   | "newDpi"
+  | "newEmail"
+  | "newId"
   | "newName"
-  | "newPosition";
+  | "newPassword"
+  | "newPosition"
+  | "newUsername";
 
 export type MovementValidationErrors = Partial<Record<MovementFieldName, string>>;
 

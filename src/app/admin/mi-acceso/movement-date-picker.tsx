@@ -29,10 +29,14 @@ export function MovementDatePicker({
   id,
   value,
   onChange,
+  className,
+  ariaLabel,
 }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
+  className?: string;
+  ariaLabel?: string;
 }) {
   const selectedDate = toDate(value);
 
@@ -43,7 +47,8 @@ export function MovementDatePicker({
           id={id}
           type="button"
           variant="outline"
-          className={cn("w-full justify-between font-normal", !selectedDate && "text-muted-foreground")}
+          aria-label={ariaLabel}
+          className={cn("w-full justify-between font-normal", !selectedDate && "text-muted-foreground", className)}
         >
           <span className="truncate">
             {selectedDate ? format(selectedDate, "PPP", { locale: es }) : "Selecciona una fecha"}
