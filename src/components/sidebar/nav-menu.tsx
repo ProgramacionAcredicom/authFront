@@ -13,8 +13,9 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@radix-ui/r
 import { ChevronRight, type LucideIcon } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getProfile } from "@/services/auth/auth.services";
+import type { OAuthPermission } from "@/lib/permissions";
+import { hasAccess } from "@/lib/permissions";
+import { useInfoUserQuery } from "@/hooks/auth/usePermissionAccess";
 
 interface NavMenuProps {
   label: string;
@@ -23,9 +24,12 @@ interface NavMenuProps {
     url: string;
     icon?: LucideIcon;
     requiresStaff?: boolean;
+    requiredPermission?: OAuthPermission;
     items?: {
       title: string;
       url: string;
+      requiresStaff?: boolean;
+      requiredPermission?: OAuthPermission;
     }[];
   }[];
 }
@@ -34,6 +38,7 @@ type NavItem = {
   url: string;
   icon?: LucideIcon;
   requiresStaff?: boolean;
+  requiredPermission?: OAuthPermission;
   items?: NavItem[]; // Recursivo para menús anidados
 };
 const getNavLinkClass = (isActive: boolean): string =>
@@ -83,23 +88,33 @@ const SidebarMenuItemSimple = ({ item }: { item: NavItem }) => (
 );
 
 export const NavMenu = ({ items, label }: NavMenuProps) => {
-  // Obtener información del usuario para filtrar menú
-  const { data: user } = useQuery({
-    queryKey: ["info_user"],
-    queryFn: getProfile,
-    staleTime: 1000 * 60 * 60,
-  });
+  const { data: user } = useInfoUserQuery();
 
-  const isStaff = user?.is_staff || false;
+  const filterItems = (menuItems: NavItem[]): NavItem[] =>
+    menuItems.reduce<NavItem[]>((acc, item) => {
+      if (item.requiresStaff && !user?.is_staff) {
+        return acc;
+      }
 
-  // Filtrar items basado en is_staff
-  const filteredItems = items.filter((item) => {
-    // Si requiere staff y el usuario no es staff, ocultar
-    if (item.requiresStaff && !isStaff) {
-      return false;
-    }
-    return true;
-  });
+      if (item.requiredPermission && !hasAccess(user, item.requiredPermission)) {
+        return acc;
+      }
+
+      const filteredChildren = item.items?.length ? filterItems(item.items) : item.items;
+
+      if (item.items?.length && (!filteredChildren || filteredChildren.length === 0)) {
+        return acc;
+      }
+
+      acc.push({
+        ...item,
+        items: filteredChildren,
+      });
+
+      return acc;
+    }, []);
+
+  const filteredItems = filterItems(items);
 
   return (
     <SidebarGroup>

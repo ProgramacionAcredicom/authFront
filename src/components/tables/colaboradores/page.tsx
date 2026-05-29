@@ -8,5 +8,6 @@ export default function ColaboradoresTablePage() {
   const [pageIndex] = useQueryState("page", parseAsInteger.withDefault(1));
   const [globalFilter] = useQueryState("search", parseAsString.withDefault(""));
   const { data, isLoading } = useQueryColaboradores({ pageIndex, pageSize }, globalFilter);
+
   return <ColaboradoresTable data={data?.results || []} totalItems={data?.total || 0} columns={columns} isLoading={isLoading} />;
 }

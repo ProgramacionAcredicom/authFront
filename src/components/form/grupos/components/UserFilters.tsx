@@ -47,4 +47,3 @@ export function UserFilters({ filterAgencia, filterPuesto, onAgenciaChange, onPu
     </div>
   );
 }
-

@@ -25,8 +25,8 @@ export function DataTableToolbar<TData>({ table, children, className, ...props }
   }, [table]);
 
   return (
-    <div role="toolbar" aria-orientation="horizontal" className={cn("flex w-full items-start justify-between gap-2 p-1", className)} {...props}>
-      <div className="flex flex-1 flex-wrap items-center gap-2">
+    <div role="toolbar" aria-orientation="horizontal" className={cn("flex w-full min-w-0 flex-col gap-2 p-1 sm:flex-row sm:items-start sm:justify-between", className)} {...props}>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         {columns.map((column) => (
           <DataTableToolbarFilter key={column.id} column={column} table={table} />
         ))}
@@ -37,7 +37,7 @@ export function DataTableToolbar<TData>({ table, children, className, ...props }
           </Button>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
         {children}
         <DataTableViewOptions table={table} />
       </div>
@@ -62,7 +62,7 @@ function DataTableToolbarFilter<TData>({ column, table }: DataTableToolbarFilter
             placeholder={columnMeta.placeholder ?? columnMeta.label}
             value={(table.getState().globalFilter as string) ?? ""}
             onChange={(event) => table.setGlobalFilter(event.target.value)}
-            className="h-8 w-40 lg:w-56"
+            className="h-8 w-full sm:w-40 lg:w-56"
           />
         );
 

@@ -10,3 +10,16 @@ afterEach(() => {
   cleanup();
 });
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+globalThis.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
+
+Element.prototype.scrollIntoView = () => {};
+
+Element.prototype.hasPointerCapture = () => false;
+Element.prototype.setPointerCapture = () => {};
+Element.prototype.releasePointerCapture = () => {};

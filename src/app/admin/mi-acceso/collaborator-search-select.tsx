@@ -5,6 +5,7 @@ import { Briefcase, Building2, Check, ChevronsUpDown, Loader2 } from "lucide-rea
 import { useInView } from "react-intersection-observer";
 
 import type { Result as ColaboradorResult } from "@/interfaces/colaboradores.interfaces";
+import { useHasPermission } from "@/hooks/auth/usePermissionAccess";
 import { useInfiniteColaboradores } from "@/hooks/colaboradores/useInfiniteColaboradores";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { cn } from "@/lib/utils";
+import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
 import type { CollaboratorInfo } from "./movements-data";
 
@@ -34,7 +36,10 @@ function toCollaboratorInfo(colaborador: ColaboradorResult): CollaboratorInfo {
     id: colaborador.id,
     name: colaborador.name,
     agency: colaborador.agency?.name ?? "Sin agencia",
+    agencyId: colaborador.agency?.id,
     position: colaborador.role?.role ?? "Sin puesto",
+    roleId: colaborador.role?.id,
+    isActive: colaborador.is_active,
     username: colaborador.username,
     email: colaborador.email,
   };
@@ -52,6 +57,7 @@ export function CollaboratorSearchSelect({
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const selectedLabel = value?.name ?? "";
   const { ref, inView } = useInView();
+  const { hasPermission: canListUsers } = useHasPermission(OAUTH_PERMISSIONS.LIST_USERS);
 
   const updateDebouncedSearch = useDebouncedCallback((nextValue: string) => {
     setDebouncedSearch(nextValue.trim());
@@ -68,11 +74,15 @@ export function CollaboratorSearchSelect({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteColaboradores(debouncedSearch, undefined, { enabled: open });
+  } = useInfiniteColaboradores(debouncedSearch, undefined, { enabled: open && canListUsers });
 
   const results = React.useMemo(
     () => data?.pages.flatMap((page) => page.results) ?? [],
     [data],
+  );
+  const activeResults = React.useMemo(
+    () => results.filter((colaborador) => colaborador.is_active),
+    [results],
   );
 
   React.useEffect(() => {
@@ -104,9 +114,12 @@ export function CollaboratorSearchSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={!canListUsers}
           className={cn("w-full justify-between font-normal", !selectedLabel && "text-muted-foreground", className)}
         >
-          <span className="truncate">{selectedLabel || placeholder}</span>
+          <span className={cn("truncate", value?.isActive === false && "text-muted-foreground")}>
+            {selectedLabel || (canListUsers ? placeholder : "Sin permiso para listar colaboradores")}
+          </span>
           <ChevronsUpDown aria-hidden="true" className="shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -121,7 +134,11 @@ export function CollaboratorSearchSelect({
             onValueChange={setSearch}
           />
           <CommandList className="max-h-[320px]">
-            {isLoading ? (
+            {!canListUsers ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No tienes permisos para listar colaboradores.
+              </div>
+            ) : isLoading ? (
               <div className="flex items-center justify-center px-3 py-6 text-sm text-muted-foreground">
                 <Loader2 className="mr-2 size-4 animate-spin" />
                 Buscando colaboradores...
@@ -134,7 +151,7 @@ export function CollaboratorSearchSelect({
               <>
                 <CommandEmpty>No se encontraron colaboradores.</CommandEmpty>
                 <CommandGroup>
-                  {results.map((colaborador) => {
+                  {activeResults.map((colaborador) => {
                     const isSelected =
                       value?.id === colaborador.id ||
                       (!value?.id && value?.name === colaborador.name);

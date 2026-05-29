@@ -1,14 +1,18 @@
 import { lazy } from "react";
 import { RouteObject } from "react-router-dom";
 import LayoutAdmin from "@/app/admin/layout";
+import { PermissionRoute } from "@/components/protected-route/PermissionRoute";
+import { StaffOnly } from "@/components/protected-route/StaffRoute";
 import { ColaboradorLoader } from "@/app/admin/colaboradores/editarColaborador/loader";
 import { AplicativoLoader } from "@/app/admin/grupos-permisos/aplicativos/loader";
 import { PermisoLoader } from "@/app/admin/grupos-permisos/permisos/loader";
 import { GrupoLoader, EditarGrupoLoader } from "@/app/admin/grupos-permisos/grupos/loader";
+import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
 // Lazy load de páginas admin
 const AdminPage = lazy(() => import("@/app/admin/page").then((m) => ({ default: m.default })));
 const MiAccesoPage = lazy(() => import("@/app/admin/mi-acceso/page").then((m) => ({ default: m.default })));
+const MovimientosPage = lazy(() => import("@/app/admin/movimientos/page").then((m) => ({ default: m.default })));
 const ColaboradoresPage = lazy(() => import("@/app/admin/colaboradores/page").then((m) => ({ default: m.ColaboradoresPage })));
 const AgenciasPage = lazy(() => import("@/app/admin/agencias/page").then((m) => ({ default: m.AgenciasPage })));
 const AreasPage = lazy(() => import("@/app/admin/areas/page").then((m) => ({ default: m.default })));
@@ -30,7 +34,11 @@ const EditarGrupoPage = lazy(() => import("@/app/admin/grupos-permisos/grupos/ed
 export const adminRoutes: RouteObject[] = [
   {
     path: "/",
-    element: <LayoutAdmin />,
+    element: (
+      <StaffOnly>
+        <LayoutAdmin />
+      </StaffOnly>
+    ),
     children: [
       {
         index: true,
@@ -39,8 +47,12 @@ export const adminRoutes: RouteObject[] = [
     ],
   },
   {
-    path: "mi-acceso",
-    element: <LayoutAdmin />,
+    path: "movimientos",
+    element: (
+      <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.MOVEMENTS_ACCESS}>
+        <LayoutAdmin />
+      </PermissionRoute>
+    ),
     children: [
       {
         index: true,
@@ -48,10 +60,28 @@ export const adminRoutes: RouteObject[] = [
       },
     ],
   },
+  {
+    path: "reporteria",
+    element: (
+      <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.MOVEMENTS_REPORT_ACCESS}>
+        <LayoutAdmin />
+      </PermissionRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <MovimientosPage />,
+      },
+    ],
+  },
   // Agencias
   {
     path: "agencias",
-    element: <LayoutAdmin />,
+    element: (
+      <StaffOnly>
+        <LayoutAdmin />
+      </StaffOnly>
+    ),
     children: [
       {
         index: true,
@@ -62,7 +92,11 @@ export const adminRoutes: RouteObject[] = [
   // Areas
   {
     path: "areas",
-    element: <LayoutAdmin />,
+    element: (
+      <StaffOnly>
+        <LayoutAdmin />
+      </StaffOnly>
+    ),
     children: [
       {
         index: true,
@@ -73,7 +107,11 @@ export const adminRoutes: RouteObject[] = [
   // Grupos
   {
     path: "grupos",
-    element: <LayoutAdmin />,
+    element: (
+      <StaffOnly>
+        <LayoutAdmin />
+      </StaffOnly>
+    ),
     children: [
       {
         index: true,
@@ -94,7 +132,11 @@ export const adminRoutes: RouteObject[] = [
   // Permisos
   {
     path: "permisos",
-    element: <LayoutAdmin />,
+    element: (
+      <StaffOnly>
+        <LayoutAdmin />
+      </StaffOnly>
+    ),
     children: [
       {
         element: <PermisosPage />,
@@ -120,7 +162,11 @@ export const adminRoutes: RouteObject[] = [
   // Aplicativos
   {
     path: "aplicativos",
-    element: <LayoutAdmin />,
+    element: (
+      <StaffOnly>
+        <LayoutAdmin />
+      </StaffOnly>
+    ),
     children: [
       {
         index: true,
@@ -145,7 +191,11 @@ export const adminRoutes: RouteObject[] = [
   // Colaboradores
   {
     path: "colaboradores",
-    element: <LayoutAdmin />,
+    element: (
+      <StaffOnly>
+        <LayoutAdmin />
+      </StaffOnly>
+    ),
     children: [
       {
         index: true,
@@ -153,11 +203,19 @@ export const adminRoutes: RouteObject[] = [
       },
       {
         path: "agregar",
-        element: <AgregarColaboradorPage />,
+        element: (
+          <StaffOnly>
+            <AgregarColaboradorPage />
+          </StaffOnly>
+        ),
       },
       {
         path: "editar/:id",
-        element: <EditarColaboradorPage />,
+        element: (
+          <StaffOnly>
+            <EditarColaboradorPage />
+          </StaffOnly>
+        ),
         loader: ColaboradorLoader,
         shouldRevalidate: ({ currentUrl, nextUrl, currentParams, nextParams }) => {
           // Evita recargar el colaborador cuando solo cambia el query param `q`

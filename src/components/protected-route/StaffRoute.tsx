@@ -1,7 +1,6 @@
 import { useAuthStore } from "@/store/useAuth.store";
 import { Navigate, Outlet } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getProfile } from "@/services/auth/auth.services";
+import { useInfoUserQuery } from "@/hooks/auth/usePermissionAccess";
 
 /**
  * Componente de protección de rutas para usuarios staff.
@@ -14,13 +13,7 @@ export const StaffRoute = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   // Obtener información del usuario para verificar is_staff
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["info_user"],
-    queryFn: getProfile,
-    staleTime: 1000 * 60 * 60, // 1 hora
-    retry: false,
-    enabled: isAuthenticated,
-  });
+  const { data: user, isLoading } = useInfoUserQuery({ enabled: isAuthenticated });
 
   // Si no está autenticado, redirigir al login
   if (!isAuthenticated) {
@@ -46,4 +39,34 @@ export const StaffRoute = () => {
 
   // Usuario es staff, permitir acceso
   return <Outlet />;
+};
+
+interface StaffOnlyProps {
+  children: React.ReactNode;
+}
+
+export const StaffOnly = ({ children }: StaffOnlyProps) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { data: user, isLoading } = useInfoUserQuery({ enabled: isAuthenticated });
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user?.is_staff) {
+    return <Navigate to="/profile" replace />;
+  }
+
+  return <>{children}</>;
 };

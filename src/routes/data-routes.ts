@@ -1,4 +1,6 @@
-import { type LucideIcon, Group, HomeIcon, KeyRound, Users2, Briefcase, User } from "lucide-react";
+import { type LucideIcon, Group, HomeIcon, Users2, Briefcase, User } from "lucide-react";
+import type { OAuthPermission } from "@/lib/permissions";
+import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
 interface Props {
   navMain: {
@@ -6,9 +8,12 @@ interface Props {
     url: string;
     icon: LucideIcon;
     requiresStaff?: boolean; // Si es true, solo se muestra para usuarios staff
+    requiredPermission?: OAuthPermission;
     items?: {
       title: string;
       url: string;
+      requiresStaff?: boolean;
+      requiredPermission?: OAuthPermission;
     }[];
   }[];
 }
@@ -27,10 +32,21 @@ export const dataRoutes: Props = {
       requiresStaff: true,
     },
     {
-      title: "Mi Acceso",
-      icon: KeyRound,
+      title: "Talento Humano",
+      icon: Users2,
       url: "/mi-acceso",
-      requiresStaff: true,
+      items: [
+        {
+          title: "Movimientos",
+          url: "/movimientos",
+          requiredPermission: OAUTH_PERMISSIONS.MOVEMENTS_ACCESS,
+        },
+        {
+          title: "Reporteria",
+          url: "/reporteria",
+          requiredPermission: OAUTH_PERMISSIONS.MOVEMENTS_REPORT_ACCESS,
+        },
+      ],
     },
     {
       title: "Colaboradores",
@@ -51,6 +67,7 @@ export const dataRoutes: Props = {
         {
           title: "Gestionar áreas",
           url: "/areas",
+          requiresStaff: true,
         },
       ],
     },

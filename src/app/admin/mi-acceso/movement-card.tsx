@@ -12,6 +12,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 
 import { ActionBadge } from "./action-badge";
 import { CollaboratorSearchSelect } from "./collaborator-search-select";
@@ -24,16 +25,18 @@ import {
 } from "./movements-data";
 import { MovementDatePicker } from "./movement-date-picker";
 import { SearchableSelect } from "./searchable-select";
-import { cn } from "@/lib/utils";
+import { generateCredentialsFromName } from "./movements-utils";
 
 interface MovementCardProps {
   agenciesOptions: readonly SearchableSelectOption[];
   agenciesEmptyMessage?: string;
+  canListAgencies?: boolean;
   index: number;
   movement: Movement;
   movementErrors?: MovementValidationErrors;
   onChange: (movement: Movement) => void;
   onRemove: () => void;
+  canListPositions?: boolean;
   positionsEmptyMessage?: string;
   positionsOptions: readonly SearchableSelectOption[];
 }
@@ -52,11 +55,13 @@ function sanitizeDigits(value: string, maxLength?: number) {
 export function MovementCard({
   agenciesOptions,
   agenciesEmptyMessage = "Sin agencias.",
+  canListAgencies = true,
   index,
   movement,
   movementErrors = {},
   onChange,
   onRemove,
+  canListPositions = true,
   positionsEmptyMessage = "Sin puestos.",
   positionsOptions,
 }: MovementCardProps) {
@@ -66,6 +71,10 @@ export function MovementCard({
   const nameValue = movement.newName ?? "";
   const dpiValue = movement.newDpi ?? "";
   const employeeIdValue = movement.newId ?? "";
+  const usernameValue = movement.newUsername ?? "";
+  const emailValue = movement.newEmail ?? "";
+  const passwordValue = movement.newPassword ?? "";
+  const confirmPasswordValue = movement.newConfirmPassword ?? "";
   const dpiError =
     movementErrors.newDpi ||
     (isAlta && dpiValue.length > 0 && dpiValue.length !== 13
@@ -73,6 +82,7 @@ export function MovementCard({
       : "");
 
   const update = (patch: Partial<Movement>) => onChange({ ...movement, ...patch });
+
   const handleCollaboratorChange = (value: CollaboratorInfo | null) => {
     if (isMovimiento) {
       update({
@@ -84,6 +94,24 @@ export function MovementCard({
     }
 
     update({ collaborator: value });
+  };
+
+  const handleAltaNameChange = (value: string) => {
+    const sanitizedName = sanitizeName(value);
+    const previousCredentials = generateCredentialsFromName(nameValue);
+    const nextCredentials = generateCredentialsFromName(sanitizedName);
+
+    update({
+      newName: sanitizedName,
+      newEmail:
+        !emailValue || emailValue === previousCredentials.email
+          ? nextCredentials.email
+          : emailValue,
+      newUsername:
+        !usernameValue || usernameValue === previousCredentials.username
+          ? nextCredentials.username
+          : usernameValue,
+    });
   };
 
   return (
@@ -153,7 +181,7 @@ export function MovementCard({
 
       <CardContent className="py-5">
         {isAlta ? (
-          <FieldGroup className="grid gap-6 md:grid-cols-2">
+          <FieldGroup className="grid gap-6 lg:grid-cols-2">
             <div className="grid gap-4">
               <Field>
                 <FieldLabel htmlFor={`date-${movement.id}`}>Fecha efectiva *</FieldLabel>
@@ -175,10 +203,11 @@ export function MovementCard({
                     aria-invalid={!!movementErrors.newName}
                     className={movementErrors.newName ? "border-destructive focus-visible:ring-destructive/40" : undefined}
                     id={`name-${movement.id}`}
-                    placeholder="Ej. Juan Pérez"
+                    placeholder="Ej. Juan Pérez López"
                     value={nameValue}
-                    onChange={(event) => update({ newName: sanitizeName(event.target.value) })}
+                    onChange={(event) => handleAltaNameChange(event.target.value)}
                   />
+                  <FieldDescription>Si el nombre tiene al menos tres partes, se sugerirá correo y username.</FieldDescription>
                   <FieldError>{movementErrors.newName}</FieldError>
                 </FieldContent>
               </Field>
@@ -199,20 +228,88 @@ export function MovementCard({
                   <FieldError>{dpiError}</FieldError>
                 </FieldContent>
               </Field>
-            </div>
 
-            <div className="grid gap-4">
               <Field>
-                <FieldLabel htmlFor={`empid-${movement.id}`}>ID de empleado</FieldLabel>
+                <FieldLabel htmlFor={`empid-${movement.id}`}>ID de empleado *</FieldLabel>
                 <FieldContent>
                   <Input
+                    aria-invalid={!!movementErrors.newId}
+                    className={movementErrors.newId ? "border-destructive focus-visible:ring-destructive/40" : undefined}
                     id={`empid-${movement.id}`}
                     inputMode="numeric"
                     placeholder="Ej. 12345"
                     value={employeeIdValue}
                     onChange={(event) => update({ newId: sanitizeDigits(event.target.value) })}
                   />
-                  <FieldDescription>Solo números.</FieldDescription>
+                  <FieldError>{movementErrors.newId}</FieldError>
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor={`username-${movement.id}`}>Username *</FieldLabel>
+                <FieldContent>
+                  <Input
+                    aria-invalid={!!movementErrors.newUsername}
+                    className={movementErrors.newUsername ? "border-destructive focus-visible:ring-destructive/40" : undefined}
+                    id={`username-${movement.id}`}
+                    placeholder="Ej. mcjperez"
+                    value={usernameValue}
+                    onChange={(event) => update({ newUsername: event.target.value.trim() })}
+                    disabled
+                  />
+                  <FieldError>{movementErrors.newUsername}</FieldError>
+                </FieldContent>
+              </Field>
+            </div>
+
+            <div className="grid gap-4">
+              <Field>
+                <FieldLabel htmlFor={`email-${movement.id}`}>Correo electrónico *</FieldLabel>
+                <FieldContent>
+                  <Input
+                    aria-invalid={!!movementErrors.newEmail}
+                    className={movementErrors.newEmail ? "border-destructive focus-visible:ring-destructive/40" : undefined}
+                    id={`email-${movement.id}`}
+                    inputMode="email"
+                    placeholder="usuario@acredicom.com.gt"
+                    type="email"
+                    value={emailValue}
+                    onChange={(event) => update({ newEmail: event.target.value.trim() })}
+                    disabled
+                  />
+                  <FieldError>{movementErrors.newEmail}</FieldError>
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor={`password-${movement.id}`}>Contraseña *</FieldLabel>
+                <FieldContent>
+                  <Input
+                    aria-invalid={!!movementErrors.newPassword}
+                    className={movementErrors.newPassword ? "border-destructive focus-visible:ring-destructive/40" : undefined}
+                    id={`password-${movement.id}`}
+                    placeholder="Contraseña de acceso"
+                    type="password"
+                    value={passwordValue}
+                    onChange={(event) => update({ newPassword: event.target.value })}
+                  />
+                  <FieldError>{movementErrors.newPassword}</FieldError>
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor={`confirm-password-${movement.id}`}>Confirmar contraseña *</FieldLabel>
+                <FieldContent>
+                  <Input
+                    aria-invalid={!!movementErrors.newConfirmPassword}
+                    className={movementErrors.newConfirmPassword ? "border-destructive focus-visible:ring-destructive/40" : undefined}
+                    id={`confirm-password-${movement.id}`}
+                    placeholder="Repite la contraseña"
+                    type="password"
+                    value={confirmPasswordValue}
+                    onChange={(event) => update({ newConfirmPassword: event.target.value })}
+                  />
+                  <FieldError>{movementErrors.newConfirmPassword}</FieldError>
                 </FieldContent>
               </Field>
 
@@ -224,10 +321,11 @@ export function MovementCard({
                     value={movement.newAgency ?? ""}
                     onChange={(value) => update({ newAgency: value })}
                     options={agenciesOptions}
-                    placeholder="Selecciona una agencia"
+                    placeholder={canListAgencies ? "Selecciona una agencia" : "Sin permiso para listar agencias"}
                     searchPlaceholder="Buscar agencia..."
                     className={movementErrors.newAgency ? "border-destructive focus-visible:ring-destructive/40" : undefined}
                     emptyMessage={agenciesEmptyMessage}
+                    disabled={!canListAgencies}
                   />
                   <FieldError>{movementErrors.newAgency}</FieldError>
                 </FieldContent>
@@ -241,17 +339,18 @@ export function MovementCard({
                     value={movement.newPosition ?? ""}
                     onChange={(value) => update({ newPosition: value })}
                     options={positionsOptions}
-                    placeholder="Selecciona un puesto"
+                    placeholder={canListPositions ? "Selecciona un puesto" : "Sin permiso para listar puestos"}
                     searchPlaceholder="Buscar puesto..."
                     className={movementErrors.newPosition ? "border-destructive focus-visible:ring-destructive/40" : undefined}
                     emptyMessage={positionsEmptyMessage}
+                    disabled={!canListPositions}
                   />
                   <FieldError>{movementErrors.newPosition}</FieldError>
                 </FieldContent>
               </Field>
             </div>
 
-            <Field className="md:col-span-2">
+            <Field className="lg:col-span-2">
               <FieldLabel htmlFor={`obs-${movement.id}`}>Observaciones</FieldLabel>
               <FieldContent>
                 <Textarea
@@ -271,15 +370,15 @@ export function MovementCard({
             <Field>
               <FieldLabel htmlFor={`date-${movement.id}`}>Fecha efectiva *</FieldLabel>
               <FieldContent>
-                  <MovementDatePicker
-                    id={`date-${movement.id}`}
-                    value={movement.effectiveDate}
-                    onChange={(value) => update({ effectiveDate: value })}
-                  />
-                  <FieldDescription>Fecha en la que tomará efecto el cambio.</FieldDescription>
-                  <FieldError>{movementErrors.effectiveDate}</FieldError>
-                </FieldContent>
-              </Field>
+                <MovementDatePicker
+                  id={`date-${movement.id}`}
+                  value={movement.effectiveDate}
+                  onChange={(value) => update({ effectiveDate: value })}
+                />
+                <FieldDescription>Fecha en la que tomará efecto el cambio.</FieldDescription>
+                <FieldError>{movementErrors.effectiveDate}</FieldError>
+              </FieldContent>
+            </Field>
 
             <Field>
               <FieldLabel htmlFor={`agency-${movement.id}`}>Asignar agencia *</FieldLabel>
@@ -289,10 +388,11 @@ export function MovementCard({
                   value={movement.newAgency ?? ""}
                   onChange={(value) => update({ newAgency: value })}
                   options={agenciesOptions}
-                  placeholder="Selecciona una agencia"
+                  placeholder={canListAgencies ? "Selecciona una agencia" : "Sin permiso para listar agencias"}
                   searchPlaceholder="Buscar agencia..."
                   className={movementErrors.newAgency ? "border-destructive focus-visible:ring-destructive/40" : undefined}
                   emptyMessage={agenciesEmptyMessage}
+                  disabled={!canListAgencies}
                 />
                 <FieldError>{movementErrors.newAgency}</FieldError>
               </FieldContent>
@@ -306,10 +406,11 @@ export function MovementCard({
                   value={movement.newPosition ?? ""}
                   onChange={(value) => update({ newPosition: value })}
                   options={positionsOptions}
-                  placeholder="Selecciona un puesto"
+                  placeholder={canListPositions ? "Selecciona un puesto" : "Sin permiso para listar puestos"}
                   searchPlaceholder="Buscar puesto..."
                   className={movementErrors.newPosition ? "border-destructive focus-visible:ring-destructive/40" : undefined}
                   emptyMessage={positionsEmptyMessage}
+                  disabled={!canListPositions}
                 />
                 <FieldError>{movementErrors.newPosition}</FieldError>
               </FieldContent>
@@ -335,15 +436,15 @@ export function MovementCard({
             <Field>
               <FieldLabel htmlFor={`date-${movement.id}`}>Fecha efectiva *</FieldLabel>
               <FieldContent>
-                  <MovementDatePicker
-                    id={`date-${movement.id}`}
-                    value={movement.effectiveDate}
-                    onChange={(value) => update({ effectiveDate: value })}
-                  />
-                  <FieldDescription>Fecha en la que tomará efecto el cambio.</FieldDescription>
-                  <FieldError>{movementErrors.effectiveDate}</FieldError>
-                </FieldContent>
-              </Field>
+                <MovementDatePicker
+                  id={`date-${movement.id}`}
+                  value={movement.effectiveDate}
+                  onChange={(value) => update({ effectiveDate: value })}
+                />
+                <FieldDescription>Fecha en la que tomará efecto el cambio.</FieldDescription>
+                <FieldError>{movementErrors.effectiveDate}</FieldError>
+              </FieldContent>
+            </Field>
 
             <Field className="md:col-span-2">
               <FieldLabel htmlFor={`obs-${movement.id}`}>Observaciones</FieldLabel>
@@ -365,15 +466,15 @@ export function MovementCard({
             <Field>
               <FieldLabel htmlFor={`date-${movement.id}`}>Fecha efectiva *</FieldLabel>
               <FieldContent>
-                  <MovementDatePicker
-                    id={`date-${movement.id}`}
-                    value={movement.effectiveDate}
-                    onChange={(value) => update({ effectiveDate: value })}
-                  />
-                  <FieldDescription>Fecha en la que tomará efecto el cambio.</FieldDescription>
-                  <FieldError>{movementErrors.effectiveDate}</FieldError>
-                </FieldContent>
-              </Field>
+                <MovementDatePicker
+                  id={`date-${movement.id}`}
+                  value={movement.effectiveDate}
+                  onChange={(value) => update({ effectiveDate: value })}
+                />
+                <FieldDescription>Fecha en la que tomará efecto el cambio.</FieldDescription>
+                <FieldError>{movementErrors.effectiveDate}</FieldError>
+              </FieldContent>
+            </Field>
 
             <Field>
               <FieldLabel htmlFor={`agency-${movement.id}`}>Asignar agencia *</FieldLabel>
@@ -383,10 +484,11 @@ export function MovementCard({
                   value={movement.newAgency ?? ""}
                   onChange={(value) => update({ newAgency: value })}
                   options={agenciesOptions}
-                  placeholder="Selecciona una agencia"
+                  placeholder={canListAgencies ? "Selecciona una agencia" : "Sin permiso para listar agencias"}
                   searchPlaceholder="Buscar agencia..."
                   className={movementErrors.newAgency ? "border-destructive focus-visible:ring-destructive/40" : undefined}
                   emptyMessage={agenciesEmptyMessage}
+                  disabled={!canListAgencies}
                 />
                 <FieldError>{movementErrors.newAgency}</FieldError>
               </FieldContent>

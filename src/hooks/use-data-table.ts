@@ -46,6 +46,9 @@ interface UseDataTableProps<TData>
   shallow?: boolean;
   startTransition?: React.TransitionStartFunction;
   onGlobalFilterChange?: (value: string) => void;
+  manualPagination?: boolean;
+  manualSorting?: boolean;
+  manualFiltering?: boolean;
 }
 
 export function useDataTable<TData>(props: UseDataTableProps<TData>) {
@@ -62,6 +65,9 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     shallow = true,
     startTransition,
     onGlobalFilterChange,
+    manualPagination = true,
+    manualSorting = true,
+    manualFiltering = true,
     ...tableProps
   } = props;
 
@@ -259,9 +265,9 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
-    manualPagination: true,
-    manualSorting: true,
-    manualFiltering: true,
+    manualPagination,
+    manualSorting,
+    manualFiltering,
   });
 
   return { table, shallow, debounceMs, throttleMs };

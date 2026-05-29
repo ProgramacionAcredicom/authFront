@@ -621,7 +621,9 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                                   role="combobox"
                                   className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal", !field.value && "text-muted-foreground")}
                                 >
-                                  {field.value ? dataAgencias?.find((a) => a.id.toString() === field.value)?.name : "Buscar y seleccionar una agencia"}
+                                  {field.value
+                                    ? dataAgencias?.find((a) => a.id.toString() === field.value)?.name
+                                    : "Buscar y seleccionar una agencia"}
                                   <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                                 </Button>
                               </FormControl>
@@ -719,7 +721,11 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                                   role="combobox"
                                   className={cn("w-full justify-between rounded-full bg-background dark:bg-neutral-900 font-normal min-w-0", !field.value && "text-muted-foreground")}
                                 >
-                                  <span className="min-w-0 truncate text-left">{field.value ? queryRoles.data?.find((r) => r.id.toString() === field.value)?.role : "Buscar y seleccionar un puesto"}</span>
+                                  <span className="min-w-0 truncate text-left">
+                                    {field.value
+                                      ? queryRoles.data?.find((r) => r.id.toString() === field.value)?.role
+                                      : "Buscar y seleccionar un puesto"}
+                                  </span>
                                   <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                                 </Button>
                               </FormControl>
