@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { AxiosError } from "axios";
 import { CheckCircle2, ChevronDown, ClipboardList, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,7 +24,7 @@ import {
 
 import { ACTION_LABELS, getTodayEffectiveDate, type ActionType, type Movement, type MovementValidationErrors } from "./movements-data";
 import { MovementCard } from "./movement-card";
-import { buildMovementSummary, buildValidationMap, serializeMovementsPayload } from "./movements-utils";
+import { buildMovementSummary, buildValidationMap, generateMovementPassword, parseMovementApiErrors, serializeMovementsPayload } from "./movements-utils";
 
 export default function MiAccesoPage() {
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -106,6 +107,12 @@ export default function MiAccesoPage() {
         actionType,
         effectiveDate: getTodayEffectiveDate(),
         collaborator: null,
+        ...(actionType === "alta"
+          ? {
+              newPassword: generateMovementPassword(),
+              newConfirmPassword: generateMovementPassword(),
+            }
+          : {}),
         observations: "",
       },
     ]);
@@ -145,8 +152,39 @@ export default function MiAccesoPage() {
       toast.success("Movimientos registrados correctamente", {
         description: buildMovementSummary(movements),
       });
-    } catch {
-      // El hook de mutation ya muestra el mensaje de error.
+    } catch (error) {
+      const apiError = error as AxiosError<unknown>;
+      const { validationMap: apiValidationMap, shouldUnlockCredentials, toastMessage } = parseMovementApiErrors(
+        apiError.response?.data,
+        movements,
+      );
+
+      if (Object.keys(apiValidationMap).length > 0) {
+        setValidationErrors((previous) => {
+          const nextMap = { ...previous };
+
+          Object.entries(apiValidationMap).forEach(([movementId, errors]) => {
+            nextMap[movementId] = {
+              ...(nextMap[movementId] ?? {}),
+              ...errors,
+            };
+          });
+
+          return nextMap;
+        });
+      }
+
+      if (shouldUnlockCredentials.length > 0) {
+        setMovements((previous) =>
+          previous.map((movement) =>
+            shouldUnlockCredentials.includes(movement.id)
+              ? { ...movement, allowCredentialEdit: true }
+              : movement,
+          ),
+        );
+      }
+
+      toast.error(toastMessage);
     }
   };
 

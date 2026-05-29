@@ -74,6 +74,14 @@ vi.mock("@/hooks/auth/usePermissionAccess", () => ({
   }),
 }));
 
+vi.mock("../movements-utils", async () => {
+  const actual = await vi.importActual("../movements-utils");
+  return {
+    ...actual,
+    generateMovementPassword: vi.fn(() => "Mayo2026."),
+  };
+});
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/mi-acceso"]}>
@@ -121,8 +129,6 @@ describe("MiAccesoPage", () => {
     expect(screen.getByText("El ID de empleado es requerido.")).toBeInTheDocument();
     expect(screen.getByText("El username es requerido.")).toBeInTheDocument();
     expect(screen.getByText("El correo es requerido.")).toBeInTheDocument();
-    expect(screen.getByText("La contraseña es requerida.")).toBeInTheDocument();
-    expect(screen.getByText("La confirmación de contraseña es requerida.")).toBeInTheDocument();
     expect(mutationState.mutateAsync).not.toHaveBeenCalled();
   });
 
@@ -140,8 +146,9 @@ describe("MiAccesoPage", () => {
     await user.type(screen.getByLabelText("ID de empleado *"), "4567");
     expect(screen.getByLabelText("Username *")).toHaveValue("mcjpperez");
     expect(screen.getByLabelText("Correo electrónico *")).toHaveValue("jpperez@acredicom.com.gt");
-    await user.type(screen.getByLabelText("Contraseña *"), "PasswordSegura123!");
-    await user.type(screen.getByLabelText("Confirmar contraseña *"), "PasswordSegura123!");
+    expect(screen.getByLabelText("Contraseña *")).toHaveValue("Mayo2026.");
+    expect(screen.getByLabelText("Contraseña *")).toBeDisabled();
+    expect(screen.queryByLabelText("Confirmar contraseña *")).not.toBeInTheDocument();
 
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
@@ -160,7 +167,7 @@ describe("MiAccesoPage", () => {
             nombre: "Juan Pablo Perez",
             username: "mcjpperez",
             email: "jpperez@acredicom.com.gt",
-            password: "PasswordSegura123!",
+            password: "Mayo2026.",
             dpi: "1234567890123",
             cif: "4567",
             agency_id: 1,
@@ -202,5 +209,46 @@ describe("MiAccesoPage", () => {
     expect(screen.getByRole("combobox", { name: /Puesto/i })).toBeDisabled();
     expect(screen.getByText("Sin permiso para listar agencias")).toBeInTheDocument();
     expect(screen.getByText("Sin permiso para listar puestos")).toBeInTheDocument();
+  });
+
+  it("habilita username y correo cuando backend reporta username duplicado y muestra el error", async () => {
+    const user = userEvent.setup();
+    mutationState.mutateAsync.mockRejectedValueOnce({
+      response: {
+        data: {
+          colaborador: {
+            username: "Este nombre de usuario ya está registrado.",
+          },
+        },
+      },
+    });
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /Añadir movimiento/i }));
+    await user.click(screen.getByRole("menuitem", { name: "Alta" }));
+
+    await user.type(screen.getByLabelText("Nombre completo *"), "Juan Pablo Perez");
+    await user.type(screen.getByLabelText("DPI *"), "1234567890123");
+    await user.type(screen.getByLabelText("ID de empleado *"), "4567");
+
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByText("Central"));
+    await user.click(comboboxes[1]);
+    await user.click(screen.getByText("Analista"));
+
+    expect(screen.getByLabelText("Username *")).toBeDisabled();
+    expect(screen.getByLabelText("Correo electrónico *")).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: /Confirmar 1 movimiento/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Este nombre de usuario ya está registrado.");
+    });
+
+    expect(screen.getByLabelText("Username *")).not.toBeDisabled();
+    expect(screen.getByLabelText("Correo electrónico *")).not.toBeDisabled();
+    expect(toast.error).toHaveBeenCalledWith("Este nombre de usuario ya está registrado.");
   });
 });

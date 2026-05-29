@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, afterEach } from "vitest";
 
 import type { Movement } from "../movements-data";
-import { buildValidationMap, generateCredentialsFromName, serializeMovementsPayload } from "../movements-utils";
+import { buildValidationMap, generateCredentialsFromName, generateMovementPassword, parseMovementApiErrors, serializeMovementsPayload } from "../movements-utils";
 
 const agencies = [
   { id: 1, name: "Central" },
@@ -14,11 +14,22 @@ const roles = [
 ];
 
 describe("movements-utils", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("genera username y correo a partir del nombre completo", () => {
     expect(generateCredentialsFromName("Juan Pablo Perez")).toEqual({
       email: "jpperez@acredicom.com.gt",
       username: "mcjpperez",
     });
+  });
+
+  it("genera la contraseña automática con mes y año actuales", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-29T12:00:00.000Z"));
+
+    expect(generateMovementPassword()).toBe("Mayo2026.");
   });
 
   it("valida los nuevos campos obligatorios para alta", () => {
@@ -33,12 +44,10 @@ describe("movements-utils", () => {
     expect(buildValidationMap([movement])).toEqual({
       "m-1": {
         newAgency: "La agencia es requerida.",
-        newConfirmPassword: "La confirmación de contraseña es requerida.",
         newDpi: "El DPI es requerido.",
         newEmail: "El correo es requerido.",
         newId: "El ID de empleado es requerido.",
         newName: "El nombre completo es requerido.",
-        newPassword: "La contraseña es requerida.",
         newPosition: "El puesto es requerido.",
         newUsername: "El username es requerido.",
       },
@@ -187,5 +196,85 @@ describe("movements-utils", () => {
     expect(() => serializeMovementsPayload([movement], { agencies, roles })).toThrow(
       'No se pudo resolver la agencia "Inexistente".',
     );
+  });
+
+  it("parsea errores anidados del backend y desbloquea credenciales", () => {
+    const movement: Movement = {
+      id: "alta-1",
+      actionType: "alta",
+      effectiveDate: "2026-05-26",
+      collaborator: null,
+      newName: "Juan Pablo Perez",
+      newDpi: "1234567890123",
+      newId: "4567",
+      newUsername: "mcjpperez",
+      newEmail: "jpperez@acredicom.com.gt",
+      newPassword: "PasswordSegura123!",
+      newConfirmPassword: "PasswordSegura123!",
+      newAgency: "Central",
+      newPosition: "Analista",
+      observations: "Alta nueva",
+    };
+
+    expect(
+      parseMovementApiErrors(
+        [
+          {
+            colaborador: {
+              username: "Este nombre de usuario ya está registrado.",
+            },
+          },
+        ],
+        [movement],
+      ),
+    ).toEqual({
+      validationMap: {
+        "alta-1": {
+          newUsername: "Este nombre de usuario ya está registrado.",
+          submit: "Este nombre de usuario ya está registrado.",
+        },
+      },
+      shouldUnlockCredentials: ["alta-1"],
+      toastMessage: "Este nombre de usuario ya está registrado.",
+    });
+  });
+
+  it("parsea errores del backend cuando llegan como objeto simple", () => {
+    const movement: Movement = {
+      id: "alta-1",
+      actionType: "alta",
+      effectiveDate: "2026-05-26",
+      collaborator: null,
+      newName: "Juan Pablo Perez",
+      newDpi: "1234567890123",
+      newId: "4567",
+      newUsername: "mcjpperez",
+      newEmail: "jpperez@acredicom.com.gt",
+      newPassword: "PasswordSegura123!",
+      newConfirmPassword: "PasswordSegura123!",
+      newAgency: "Central",
+      newPosition: "Analista",
+      observations: "Alta nueva",
+    };
+
+    expect(
+      parseMovementApiErrors(
+        {
+          colaborador: {
+            username: "Este nombre de usuario ya está registrado.",
+          },
+        },
+        [movement],
+      ),
+    ).toEqual({
+      validationMap: {
+        "alta-1": {
+          newUsername: "Este nombre de usuario ya está registrado.",
+          submit: "Este nombre de usuario ya está registrado.",
+        },
+      },
+      shouldUnlockCredentials: ["alta-1"],
+      toastMessage: "Este nombre de usuario ya está registrado.",
+    });
   });
 });

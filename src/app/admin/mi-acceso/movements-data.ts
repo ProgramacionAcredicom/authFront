@@ -21,6 +21,7 @@ export interface Movement {
   actionType: ActionType;
   effectiveDate: string;
   collaborator: CollaboratorInfo | null;
+  allowCredentialEdit?: boolean;
   newName?: string;
   newDpi?: string;
   newId?: string;
@@ -44,7 +45,8 @@ export type MovementFieldName =
   | "newName"
   | "newPassword"
   | "newPosition"
-  | "newUsername";
+  | "newUsername"
+  | "submit";
 
 export type MovementValidationErrors = Partial<Record<MovementFieldName, string>>;
 
