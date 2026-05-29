@@ -6,6 +6,20 @@ import { splitName } from "@/lib/splitName";
 import { ACTION_LABELS, type ActionType, type Movement, type MovementValidationErrors } from "./movements-data";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SPANISH_MONTHS = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+] as const;
 
 function normalizeString(value: string) {
   return value
@@ -30,6 +44,13 @@ export function generateCredentialsFromName(fullName: string) {
     email: `${firstInitial}${secondInitial}${normalizedLastName}@acredicom.com.gt`,
     username: `mc${firstInitial}${secondInitial}${normalizedLastName}`,
   };
+}
+
+export function generateMovementPassword(referenceDate = new Date()) {
+  const month = SPANISH_MONTHS[referenceDate.getMonth()];
+  const year = referenceDate.getFullYear();
+
+  return `${month}${year}.`;
 }
 
 export function buildMovementSummary(movements: Movement[]) {
@@ -82,16 +103,6 @@ export function validateMovement(movement: Movement): MovementValidationErrors {
       errors.newEmail = "El correo es requerido.";
     } else if (!EMAIL_REGEX.test(movement.newEmail.trim())) {
       errors.newEmail = "El correo debe ser válido.";
-    }
-
-    if (!movement.newPassword?.trim()) {
-      errors.newPassword = "La contraseña es requerida.";
-    }
-
-    if (!movement.newConfirmPassword?.trim()) {
-      errors.newConfirmPassword = "La confirmación de contraseña es requerida.";
-    } else if (movement.newPassword !== movement.newConfirmPassword) {
-      errors.newConfirmPassword = "Las contraseñas no coinciden.";
     }
 
     if (!movement.newAgency?.trim()) {
@@ -223,6 +234,7 @@ export function serializeMovement(
   { agencies, roles }: SerializeMovementsOptions,
 ): CreateMovementPayload {
   if (movement.actionType === "alta") {
+    const generatedPassword = movement.newPassword?.trim() || generateMovementPassword();
     const agencyId = ensureId(
       resolveAgencyId(movement.newAgency, agencies),
       `No se pudo resolver la agencia "${movement.newAgency ?? ""}".`,
@@ -240,7 +252,7 @@ export function serializeMovement(
         nombre: movement.newName?.trim() ?? "",
         username: movement.newUsername?.trim() ?? "",
         email: movement.newEmail?.trim() ?? "",
-        password: movement.newPassword?.trim() ?? "",
+        password: generatedPassword,
         dpi: movement.newDpi?.trim() ?? "",
         cif: movement.newId?.trim() ?? "",
         agency_id: agencyId,
@@ -278,4 +290,141 @@ export function serializeMovementsPayload(
   options: SerializeMovementsOptions,
 ) {
   return movements.map((movement) => serializeMovement(movement, options));
+}
+
+function getFirstNestedString(value: unknown): string | undefined {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const nested = getFirstNestedString(item);
+      if (nested) {
+        return nested;
+      }
+    }
+    return undefined;
+  }
+
+  if (value && typeof value === "object") {
+    for (const nestedValue of Object.values(value)) {
+      const nested = getFirstNestedString(nestedValue);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+interface ParsedMovementApiError {
+  validationMap: Record<string, MovementValidationErrors>;
+  shouldUnlockCredentials: string[];
+  toastMessage?: string;
+}
+
+function buildCredentialErrorsFromApiItem(
+  item: Record<string, unknown>,
+  movement: Movement | undefined,
+) {
+  if (!movement) {
+    return undefined;
+  }
+
+  const collaboratorErrors =
+    "colaborador" in item && item.colaborador && typeof item.colaborador === "object"
+      ? (item.colaborador as Record<string, unknown>)
+      : undefined;
+
+  const movementErrors: MovementValidationErrors = {};
+  let shouldUnlock = false;
+
+  const usernameError =
+    collaboratorErrors && typeof collaboratorErrors.username === "string"
+      ? collaboratorErrors.username
+      : undefined;
+
+  const emailError =
+    collaboratorErrors && typeof collaboratorErrors.email === "string"
+      ? collaboratorErrors.email
+      : undefined;
+
+  if (usernameError) {
+    movementErrors.newUsername = usernameError;
+    shouldUnlock = true;
+  }
+
+  if (emailError) {
+    movementErrors.newEmail = emailError;
+    shouldUnlock = true;
+  }
+
+  const rootError = getFirstNestedString(item);
+  if (rootError) {
+    movementErrors.submit = rootError;
+  }
+
+  if (Object.keys(movementErrors).length === 0) {
+    return undefined;
+  }
+
+  return {
+    movementId: movement.id,
+    movementErrors,
+    shouldUnlock,
+  };
+}
+
+export function parseMovementApiErrors(
+  errorData: unknown,
+  movements: Movement[],
+): ParsedMovementApiError {
+  const validationMap: Record<string, MovementValidationErrors> = {};
+  const shouldUnlockCredentials = new Set<string>();
+
+  if (Array.isArray(errorData)) {
+    errorData.forEach((item, index) => {
+      if (!item || typeof item !== "object") {
+        return;
+      }
+
+      const parsed = buildCredentialErrorsFromApiItem(item as Record<string, unknown>, movements[index]);
+      if (!parsed) {
+        return;
+      }
+
+      validationMap[parsed.movementId] = parsed.movementErrors;
+      if (parsed.shouldUnlock) {
+        shouldUnlockCredentials.add(parsed.movementId);
+      }
+    });
+  } else if (errorData && typeof errorData === "object") {
+    const candidateMovement =
+      movements.find((movement) => movement.actionType === "alta") ??
+      movements[0];
+
+    const parsed = buildCredentialErrorsFromApiItem(
+      errorData as Record<string, unknown>,
+      candidateMovement,
+    );
+
+    if (parsed) {
+      validationMap[parsed.movementId] = parsed.movementErrors;
+      if (parsed.shouldUnlock) {
+        shouldUnlockCredentials.add(parsed.movementId);
+      }
+    }
+  }
+
+  const toastMessage =
+    getFirstNestedString(errorData) ||
+    "No se pudieron registrar los movimientos.";
+
+  return {
+    validationMap,
+    shouldUnlockCredentials: [...shouldUnlockCredentials],
+    toastMessage,
+  };
 }

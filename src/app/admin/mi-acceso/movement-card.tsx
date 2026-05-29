@@ -74,7 +74,10 @@ export function MovementCard({
   const usernameValue = movement.newUsername ?? "";
   const emailValue = movement.newEmail ?? "";
   const passwordValue = movement.newPassword ?? "";
-  const confirmPasswordValue = movement.newConfirmPassword ?? "";
+  const allowCredentialEdit = Boolean(movement.allowCredentialEdit);
+  const hasCredentialConflict = allowCredentialEdit && Boolean(
+    movementErrors.newUsername || movementErrors.newEmail || movementErrors.submit,
+  );
   const dpiError =
     movementErrors.newDpi ||
     (isAlta && dpiValue.length > 0 && dpiValue.length !== 13
@@ -255,8 +258,13 @@ export function MovementCard({
                     placeholder="Ej. mcjperez"
                     value={usernameValue}
                     onChange={(event) => update({ newUsername: event.target.value.trim() })}
-                    disabled
+                    disabled={!allowCredentialEdit}
                   />
+                  <FieldDescription>
+                    {allowCredentialEdit
+                      ? "Puedes ajustar el username si el sistema detectó un conflicto."
+                      : "Se genera automáticamente a partir del nombre."}
+                  </FieldDescription>
                   <FieldError>{movementErrors.newUsername}</FieldError>
                 </FieldContent>
               </Field>
@@ -267,16 +275,25 @@ export function MovementCard({
                 <FieldLabel htmlFor={`email-${movement.id}`}>Correo electrónico *</FieldLabel>
                 <FieldContent>
                   <Input
-                    aria-invalid={!!movementErrors.newEmail}
-                    className={movementErrors.newEmail ? "border-destructive focus-visible:ring-destructive/40" : undefined}
+                    aria-invalid={!!movementErrors.newEmail || hasCredentialConflict}
+                    className={
+                      movementErrors.newEmail || hasCredentialConflict
+                        ? "border-destructive focus-visible:ring-destructive/40"
+                        : undefined
+                    }
                     id={`email-${movement.id}`}
                     inputMode="email"
                     placeholder="usuario@acredicom.com.gt"
                     type="email"
                     value={emailValue}
                     onChange={(event) => update({ newEmail: event.target.value.trim() })}
-                    disabled
+                    disabled={!allowCredentialEdit}
                   />
+                  <FieldDescription>
+                    {allowCredentialEdit
+                      ? "Puedes ajustar el correo si el sistema detectó un conflicto."
+                      : "Se genera automáticamente a partir del nombre."}
+                  </FieldDescription>
                   <FieldError>{movementErrors.newEmail}</FieldError>
                 </FieldContent>
               </Field>
@@ -288,28 +305,13 @@ export function MovementCard({
                     aria-invalid={!!movementErrors.newPassword}
                     className={movementErrors.newPassword ? "border-destructive focus-visible:ring-destructive/40" : undefined}
                     id={`password-${movement.id}`}
-                    placeholder="Contraseña de acceso"
-                    type="password"
+                    placeholder="Contraseña generada automáticamente"
+                    type="text"
                     value={passwordValue}
-                    onChange={(event) => update({ newPassword: event.target.value })}
+                    disabled
                   />
-                  <FieldError>{movementErrors.newPassword}</FieldError>
-                </FieldContent>
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor={`confirm-password-${movement.id}`}>Confirmar contraseña *</FieldLabel>
-                <FieldContent>
-                  <Input
-                    aria-invalid={!!movementErrors.newConfirmPassword}
-                    className={movementErrors.newConfirmPassword ? "border-destructive focus-visible:ring-destructive/40" : undefined}
-                    id={`confirm-password-${movement.id}`}
-                    placeholder="Repite la contraseña"
-                    type="password"
-                    value={confirmPasswordValue}
-                    onChange={(event) => update({ newConfirmPassword: event.target.value })}
-                  />
-                  <FieldError>{movementErrors.newConfirmPassword}</FieldError>
+                  <FieldDescription>Se genera automáticamente con el mes y año actuales.</FieldDescription>
+                  <FieldError>{movementErrors.newPassword || movementErrors.newConfirmPassword}</FieldError>
                 </FieldContent>
               </Field>
 
@@ -348,6 +350,14 @@ export function MovementCard({
                   <FieldError>{movementErrors.newPosition}</FieldError>
                 </FieldContent>
               </Field>
+            </div>
+
+            <div className="lg:col-span-2">
+              {movementErrors.submit ? (
+                <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                  {movementErrors.submit}
+                </div>
+              ) : null}
             </div>
 
             <Field className="lg:col-span-2">
