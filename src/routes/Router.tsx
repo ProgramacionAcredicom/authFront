@@ -1,7 +1,6 @@
 import { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ProtectedRoute } from "@/components/protected-route/ProtectedRoute";
-import { StaffRoute } from "@/components/protected-route/StaffRoute";
 import Page404 from "@/app/404/page404";
 import LayoutAdmin from "@/app/admin/layout";
 import { adminRoutes } from "./admin.routes";
@@ -39,22 +38,18 @@ const routes = createBrowserRouter([
           },
         ],
       },
-      // Rutas admin protegidas con StaffRoute
-      {
-        element: <StaffRoute />,
-        children: adminRoutes.map((route) => ({
-          ...route,
-          element: route.element ? <SuspenseWrapper>{route.element}</SuspenseWrapper> : route.element,
-          children: route.children?.map((child) => ({
-            ...child,
-            element: child.element ? <SuspenseWrapper>{child.element}</SuspenseWrapper> : child.element,
-            children: child.children?.map((grandchild) => ({
-              ...grandchild,
-              element: grandchild.element ? <SuspenseWrapper>{grandchild.element}</SuspenseWrapper> : grandchild.element,
-            })),
+      ...adminRoutes.map((route) => ({
+        ...route,
+        element: route.element ? <SuspenseWrapper>{route.element}</SuspenseWrapper> : route.element,
+        children: route.children?.map((child) => ({
+          ...child,
+          element: child.element ? <SuspenseWrapper>{child.element}</SuspenseWrapper> : child.element,
+          children: child.children?.map((grandchild) => ({
+            ...grandchild,
+            element: grandchild.element ? <SuspenseWrapper>{grandchild.element}</SuspenseWrapper> : grandchild.element,
           })),
         })),
-      },
+      })),
     ],
   },
   ...authRoutes.map((route) => ({

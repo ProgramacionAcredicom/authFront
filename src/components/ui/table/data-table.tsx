@@ -2,7 +2,6 @@ import { type Table as TanstackTable, flexRender } from "@tanstack/react-table";
 import type * as React from "react";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { getCommonPinningStyles } from "@/lib/data-table";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -18,12 +17,11 @@ interface DataTableProps<TData extends { id: string | number }> extends React.Co
 export function DataTable<TData extends { id: string | number }>({ table, actionBar, children, isLoading, clickRow = false }: DataTableProps<TData>) {
   const navigate = useNavigate();
   return (
-    <div className="flex flex-1 flex-col space-y-4">
+    <div className="flex min-w-0 flex-1 flex-col gap-4">
       {children}
-      <div className="relative flex flex-1">
-        <div className="absolute inset-0 flex overflow-hidden rounded-lg border">
-          <ScrollArea className="h-full w-full">
-            <Table>
+      <div className="relative flex min-h-[320px] min-w-0 flex-1 overflow-hidden rounded-lg border sm:min-h-[360px]">
+        <div className="min-w-0 flex-1 overflow-auto">
+            <Table className="min-w-max">
               <TableHeader className="bg-muted sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
@@ -31,6 +29,7 @@ export function DataTable<TData extends { id: string | number }>({ table, action
                       <TableHead
                         key={header.id}
                         colSpan={header.colSpan}
+                        className={(header.column.columnDef.meta as { headerClassName?: string } | undefined)?.headerClassName}
                         style={{
                           ...getCommonPinningStyles({ column: header.column }),
                         }}
@@ -56,15 +55,18 @@ export function DataTable<TData extends { id: string | number }>({ table, action
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           key={cell.id}
+                          className={cn(
+                            (cell.column.columnDef.meta as { cellClassName?: string } | undefined)?.cellClassName,
+                            {
+                              "cursor-pointer": clickRow,
+                            },
+                          )}
                           style={{
                             ...getCommonPinningStyles({ column: cell.column }),
                           }}
                           onClick={() => {
                             if (clickRow) navigate(`/colaboradores/editar/${row.original.id}`);
                           }}
-                          className={cn({
-                            "cursor-pointer": clickRow,
-                          })}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
@@ -80,8 +82,6 @@ export function DataTable<TData extends { id: string | number }>({ table, action
                 )}
               </TableBody>
             </Table>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
         </div>
       </div>
       <div className="flex flex-col gap-2.5">

@@ -14,10 +14,10 @@ interface DataTablePaginationProps<TData> extends React.ComponentProps<"div"> {
 export function DataTablePagination<TData>({ table, pageSizeOptions = [10, 20, 30, 40, 50], className, ...props }: DataTablePaginationProps<TData>) {
   return (
     <div
-      className={cn("flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8", className)}
+      className={cn("flex w-full min-w-0 flex-col gap-4 p-1 sm:flex-row sm:items-center sm:justify-between sm:gap-8", className)}
       {...props}
     >
-      <div className="text-muted-foreground flex-1 text-sm whitespace-nowrap">
+      <div className="text-muted-foreground w-full text-center text-sm sm:flex-1 sm:text-left">
         {table.getFilteredSelectedRowModel().rows.length > 0 ? (
           <>
             {table.getFilteredSelectedRowModel().rows.length} de {table.getFilteredRowModel().rows.length} fila(s) seleccionada(s).
@@ -26,8 +26,8 @@ export function DataTablePagination<TData>({ table, pageSizeOptions = [10, 20, 3
           <>{table.getFilteredRowModel().rows.length} fila(s) total.</>
         )}
       </div>
-      <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-        <div className="flex items-center space-x-2">
+      <div className="flex w-full flex-col items-center gap-4 sm:w-auto sm:flex-row sm:gap-6 lg:gap-8">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
           <p className="text-sm font-medium whitespace-nowrap">Filas por página</p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
@@ -47,10 +47,10 @@ export function DataTablePagination<TData>({ table, pageSizeOptions = [10, 20, 3
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center justify-center text-sm font-medium">
+        <div className="flex items-center justify-center text-center text-sm font-medium">
           Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
           <Button
             aria-label="Go to first page"
             variant="outline"
