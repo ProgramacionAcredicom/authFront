@@ -15,18 +15,32 @@ vi.mock("@/hooks/auth/usePermissionAccess", () => ({
   useInfoUserQuery: () => useInfoUserQueryMock(),
 }));
 
+const mockMatchMedia = () => {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation(() => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  });
+};
+
+const renderNavMenu = (initialEntries: string[] = ["/"]) =>
+  render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <SidebarProvider>
+        <NavMenu items={dataRoutes.navMain} label="Menu" />
+      </SidebarProvider>
+    </MemoryRouter>,
+  );
+
+const getGroupTrigger = (label: string) => screen.getByText(label).closest("button");
+
 describe("NavMenu permissions", () => {
   it("mantiene visibles los módulos admin para staff aunque falten oauth_perms", async () => {
     const user = userEvent.setup();
-
-    Object.defineProperty(window, "matchMedia", {
-      writable: true,
-      value: vi.fn().mockImplementation(() => ({
-        matches: false,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    });
+    mockMatchMedia();
 
     useInfoUserQueryMock.mockReturnValue({
       data: {
@@ -35,31 +49,18 @@ describe("NavMenu permissions", () => {
       },
     });
 
-    render(
-      <MemoryRouter>
-        <SidebarProvider>
-          <NavMenu items={dataRoutes.navMain} label="Menu" />
-        </SidebarProvider>
-      </MemoryRouter>,
-    );
+    renderNavMenu();
 
     await user.click(screen.getByText("Talento Humano"));
 
     expect(screen.getByText("Movimientos")).toBeInTheDocument();
     expect(screen.getByText("Reporteria")).toBeInTheDocument();
+    expect(getGroupTrigger("Talento Humano")).toHaveAttribute("aria-expanded", "true");
   });
 
   it("muestra módulos permitidos a usuarios no staff cuando sí tienen oauth_perms", async () => {
     const user = userEvent.setup();
-
-    Object.defineProperty(window, "matchMedia", {
-      writable: true,
-      value: vi.fn().mockImplementation(() => ({
-        matches: false,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    });
+    mockMatchMedia();
 
     useInfoUserQueryMock.mockReturnValue({
       data: {
@@ -68,13 +69,7 @@ describe("NavMenu permissions", () => {
       },
     });
 
-    render(
-      <MemoryRouter>
-        <SidebarProvider>
-          <NavMenu items={dataRoutes.navMain} label="Menu" />
-        </SidebarProvider>
-      </MemoryRouter>,
-    );
+    renderNavMenu();
 
     await user.click(screen.getByText("Talento Humano"));
 
@@ -82,5 +77,60 @@ describe("NavMenu permissions", () => {
     expect(screen.getByText("Reporteria")).toBeInTheDocument();
     expect(screen.queryByText("Colaboradores")).not.toBeInTheDocument();
     expect(screen.queryByText("Unidades de trabajo")).not.toBeInTheDocument();
+  });
+
+  it("mantiene abierto Talento Humano cuando la ruta activa pertenece a uno de sus subitems", () => {
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: true,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu(["/movimientos"]);
+
+    expect(screen.getByText("Movimientos")).toBeInTheDocument();
+    expect(screen.getByText("Reporteria")).toBeInTheDocument();
+    expect(getGroupTrigger("Talento Humano")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("mantiene abierto el grupo después de navegar hacia un subitem activo", async () => {
+    const user = userEvent.setup();
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: true,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu();
+
+    await user.click(screen.getByText("Talento Humano"));
+    await user.click(screen.getByText("Movimientos"));
+
+    expect(screen.getByText("Movimientos")).toBeInTheDocument();
+    expect(screen.getByText("Reporteria")).toBeInTheDocument();
+    expect(getGroupTrigger("Talento Humano")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("mantiene abierto otro grupo colapsable cuando una ruta hija está activa", () => {
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: true,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu(["/agencias"]);
+
+    expect(screen.getByText("Gestionar agencias")).toBeInTheDocument();
+    expect(screen.getByText("Gestionar áreas")).toBeInTheDocument();
+    expect(getGroupTrigger("Unidades de trabajo")).toHaveAttribute("aria-expanded", "true");
   });
 });
