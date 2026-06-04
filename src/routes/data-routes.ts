@@ -1,4 +1,4 @@
-import { type LucideIcon, Group, HomeIcon, Users2, Briefcase, User } from "lucide-react";
+import { type LucideIcon, Group, HomeIcon, Users2, Briefcase, User, KeyRound } from "lucide-react";
 import type { OAuthPermission } from "@/lib/permissions";
 import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
@@ -34,7 +34,7 @@ export const dataRoutes: Props = {
     {
       title: "Talento Humano",
       icon: Users2,
-      url: "/mi-acceso",
+      url: "/talento-humano",
       items: [
         {
           title: "Movimientos",
@@ -47,6 +47,11 @@ export const dataRoutes: Props = {
           requiredPermission: OAUTH_PERMISSIONS.MOVEMENTS_REPORT_ACCESS,
         },
       ],
+    },
+    {
+      title: "MI ACCESO",
+      icon: KeyRound,
+      url: "/mi-acceso",
     },
     {
       title: "Colaboradores",
