@@ -50,7 +50,7 @@ describe("ProfileInfo", () => {
     });
   });
 
-  it("renderiza el acceso rápido a MI ACCESO junto a los badges de MFA y Staff", () => {
+  it("renderiza el acceso rápido a Mi acceso junto a los badges de MFA y Staff", () => {
     useQueryMock.mockReturnValue({
       data: {
         name: "Danilo Calderon",
@@ -75,7 +75,7 @@ describe("ProfileInfo", () => {
     expect(screen.getByRole("link", { name: /mi acceso/i })).toHaveAttribute("href", "/mi-acceso");
   });
 
-  it("mantiene visible el CTA de MI ACCESO aunque el usuario no sea staff", () => {
+  it("mantiene visible el CTA de Mi acceso aunque el usuario no sea staff", () => {
     useQueryMock.mockReturnValue({
       data: {
         name: "Ana Perez",

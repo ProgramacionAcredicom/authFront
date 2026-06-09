@@ -49,7 +49,7 @@ export const dataRoutes: Props = {
       ],
     },
     {
-      title: "MI ACCESO",
+      title: "Mi acceso",
       icon: KeyRound,
       url: "/mi-acceso",
     },

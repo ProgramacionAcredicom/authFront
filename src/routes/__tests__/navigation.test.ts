@@ -5,12 +5,12 @@ import { dataRoutes } from "../data-routes";
 import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
 describe("talento humano navigation", () => {
-  it("incluye el módulo MI ACCESO como entrada separada del sidebar", () => {
-    const miAcceso = dataRoutes.navMain.find((item) => item.title === "MI ACCESO");
+  it("incluye el módulo Mi acceso como entrada separada del sidebar", () => {
+    const miAcceso = dataRoutes.navMain.find((item) => item.title === "Mi acceso");
 
     expect(miAcceso).toBeDefined();
     expect(miAcceso).toMatchObject({
-      title: "MI ACCESO",
+      title: "Mi acceso",
       url: "/mi-acceso",
     });
   });
@@ -46,7 +46,9 @@ describe("talento humano navigation", () => {
     const miAccesoRoute = adminRoutes.find((route) => route.path === "mi-acceso");
 
     expect(miAccesoRoute).toBeDefined();
-    expect(miAccesoRoute?.children).toHaveLength(1);
+    expect(miAccesoRoute?.children).toHaveLength(3);
     expect(miAccesoRoute?.children?.[0]?.index).toBe(true);
+    expect(miAccesoRoute?.children?.[1]?.path).toBe("nueva");
+    expect(miAccesoRoute?.children?.[2]?.path).toBe("requerimiento-accesos");
   });
 });

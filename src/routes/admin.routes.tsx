@@ -13,6 +13,10 @@ import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 const AdminPage = lazy(() => import("@/app/admin/page").then((m) => ({ default: m.default })));
 const MovementRequestsPage = lazy(() => import("@/app/admin/mi-acceso/page").then((m) => ({ default: m.default })));
 const MiAccesoPage = lazy(() => import("@/app/admin/mi-acceso-home/page").then((m) => ({ default: m.default })));
+const MiAccesoNewRequestPage = lazy(() => import("@/app/admin/mi-acceso-home/new-request-page").then((m) => ({ default: m.default })));
+const MiAccesoAccessRequirementsPage = lazy(
+  () => import("@/app/admin/mi-acceso-home/access-requirements-page").then((m) => ({ default: m.default })),
+);
 const MovimientosPage = lazy(() => import("@/app/admin/movimientos/page").then((m) => ({ default: m.default })));
 const ColaboradoresPage = lazy(() => import("@/app/admin/colaboradores/page").then((m) => ({ default: m.ColaboradoresPage })));
 const AgenciasPage = lazy(() => import("@/app/admin/agencias/page").then((m) => ({ default: m.AgenciasPage })));
@@ -68,6 +72,14 @@ export const adminRoutes: RouteObject[] = [
       {
         index: true,
         element: <MiAccesoPage />,
+      },
+      {
+        path: "nueva",
+        element: <MiAccesoNewRequestPage />,
+      },
+      {
+        path: "requerimiento-accesos",
+        element: <MiAccesoAccessRequirementsPage />,
       },
     ],
   },
