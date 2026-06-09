@@ -2,7 +2,7 @@ import type { Table } from "@tanstack/react-table";
 import * as React from "react";
 
 import type { MovementListTypeFilter, MovementLogRow, MovementLogType } from "@/interfaces/movements.interfaces";
-import { MovementDatePicker } from "@/app/admin/mi-acceso/movement-date-picker";
+import { MovementDatePicker } from "@/app/admin/movimientos-registro/movement-date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

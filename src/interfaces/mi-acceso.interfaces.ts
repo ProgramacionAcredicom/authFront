@@ -1,4 +1,4 @@
-import type { MiAccesoRequestStatus, MiAccesoRequestType } from "@/app/admin/mi-acceso-home/mi-acceso.types";
+import type { MiAccesoRequestStatus, MiAccesoRequestType } from "@/app/admin/mis-solicitudes/mi-acceso.types";
 
 export interface UserBriefApi {
   id: number;
@@ -80,6 +80,15 @@ export interface AccessRequestListResponse {
 }
 
 export interface GetMiAccesoRequestsParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  status?: MiAccesoRequestStatus;
+  request_type?: MiAccesoRequestType;
+  ordering?: string;
+}
+
+export interface GetAdminMiAccesoRequestsParams {
   page?: number;
   page_size?: number;
   search?: string;

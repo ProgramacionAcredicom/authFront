@@ -48,7 +48,7 @@ export default function MiAccesoPage() {
   const hasRequests = requests.length > 0;
 
   return (
-    <PageShell contentClassName="max-w-6xl gap-6">
+    <PageShell>
       <PageIntro
         title={<h1 className="text-2xl font-semibold tracking-tight">Mis solicitudes</h1>}
         description="Historial y seguimiento de tus requerimientos de alta y baja de accesos."

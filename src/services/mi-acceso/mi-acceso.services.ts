@@ -5,11 +5,17 @@ import type {
   AccessSystemListResponse,
   CreateAccessRequestPayload,
   GetAccessSystemsParams,
+  GetAdminMiAccesoRequestsParams,
   GetMiAccesoRequestsParams,
 } from "@/interfaces/mi-acceso.interfaces";
 
 export const getMiAccesoRequests = async (params: GetMiAccesoRequestsParams): Promise<AccessRequestListResponse> => {
   const response = await apiServices.get<AccessRequestListResponse>("/solicitudes/", { params });
+  return response.data;
+};
+
+export const getAdminMiAccesoRequests = async (params: GetAdminMiAccesoRequestsParams): Promise<AccessRequestListResponse> => {
+  const response = await apiServices.get<AccessRequestListResponse>("/solicitudes/admin/", { params });
   return response.data;
 };
 

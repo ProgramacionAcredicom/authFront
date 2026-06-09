@@ -55,7 +55,7 @@ vi.mock("@/hooks/mi-acceso/useMutationDownloadMiAccesoPdf", () => ({
   }),
 }));
 
-vi.mock("@/app/admin/mi-acceso/movement-date-picker", () => ({
+vi.mock("@/app/admin/movimientos-registro/movement-date-picker", () => ({
   MovementDatePicker: ({
     id,
     value,
@@ -154,7 +154,7 @@ describe("AccessRequirementsPage", () => {
     renderPage();
 
     expect(screen.getByRole("heading", { name: /requerimiento accesos/i })).toBeInTheDocument();
-    expect(screen.getByText(/solicitante identificado/i)).toBeInTheDocument();
+    expect(screen.getByText(/^solicitante$/i)).toBeInTheDocument();
     expect(screen.getByText("Ramiro López")).toBeInTheDocument();
     expect(screen.getByText(/analista programador/i)).toBeInTheDocument();
     expect(screen.getByText(/usuario: rlopez/i)).toBeInTheDocument();

@@ -5,13 +5,23 @@ import { dataRoutes } from "../data-routes";
 import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
 describe("talento humano navigation", () => {
-  it("incluye el módulo Mi acceso como entrada separada del sidebar", () => {
+  it("agrupa Mis solicitudes y Administracion solicitudes bajo Mi acceso en el sidebar", () => {
     const miAcceso = dataRoutes.navMain.find((item) => item.title === "Mi acceso");
 
     expect(miAcceso).toBeDefined();
     expect(miAcceso).toMatchObject({
       title: "Mi acceso",
       url: "/mi-acceso",
+      items: [
+        {
+          title: "Mis solicitudes",
+          url: "/mi-acceso",
+        },
+        {
+          title: "Administracion solicitudes",
+          url: "/mi-acceso/administracion-solicitudes",
+        },
+      ],
     });
   });
 
@@ -46,9 +56,10 @@ describe("talento humano navigation", () => {
     const miAccesoRoute = adminRoutes.find((route) => route.path === "mi-acceso");
 
     expect(miAccesoRoute).toBeDefined();
-    expect(miAccesoRoute?.children).toHaveLength(3);
+    expect(miAccesoRoute?.children).toHaveLength(4);
     expect(miAccesoRoute?.children?.[0]?.index).toBe(true);
     expect(miAccesoRoute?.children?.[1]?.path).toBe("nueva");
     expect(miAccesoRoute?.children?.[2]?.path).toBe("requerimiento-accesos");
+    expect(miAccesoRoute?.children?.[3]?.path).toBe("administracion-solicitudes");
   });
 });

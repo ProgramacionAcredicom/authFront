@@ -11,13 +11,16 @@ import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
 // Lazy load de páginas admin
 const AdminPage = lazy(() => import("@/app/admin/page").then((m) => ({ default: m.default })));
-const MovementRequestsPage = lazy(() => import("@/app/admin/mi-acceso/page").then((m) => ({ default: m.default })));
-const MiAccesoPage = lazy(() => import("@/app/admin/mi-acceso-home/page").then((m) => ({ default: m.default })));
-const MiAccesoNewRequestPage = lazy(() => import("@/app/admin/mi-acceso-home/new-request-page").then((m) => ({ default: m.default })));
+const MovementRequestsPage = lazy(() => import("@/app/admin/movimientos-registro/page").then((m) => ({ default: m.default })));
+const MiAccesoPage = lazy(() => import("@/app/admin/mis-solicitudes/page").then((m) => ({ default: m.default })));
+const MiAccesoNewRequestPage = lazy(() => import("@/app/admin/mis-solicitudes/new-request-page").then((m) => ({ default: m.default })));
 const MiAccesoAccessRequirementsPage = lazy(
-  () => import("@/app/admin/mi-acceso-home/access-requirements-page").then((m) => ({ default: m.default })),
+  () => import("@/app/admin/mis-solicitudes/access-requirements-page").then((m) => ({ default: m.default })),
 );
-const MovimientosPage = lazy(() => import("@/app/admin/movimientos/page").then((m) => ({ default: m.default })));
+const MiAccesoAdministrationPage = lazy(
+  () => import("@/app/admin/administracion-solicitudes/page").then((m) => ({ default: m.default })),
+);
+const MovimientosPage = lazy(() => import("@/app/admin/movimientos-reporteria/page").then((m) => ({ default: m.default })));
 const ColaboradoresPage = lazy(() => import("@/app/admin/colaboradores/page").then((m) => ({ default: m.ColaboradoresPage })));
 const AgenciasPage = lazy(() => import("@/app/admin/agencias/page").then((m) => ({ default: m.AgenciasPage })));
 const AreasPage = lazy(() => import("@/app/admin/areas/page").then((m) => ({ default: m.default })));
@@ -80,6 +83,10 @@ export const adminRoutes: RouteObject[] = [
       {
         path: "requerimiento-accesos",
         element: <MiAccesoAccessRequirementsPage />,
+      },
+      {
+        path: "administracion-solicitudes",
+        element: <MiAccesoAdministrationPage />,
       },
     ],
   },

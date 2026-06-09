@@ -22,7 +22,7 @@ import { useMutationCreateMiAccesoRequest } from "@/hooks/mi-acceso/useMutationC
 import { useMutationDownloadMiAccesoPdf } from "@/hooks/mi-acceso/useMutationDownloadMiAccesoPdf";
 import { useQueryAccessSystems } from "@/hooks/mi-acceso/useQueryAccessSystems";
 import { cn } from "@/lib/utils";
-import { MovementDatePicker } from "@/app/admin/mi-acceso/movement-date-picker";
+import { MovementDatePicker } from "@/app/admin/movimientos-registro/movement-date-picker";
 
 type AccessRequirementTab = "vacaciones" | "nuevo_permiso";
 type AccessRequirementAbsenceType = "bloqueo_vacaciones" | "suspension";

@@ -117,6 +117,60 @@ describe("NavMenu permissions", () => {
     expect(getGroupTrigger("Talento Humano")).toHaveAttribute("aria-expanded", "true");
   });
 
+  it("expande Mi acceso y muestra sus subitems", async () => {
+    const user = userEvent.setup();
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: true,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu();
+
+    await user.click(screen.getByText("Mi acceso"));
+
+    expect(screen.getByText("Mis solicitudes")).toBeInTheDocument();
+    expect(screen.getByText("Administracion solicitudes")).toBeInTheDocument();
+    expect(getGroupTrigger("Mi acceso")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("mantiene abierto Mi acceso cuando la ruta activa es /mi-acceso", () => {
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: true,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu(["/mi-acceso"]);
+
+    expect(screen.getByText("Mis solicitudes")).toBeInTheDocument();
+    expect(screen.getByText("Administracion solicitudes")).toBeInTheDocument();
+    expect(getGroupTrigger("Mi acceso")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("mantiene abierto Mi acceso cuando la ruta activa es /mi-acceso/administracion-solicitudes", () => {
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: true,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu(["/mi-acceso/administracion-solicitudes"]);
+
+    expect(screen.getByText("Mis solicitudes")).toBeInTheDocument();
+    expect(screen.getByText("Administracion solicitudes")).toBeInTheDocument();
+    expect(getGroupTrigger("Mi acceso")).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("mantiene abierto otro grupo colapsable cuando una ruta hija está activa", () => {
     mockMatchMedia();
 

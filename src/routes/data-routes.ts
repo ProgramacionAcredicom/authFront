@@ -52,6 +52,16 @@ export const dataRoutes: Props = {
       title: "Mi acceso",
       icon: KeyRound,
       url: "/mi-acceso",
+      items: [
+        {
+          title: "Mis solicitudes",
+          url: "/mi-acceso",
+        },
+        {
+          title: "Administracion solicitudes",
+          url: "/mi-acceso/administracion-solicitudes",
+        },
+      ],
     },
     {
       title: "Colaboradores",
