@@ -84,6 +84,11 @@ export const dataRoutes: Props = {
           url: "/areas",
           requiresStaff: true,
         },
+        {
+          title: "Puestos",
+          url: "/puestos",
+          requiresStaff: true,
+        },
       ],
     },
     {

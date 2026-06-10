@@ -27,6 +27,7 @@ const AreasPage = lazy(() => import("@/app/admin/areas/page").then((m) => ({ def
 const GruposPage = lazy(() => import("@/app/admin/grupos-permisos/grupos/page").then((m) => ({ default: m.GruposPage })));
 const PermisosPage = lazy(() => import("@/app/admin/grupos-permisos/permisos/page").then((m) => ({ default: m.default })));
 const AplicativosPage = lazy(() => import("@/app/admin/grupos-permisos/aplicativos/page").then((m) => ({ default: m.AplicativosPage })));
+const PuestosPage = lazy(() => import("@/app/admin/puestos/page").then((m) => ({ default: m.PuestosPage })));
 const AgregarColaboradorPage = lazy(() => import("@/app/admin/colaboradores/agregarColaborador/page").then((m) => ({ default: m.AgregarColaboradorPage })));
 const EditarColaboradorPage = lazy(() => import("@/app/admin/colaboradores/editarColaborador/page").then((m) => ({ default: m.EditarColaboradorPage })));
 const ModalAsignarAplicativo = lazy(() => import("@/components/modal/aplicativos/modal-asignar-aplicativo").then((m) => ({ default: m.ModalAsignarAplicativo })));
@@ -186,6 +187,21 @@ export const adminRoutes: RouteObject[] = [
             loader: PermisoLoader,
           },
         ],
+      },
+    ],
+  },
+  // Puestos
+  {
+    path: "puestos",
+    element: (
+      <StaffOnly>
+        <LayoutAdmin />
+      </StaffOnly>
+    ),
+    children: [
+      {
+        index: true,
+        element: <PuestosPage />,
       },
     ],
   },

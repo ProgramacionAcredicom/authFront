@@ -77,6 +77,7 @@ describe("NavMenu permissions", () => {
     expect(screen.getByText("Reporteria")).toBeInTheDocument();
     expect(screen.queryByText("Colaboradores")).not.toBeInTheDocument();
     expect(screen.queryByText("Unidades de trabajo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Puestos")).not.toBeInTheDocument();
   });
 
   it("mantiene abierto Talento Humano cuando la ruta activa pertenece a uno de sus subitems", () => {
@@ -185,6 +186,25 @@ describe("NavMenu permissions", () => {
 
     expect(screen.getByText("Gestionar agencias")).toBeInTheDocument();
     expect(screen.getByText("Gestionar áreas")).toBeInTheDocument();
+    expect(getGroupTrigger("Unidades de trabajo")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("muestra Puestos como subitem de Unidades de trabajo para usuarios staff", async () => {
+    const user = userEvent.setup();
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: true,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu(["/puestos"]);
+
+    await user.click(screen.getByText("Unidades de trabajo"));
+
+    expect(screen.getByText("Puestos")).toBeInTheDocument();
     expect(getGroupTrigger("Unidades de trabajo")).toHaveAttribute("aria-expanded", "true");
   });
 });

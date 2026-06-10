@@ -62,4 +62,23 @@ describe("talento humano navigation", () => {
     expect(miAccesoRoute?.children?.[2]?.path).toBe("requerimiento-accesos");
     expect(miAccesoRoute?.children?.[3]?.path).toBe("administracion-solicitudes");
   });
+
+  it("ubica Puestos como subitem de Unidades de trabajo y mantiene su ruta admin", () => {
+    const unidadesTrabajo = dataRoutes.navMain.find((item) => item.title === "Unidades de trabajo");
+    const puestosRoute = adminRoutes.find((route) => route.path === "puestos");
+
+    expect(unidadesTrabajo?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "Puestos",
+          url: "/puestos",
+          requiresStaff: true,
+        }),
+      ]),
+    );
+
+    expect(puestosRoute).toBeDefined();
+    expect(puestosRoute?.children).toHaveLength(1);
+    expect(puestosRoute?.children?.[0]?.index).toBe(true);
+  });
 });
