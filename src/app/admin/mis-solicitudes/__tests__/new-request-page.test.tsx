@@ -5,13 +5,16 @@ import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Result as CollaboratorResult } from "@/interfaces/colaboradores.interfaces";
+import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
 import MiAccesoPage from "../page";
 import MiAccesoNewRequestPage from "../new-request-page";
 
-const { mutateAsyncMock, useQueryMiAccesoRequestsMock } = vi.hoisted(() => ({
+const { mutateAsyncMock, useQueryMiAccesoRequestsMock, useHasPermissionMock, useInfoUserQueryMock } = vi.hoisted(() => ({
   mutateAsyncMock: vi.fn(),
   useQueryMiAccesoRequestsMock: vi.fn(),
+  useHasPermissionMock: vi.fn(),
+  useInfoUserQueryMock: vi.fn(),
 }));
 
 const collaborators: CollaboratorResult[] = [
@@ -131,9 +134,8 @@ vi.mock("react-intersection-observer", () => ({
 }));
 
 vi.mock("@/hooks/auth/usePermissionAccess", () => ({
-  useHasPermission: () => ({
-    hasPermission: true,
-  }),
+  useHasPermission: (permission: string) => useHasPermissionMock(permission),
+  useInfoUserQuery: () => useInfoUserQueryMock(),
 }));
 
 function renderPage() {
@@ -152,9 +154,25 @@ function renderPage() {
 describe("MiAccesoNewRequestPage", () => {
   beforeEach(() => {
     mutateAsyncMock.mockReset();
+    useHasPermissionMock.mockReset();
+    useInfoUserQueryMock.mockReset();
     toast.success.mockReset();
     toast.error.mockReset();
     mutateAsyncMock.mockResolvedValue({ id: 999 });
+    useHasPermissionMock.mockImplementation(() => ({
+      hasPermission: true,
+    }));
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [
+          OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS,
+          OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST,
+          OAUTH_PERMISSIONS.VIEW_ACCESS_REQUEST,
+        ],
+      },
+      isLoading: false,
+    });
     useQueryMiAccesoRequestsMock.mockReturnValue({
       data: { count: 0, results: [] },
       isLoading: false,
@@ -281,5 +299,33 @@ describe("MiAccesoNewRequestPage", () => {
     await user.click(screen.getByRole("button", { name: /guardar solicitud/i }));
 
     expect(screen.getByText("El requerimiento adicional no puede exceder 500 caracteres.")).toBeInTheDocument();
+  });
+
+  it("deshabilita los selects de usuarios cuando falta listar_usuarios_oauth", () => {
+    useHasPermissionMock.mockImplementation((permission: string) => ({
+      hasPermission: permission !== OAUTH_PERMISSIONS.LIST_USERS,
+    }));
+
+    renderPage();
+
+    expect(screen.getByRole("combobox", { name: /solicitante/i })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: /jefe inmediato/i })).toBeDisabled();
+  });
+
+  it("deshabilita el select de sistema cuando falta listar_sistemas_acceso", async () => {
+    const user = userEvent.setup();
+
+    useHasPermissionMock.mockImplementation((permission: string) => ({
+      hasPermission: permission !== OAUTH_PERMISSIONS.LIST_ACCESS_SYSTEMS,
+    }));
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /agregar sistema/i }));
+
+    const systemSelect = screen.getByRole("combobox", { name: /^sistema/i });
+    expect(systemSelect).toBeDisabled();
+    expect(systemSelect).toHaveTextContent("Sin permiso para listar sistemas");
+    expect(screen.getByText("No tienes permisos para listar sistemas de acceso.")).toBeInTheDocument();
   });
 });

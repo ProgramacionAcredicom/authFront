@@ -5,11 +5,13 @@ import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import MiAccesoPage from "../page";
+import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
-const { mutateMock, useQueryMiAccesoRequestsMock, useMutationDownloadMiAccesoPdfMock } = vi.hoisted(() => ({
+const { mutateMock, useQueryMiAccesoRequestsMock, useMutationDownloadMiAccesoPdfMock, useInfoUserQueryMock } = vi.hoisted(() => ({
   mutateMock: vi.fn(),
   useQueryMiAccesoRequestsMock: vi.fn(),
   useMutationDownloadMiAccesoPdfMock: vi.fn(),
+  useInfoUserQueryMock: vi.fn(),
 }));
 
 const { toast } = vi.hoisted(() => ({
@@ -24,6 +26,10 @@ vi.mock("@/hooks/mi-acceso/useQueryMiAccesoRequests", () => ({
 
 vi.mock("@/hooks/mi-acceso/useMutationDownloadMiAccesoPdf", () => ({
   useMutationDownloadMiAccesoPdf: () => useMutationDownloadMiAccesoPdfMock(),
+}));
+
+vi.mock("@/hooks/auth/usePermissionAccess", () => ({
+  useInfoUserQuery: () => useInfoUserQueryMock(),
 }));
 
 vi.mock("sonner", () => ({
@@ -46,10 +52,22 @@ describe("MiAccesoPage", () => {
   beforeEach(() => {
     mutateMock.mockReset();
     toast.error.mockReset();
+    useInfoUserQueryMock.mockReset();
     useMutationDownloadMiAccesoPdfMock.mockReturnValue({
       mutate: mutateMock,
       variables: undefined,
       isPending: false,
+    });
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [
+          OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS,
+          OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST,
+          OAUTH_PERMISSIONS.VIEW_ACCESS_REQUEST,
+        ],
+      },
+      isLoading: false,
     });
     useQueryMiAccesoRequestsMock.mockReturnValue({
       data: {
@@ -186,6 +204,37 @@ describe("MiAccesoPage", () => {
     expect(screen.getByText("T24")).toBeInTheDocument();
     expect(screen.getAllByText("Detalle adicional")).toHaveLength(2);
     expect(screen.getByText("Crear accesos iniciales para inducción.")).toBeInTheDocument();
+  });
+
+  it("oculta los CTAs de creación cuando falta crear_solicitud", () => {
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS, OAUTH_PERMISSIONS.VIEW_ACCESS_REQUEST],
+      },
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(screen.queryByRole("link", { name: /requerimiento accesos/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /nueva solicitud/i })).not.toBeInTheDocument();
+  });
+
+  it("muestra estado informativo cuando falta ver_solicitud", () => {
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS, OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST],
+      },
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(screen.getByText("Sin permisos para consultar solicitudes")).toBeInTheDocument();
+    expect(screen.queryByText("REQ-2026-001")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
   });
 
   it("usa total cuando el backend no envía count en el listado", async () => {

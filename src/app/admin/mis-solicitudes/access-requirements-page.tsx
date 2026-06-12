@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMutationCreateMiAccesoRequest } from "@/hooks/mi-acceso/useMutationCreateMiAccesoRequest";
 import { useMutationDownloadMiAccesoPdf } from "@/hooks/mi-acceso/useMutationDownloadMiAccesoPdf";
 import { useQueryAccessSystems } from "@/hooks/mi-acceso/useQueryAccessSystems";
+import { hasAccess, OAUTH_PERMISSIONS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { MovementDatePicker } from "@/app/admin/movimientos-registro/movement-date-picker";
 
@@ -109,9 +110,10 @@ export default function MiAccesoAccessRequirementsPage() {
     queryFn: getProfile,
     staleTime: 1000 * 60 * 60,
   });
+  const canListAccessSystems = hasAccess(currentUserQuery.data, OAUTH_PERMISSIONS.LIST_ACCESS_SYSTEMS);
   const accessSystemsQuery = useQueryAccessSystems(
     { is_active: true, system_kind: "form" },
-    { enabled: activeTab === "nuevo_permiso" },
+    { enabled: activeTab === "nuevo_permiso" && canListAccessSystems },
   );
 
   const {
@@ -141,7 +143,7 @@ export default function MiAccesoAccessRequirementsPage() {
     isSubmitting ||
     currentUserQuery.isLoading ||
     isUserUnavailable ||
-    (activeTab === "nuevo_permiso" && (accessSystemsQuery.isLoading || accessSystemsQuery.isError));
+    (activeTab === "nuevo_permiso" && (!canListAccessSystems || accessSystemsQuery.isLoading || accessSystemsQuery.isError));
 
   const handleTabChange = (nextTab: string) => {
     setActiveTab(nextTab as AccessRequirementTab);
@@ -368,7 +370,13 @@ export default function MiAccesoAccessRequirementsPage() {
               </TabsContent>
 
               <TabsContent value="nuevo_permiso" className="mt-6">
-                {accessSystemsQuery.isError ? (
+                {!currentUserQuery.isLoading && !canListAccessSystems ? (
+                  <Alert>
+                    <ShieldAlert aria-hidden="true" />
+                    <AlertTitle>Sin permisos para listar sistemas</AlertTitle>
+                    <AlertDescription>Tu usuario no tiene acceso al catálogo de sistemas para solicitar nuevos permisos.</AlertDescription>
+                  </Alert>
+                ) : accessSystemsQuery.isError ? (
                   <Alert variant="destructive">
                     <AlertCircle aria-hidden="true" />
                     <AlertTitle>No se pudieron cargar los sistemas</AlertTitle>
@@ -394,13 +402,14 @@ export default function MiAccesoAccessRequirementsPage() {
                             }}
                             render={({ field }) => (
                               <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger
-                                id="access-requirements-system"
-                                aria-label="Sistema para nuevo permiso"
-                                className={cn("w-full", errors.systemId && "border-destructive focus-visible:ring-destructive/40")}
-                              >
-                                <SelectValue placeholder="Selecciona un sistema" />
-                              </SelectTrigger>
+                                <SelectTrigger
+                                  id="access-requirements-system"
+                                  aria-label="Sistema para nuevo permiso"
+                                  className={cn("w-full", errors.systemId && "border-destructive focus-visible:ring-destructive/40")}
+                                  disabled={!canListAccessSystems}
+                                >
+                                  <SelectValue placeholder={canListAccessSystems ? "Selecciona un sistema" : "Sin permiso para listar sistemas"} />
+                                </SelectTrigger>
                                 <SelectContent>
                                   <SelectGroup>
                                     {availableSystems.map((system) => (

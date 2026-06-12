@@ -23,9 +23,11 @@ import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
 interface CardPuestoProps {
   puesto: PuestoListItem;
   onEdit: (puestoId: number) => void;
+  canEdit?: boolean;
+  canDeactivate?: boolean;
 }
 
-export const CardPuesto = ({ puesto, onEdit }: CardPuestoProps) => {
+export const CardPuesto = ({ puesto, onEdit, canEdit = true, canDeactivate = true }: CardPuestoProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { mutationEliminarPuesto, isLoading } = useMutationEliminarPuesto();
   const isActive = puesto.state;
@@ -67,7 +69,7 @@ export const CardPuesto = ({ puesto, onEdit }: CardPuestoProps) => {
             <TypographyH3 text={puesto.role} className="truncate text-lg font-semibold transition-colors group-hover:text-primary" />
           </div>
 
-          {isActive ? (
+          {isActive && canDeactivate ? (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -103,14 +105,16 @@ export const CardPuesto = ({ puesto, onEdit }: CardPuestoProps) => {
             </div>
           </div>
 
-          <Button variant="outline" className="w-full transition-colors group-hover:border-primary group-hover:text-primary" size="sm" onClick={() => onEdit(puesto.id)}>
-            <Edit className="mr-2 size-4" />
-            Editar puesto
-          </Button>
+          {canEdit ? (
+            <Button variant="outline" className="w-full transition-colors group-hover:border-primary group-hover:text-primary" size="sm" onClick={() => onEdit(puesto.id)}>
+              <Edit className="mr-2 size-4" />
+              Editar puesto
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={canDeactivate ? showDeleteDialog : false} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Desactivar puesto?</AlertDialogTitle>

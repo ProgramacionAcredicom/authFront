@@ -1,16 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
-import { FileText, FolderKey, PlusCircle } from "lucide-react";
+import { FileText, FolderKey, PlusCircle, ShieldAlert } from "lucide-react";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { Link } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageIntro, PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { useInfoUserQuery } from "@/hooks/auth/usePermissionAccess";
 import { useMutationDownloadMiAccesoPdf } from "@/hooks/mi-acceso/useMutationDownloadMiAccesoPdf";
 import { useQueryMiAccesoRequests } from "@/hooks/mi-acceso/useQueryMiAccesoRequests";
 import { PAGINATION } from "@/config/constants";
+import { hasAccess, OAUTH_PERMISSIONS } from "@/lib/permissions";
 import { getMiAccesoColumns } from "./columns";
 import { MiAccesoTable } from "./data-table";
 import { mapAccessRequestDetailToMiAccesoRequest } from "./mi-acceso.utils";
@@ -19,11 +21,16 @@ export default function MiAccesoPage() {
   const [pageSize] = useQueryState("perPage", parseAsInteger.withDefault(PAGINATION.DEFAULT_PAGE_SIZE));
   const [pageIndex] = useQueryState("page", parseAsInteger.withDefault(1));
   const [globalFilter] = useQueryState("search", parseAsString.withDefault(""));
+  const userQuery = useInfoUserQuery();
+  const canCreateRequest = hasAccess(userQuery.data, OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST);
+  const canViewRequest = hasAccess(userQuery.data, OAUTH_PERMISSIONS.VIEW_ACCESS_REQUEST);
 
   const requestsQuery = useQueryMiAccesoRequests({
     page: pageIndex,
     page_size: pageSize,
     search: globalFilter.trim() || undefined,
+  }, {
+    enabled: canViewRequest,
   });
   const downloadPdfMutation = useMutationDownloadMiAccesoPdf();
 
@@ -46,13 +53,15 @@ export default function MiAccesoPage() {
   const totalItems = requestsQuery.data?.count ?? requestsQuery.data?.total ?? requests.length;
   const hasActiveSearch = globalFilter.trim().length > 0;
   const hasRequests = requests.length > 0;
+  const isLoadingPermissions = userQuery.isLoading;
+  const showCreationActions = canCreateRequest;
 
   return (
     <PageShell>
       <PageIntro
         title={<h1 className="text-2xl font-semibold tracking-tight">Mis solicitudes</h1>}
         description="Historial y seguimiento de tus requerimientos de alta y baja de accesos."
-        actions={
+        actions={showCreationActions ? (
           <>
             <Button asChild variant="custom2">
               <Link to="/mi-acceso/requerimiento-accesos">
@@ -67,9 +76,29 @@ export default function MiAccesoPage() {
               </Link>
             </Button>
           </>
-        }
+        ) : undefined}
       />
-      {requestsQuery.isError ? (
+      {isLoadingPermissions ? (
+        <Empty className="border py-16">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileText aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>Cargando permisos de solicitudes</EmptyTitle>
+            <EmptyDescription>Estamos validando qué acciones tenés disponibles en Mi Acceso.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : !canViewRequest ? (
+        <Empty className="border py-16">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ShieldAlert aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>Sin permisos para consultar solicitudes</EmptyTitle>
+            <EmptyDescription>No tenés permiso para ver el detalle ni descargar los PDF de tus solicitudes de acceso.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : requestsQuery.isError ? (
         <Alert variant="destructive">
           <AlertTitle>Error al cargar solicitudes</AlertTitle>
           <AlertDescription>
@@ -83,7 +112,11 @@ export default function MiAccesoPage() {
               <FileText aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>No hay solicitudes registradas</EmptyTitle>
-            <EmptyDescription>Creá tu primera solicitud de alta o baja desde el botón superior.</EmptyDescription>
+            <EmptyDescription>
+              {showCreationActions
+                ? "Creá tu primera solicitud de alta o baja desde el botón superior."
+                : "Todavía no tenés solicitudes registradas."}
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (

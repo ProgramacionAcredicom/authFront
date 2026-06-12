@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 import AccessRequirementsPage from "../access-requirements-page";
 
 const {
@@ -107,6 +108,8 @@ describe("AccessRequirementsPage", () => {
         username: "rlopez",
         agency: { name: "Corporativo" },
         role: { role: "Analista Programador" },
+        is_staff: false,
+        oauth_perms: [OAUTH_PERMISSIONS.LIST_ACCESS_SYSTEMS],
       },
       isLoading: false,
       isError: false,
@@ -238,6 +241,37 @@ describe("AccessRequirementsPage", () => {
     await user.click(screen.getByRole("tab", { name: /nuevos permisos/i }));
 
     expect(screen.getByText(/no se pudieron cargar los sistemas/i)).toBeInTheDocument();
+  });
+
+  it("muestra estado informativo si falta listar_sistemas_acceso en nuevos permisos", async () => {
+    const user = userEvent.setup();
+
+    useQueryMock.mockReturnValue({
+      data: {
+        id: 24,
+        cif: "EMP-2024-893",
+        name: "Ramiro López",
+        username: "rlopez",
+        agency: { name: "Corporativo" },
+        role: { role: "Analista Programador" },
+        is_staff: false,
+        oauth_perms: [],
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    renderPage();
+
+    await user.click(screen.getByRole("tab", { name: /nuevos permisos/i }));
+
+    expect(screen.getByText("Sin permisos para listar sistemas")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: /sistema para nuevo permiso/i })).not.toBeInTheDocument();
+    expect(useQueryAccessSystemsMock).toHaveBeenCalledWith(
+      { is_active: true, system_kind: "form" },
+      { enabled: false },
+    );
   });
 
   it("vuelve al listado aunque falle la descarga del PDF", async () => {

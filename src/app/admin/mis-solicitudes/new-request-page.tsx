@@ -14,8 +14,10 @@ import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLab
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
+import { useHasPermission } from "@/hooks/auth/usePermissionAccess";
 import { useMutationCreateMiAccesoRequest } from "@/hooks/mi-acceso/useMutationCreateMiAccesoRequest";
 import { useQueryAccessSystems } from "@/hooks/mi-acceso/useQueryAccessSystems";
+import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 import { MI_ACCESO_TYPE_LABELS } from "./mi-acceso.constants";
 import { MiAccesoCollaboratorSelect } from "./mi-acceso-collaborator-select";
 import { createEmptySystemAccess } from "./mi-acceso.utils";
@@ -78,7 +80,8 @@ function TypeOptionButton({ active, type, onClick }: { active: boolean; type: Mi
 export default function MiAccesoNewRequestPage() {
   const navigate = useNavigate();
   const createRequestMutation = useMutationCreateMiAccesoRequest();
-  const accessSystemsQuery = useQueryAccessSystems({ is_active: true, system_kind: "form" });
+  const { hasPermission: canListAccessSystems } = useHasPermission(OAUTH_PERMISSIONS.LIST_ACCESS_SYSTEMS);
+  const accessSystemsQuery = useQueryAccessSystems({ is_active: true, system_kind: "form" }, { enabled: canListAccessSystems });
   const availableSystems = useMemo(() => accessSystemsQuery.data?.results ?? [], [accessSystemsQuery.data]);
 
   const {
@@ -277,9 +280,9 @@ export default function MiAccesoNewRequestPage() {
                                     "w-full",
                                     errors.systems?.[index]?.systemId ? "border-destructive focus-visible:ring-destructive/40" : undefined,
                                   )}
-                                  disabled={accessSystemsQuery.isLoading || accessSystemsQuery.isError}
+                                  disabled={!canListAccessSystems || accessSystemsQuery.isLoading || accessSystemsQuery.isError}
                                 >
-                                  <SelectValue placeholder="Seleccionar sistema" />
+                                  <SelectValue placeholder={canListAccessSystems ? "Seleccionar sistema" : "Sin permiso para listar sistemas"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {availableSystems.map((system) => (
@@ -290,8 +293,10 @@ export default function MiAccesoNewRequestPage() {
                                 </SelectContent>
                               </Select>
                             )}
-                          />
-                          {accessSystemsQuery.isError ? (
+                              />
+                          {!canListAccessSystems ? (
+                            <FieldDescription className="text-muted-foreground">No tienes permisos para listar sistemas de acceso.</FieldDescription>
+                          ) : accessSystemsQuery.isError ? (
                             <FieldDescription className="text-destructive">No se pudieron cargar los sistemas disponibles.</FieldDescription>
                           ) : null}
                           <FieldError>{errors.systems?.[index]?.systemId?.message}</FieldError>

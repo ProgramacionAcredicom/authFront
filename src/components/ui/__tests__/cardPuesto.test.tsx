@@ -36,7 +36,7 @@ describe("CardPuesto", () => {
     expect(screen.getByText("Supervisor regional")).toBeInTheDocument();
     expect(screen.getByText("Activo")).toBeInTheDocument();
     expect(screen.getAllByText(/Total 8/)).toHaveLength(1);
-    expect(screen.getByText("Cantidad reportada por backend")).toBeInTheDocument();
+    expect(screen.getByText("Cantidad:")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
   });
 
@@ -80,5 +80,39 @@ describe("CardPuesto", () => {
     await user.click(screen.getByRole("button", { name: /^desactivar$/i }));
 
     expect(mutateMock).toHaveBeenCalledWith({ id: "9" });
+  });
+
+  it("oculta la acción de editar cuando falta actualizar_puesto", () => {
+    render(
+      <CardPuesto
+        puesto={{
+          id: 7,
+          role: "Coordinador",
+          state: true,
+          gruposCount: 3,
+        }}
+        onEdit={vi.fn()}
+        canEdit={false}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /editar puesto/i })).not.toBeInTheDocument();
+  });
+
+  it("oculta la acción de desactivar cuando falta desactivar_puesto", () => {
+    render(
+      <CardPuesto
+        puesto={{
+          id: 8,
+          role: "Líder comercial",
+          state: true,
+          gruposCount: 5,
+        }}
+        onEdit={vi.fn()}
+        canDeactivate={false}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /desactivar puesto/i })).not.toBeInTheDocument();
   });
 });
