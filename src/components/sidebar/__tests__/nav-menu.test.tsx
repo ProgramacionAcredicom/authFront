@@ -75,9 +75,78 @@ describe("NavMenu permissions", () => {
 
     expect(screen.getByText("Movimientos")).toBeInTheDocument();
     expect(screen.getByText("Reporteria")).toBeInTheDocument();
+    expect(screen.queryByText("Auditoria")).not.toBeInTheDocument();
     expect(screen.queryByText("Colaboradores")).not.toBeInTheDocument();
     expect(screen.queryByText("Unidades de trabajo")).not.toBeInTheDocument();
     expect(screen.queryByText("Puestos")).not.toBeInTheDocument();
+  });
+
+  it("muestra Auditoria como módulo raíz cuando el usuario tiene el permiso", () => {
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: ["consultar_log_auditoria"],
+      },
+    });
+
+    renderNavMenu(["/auditoria"]);
+
+    expect(screen.getByText("Auditoria")).toBeInTheDocument();
+  });
+
+  it("oculta Mi acceso cuando el usuario no tiene ninguno de sus permisos", () => {
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu(["/profile"]);
+
+    expect(screen.queryByText("Mi acceso")).not.toBeInTheDocument();
+  });
+
+  it("muestra solo Mis solicitudes cuando el usuario tiene acceso_mis_solicitudes", async () => {
+    const user = userEvent.setup();
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: ["acceso_mis_solicitudes"],
+      },
+    });
+
+    renderNavMenu(["/mi-acceso"]);
+
+    await user.click(screen.getByText("Mi acceso"));
+
+    expect(screen.getByText("Mis solicitudes")).toBeInTheDocument();
+    expect(screen.queryByText("Administracion solicitudes")).not.toBeInTheDocument();
+  });
+
+  it("muestra solo Administracion solicitudes cuando el usuario tiene administrar_solicitudes", async () => {
+    const user = userEvent.setup();
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: ["administrar_solicitudes"],
+      },
+    });
+
+    renderNavMenu(["/mi-acceso/administracion-solicitudes"]);
+
+    await user.click(screen.getByText("Mi acceso"));
+
+    expect(screen.queryByText("Mis solicitudes")).not.toBeInTheDocument();
+    expect(screen.getByText("Administracion solicitudes")).toBeInTheDocument();
   });
 
   it("mantiene abierto Talento Humano cuando la ruta activa pertenece a uno de sus subitems", () => {
@@ -206,5 +275,39 @@ describe("NavMenu permissions", () => {
 
     expect(screen.getByText("Puestos")).toBeInTheDocument();
     expect(getGroupTrigger("Unidades de trabajo")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("muestra Puestos a un usuario no staff cuando tiene ver_puesto", async () => {
+    const user = userEvent.setup();
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: ["ver_puesto"],
+      },
+    });
+
+    renderNavMenu(["/puestos"]);
+
+    await user.click(screen.getByText("Unidades de trabajo"));
+
+    expect(screen.getByText("Puestos")).toBeInTheDocument();
+  });
+
+  it("oculta Puestos a un usuario no staff cuando falta ver_puesto", async () => {
+    mockMatchMedia();
+
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [],
+      },
+    });
+
+    renderNavMenu(["/agencias"]);
+
+    expect(screen.queryByText("Unidades de trabajo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Puestos")).not.toBeInTheDocument();
   });
 });

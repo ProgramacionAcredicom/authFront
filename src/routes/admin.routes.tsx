@@ -20,6 +20,7 @@ const MiAccesoAccessRequirementsPage = lazy(
 const MiAccesoAdministrationPage = lazy(
   () => import("@/app/admin/administracion-solicitudes/page").then((m) => ({ default: m.default })),
 );
+const AuditoriaPage = lazy(() => import("@/app/admin/auditoria/page").then((m) => ({ default: m.default })));
 const MovimientosPage = lazy(() => import("@/app/admin/movimientos-reporteria/page").then((m) => ({ default: m.default })));
 const ColaboradoresPage = lazy(() => import("@/app/admin/colaboradores/page").then((m) => ({ default: m.ColaboradoresPage })));
 const AgenciasPage = lazy(() => import("@/app/admin/agencias/page").then((m) => ({ default: m.AgenciasPage })));
@@ -75,19 +76,49 @@ export const adminRoutes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: <MiAccesoPage />,
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS}>
+            <MiAccesoPage />
+          </PermissionRoute>
+        ),
       },
       {
         path: "nueva",
-        element: <MiAccesoNewRequestPage />,
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST}>
+            <MiAccesoNewRequestPage />
+          </PermissionRoute>
+        ),
       },
       {
         path: "requerimiento-accesos",
-        element: <MiAccesoAccessRequirementsPage />,
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST}>
+            <MiAccesoAccessRequirementsPage />
+          </PermissionRoute>
+        ),
       },
       {
         path: "administracion-solicitudes",
-        element: <MiAccesoAdministrationPage />,
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS}>
+            <MiAccesoAdministrationPage />
+          </PermissionRoute>
+        ),
+      },
+    ],
+  },
+  {
+    path: "auditoria",
+    element: (
+      <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.AUDIT_LOG_ACCESS}>
+        <LayoutAdmin />
+      </PermissionRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <AuditoriaPage />,
       },
     ],
   },
@@ -194,9 +225,9 @@ export const adminRoutes: RouteObject[] = [
   {
     path: "puestos",
     element: (
-      <StaffOnly>
+      <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.VIEW_POSITION}>
         <LayoutAdmin />
-      </StaffOnly>
+      </PermissionRoute>
     ),
     children: [
       {

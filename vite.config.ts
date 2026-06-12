@@ -71,6 +71,7 @@ export default defineConfig(({ mode }) => {
     // Optimización de dependencias
     optimizeDeps: {
       include: ["react", "react-dom", "react-router-dom"],
+      exclude: ["xlsx"],
     },
   };
 });
