@@ -26,6 +26,7 @@ export const localColaboradorByIdMapper = (colaborador: ColaboradorIDType) => {
     area: colaborador.area,
     grupos: colaborador.grupos,
     is_active: colaborador.is_active,
+    is_blocked: colaborador.is_blocked,
     is_staff: colaborador.is_staff,
     is_superuser: colaborador.is_superuser,
     otp_enabled: colaborador.otp_enabled,

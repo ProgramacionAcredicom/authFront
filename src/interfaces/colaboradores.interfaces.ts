@@ -27,6 +27,7 @@ export interface Result {
   role: Role;
   areas: Areas[];
   is_active: boolean;
+  is_blocked: boolean;
   is_staff: boolean;
   is_superuser: boolean;
   picture: null | string;
@@ -80,6 +81,7 @@ export interface CrearColaboradorType {
   confirm_password?: string;
   executive_number: null | string | number;
   is_active: boolean;
+  is_blocked?: boolean;
 }
 
 export interface ColaboradorIDType {
@@ -97,6 +99,7 @@ export interface ColaboradorIDType {
   area: Areas;
   grupos: Grupo[];
   is_active: boolean;
+  is_blocked: boolean;
   is_staff: boolean;
   is_superuser: boolean;
   otp_enabled: boolean;

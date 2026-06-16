@@ -30,6 +30,7 @@ export class ColaboradorByIdModel {
   area: null;
   grupos: Grupo[];
   is_active: boolean;
+  is_blocked: boolean;
   is_staff: boolean;
   is_superuser: boolean;
   otp_enabled: boolean;
@@ -46,6 +47,7 @@ export class ColaboradorByIdModel {
     this.area = colaborador.area;
     this.grupos = colaborador.grupos;
     this.is_active = colaborador.is_active;
+    this.is_blocked = colaborador.is_blocked;
     this.is_staff = colaborador.is_staff;
     this.is_superuser = colaborador.is_superuser;
     this.otp_enabled = colaborador.otp_enabled;
