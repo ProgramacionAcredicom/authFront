@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
@@ -213,6 +213,24 @@ describe("MiAccesoNewRequestPage", () => {
     expect(screen.getByText("Selecciona un sistema.")).toBeInTheDocument();
     expect(screen.getByText("Selecciona un colaborador de referencia.")).toBeInTheDocument();
     expect(screen.getByText("Ingresa una observación.")).toBeInTheDocument();
+  });
+
+  it("oculta en la siguiente fila los sistemas que ya fueron seleccionados", async () => {
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /agregar sistema/i }));
+    await user.click(screen.getByRole("combobox", { name: /^sistema/i }));
+    await user.click(screen.getAllByText("T24")[1]);
+
+    await user.click(screen.getByRole("button", { name: /agregar sistema/i }));
+    await user.click(screen.getAllByRole("combobox", { name: /^sistema/i })[1]);
+
+    const secondSystemOptions = within(screen.getByRole("listbox"));
+
+    expect(secondSystemOptions.queryByRole("option", { name: "T24" })).not.toBeInTheDocument();
+    expect(secondSystemOptions.getByRole("option", { name: "Seguros" })).toBeInTheDocument();
   });
 
   it("crea la solicitud en backend y regresa al listado", async () => {

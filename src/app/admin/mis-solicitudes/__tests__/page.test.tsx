@@ -204,6 +204,7 @@ describe("MiAccesoPage", () => {
     expect(screen.getByText("T24")).toBeInTheDocument();
     expect(screen.getAllByText("Detalle adicional")).toHaveLength(2);
     expect(screen.getByText("Crear accesos iniciales para inducción.")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /descargar pdf/i })).toHaveLength(2);
   });
 
   it("oculta los CTAs de creación cuando falta crear_solicitud", () => {
@@ -221,7 +222,7 @@ describe("MiAccesoPage", () => {
     expect(screen.queryByRole("link", { name: /nueva solicitud/i })).not.toBeInTheDocument();
   });
 
-  it("muestra estado informativo cuando falta ver_solicitud", () => {
+  it("mantiene la tabla pero oculta descargar pdf cuando falta ver_solicitud", () => {
     useInfoUserQueryMock.mockReturnValue({
       data: {
         is_staff: false,
@@ -232,9 +233,24 @@ describe("MiAccesoPage", () => {
 
     renderPage();
 
+    expect(screen.getByText("REQ-2026-001")).toBeInTheDocument();
+    expect(screen.getByText("REQ-2026-002")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
+  });
+
+  it("muestra estado informativo cuando falta acceso_mis_solicitudes", () => {
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST, OAUTH_PERMISSIONS.VIEW_ACCESS_REQUEST],
+      },
+      isLoading: false,
+    });
+
+    renderPage();
+
     expect(screen.getByText("Sin permisos para consultar solicitudes")).toBeInTheDocument();
     expect(screen.queryByText("REQ-2026-001")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
   });
 
   it("usa total cuando el backend no envía count en el listado", async () => {

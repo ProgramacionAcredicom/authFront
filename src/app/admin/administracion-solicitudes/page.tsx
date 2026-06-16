@@ -1,6 +1,6 @@
 import { AlertTriangle, FileSearch, ShieldAlert } from "lucide-react";
 import { parseAsArrayOf, parseAsInteger, parseAsString, useQueryState } from "nuqs";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type { MiAccesoRequestStatus, MiAccesoRequestType } from "@/app/admin/mis-solicitudes/mi-acceso.types";
 import { MI_ACCESO_STATUS_LABELS, MI_ACCESO_TYPE_LABELS } from "@/app/admin/mis-solicitudes/mi-acceso.constants";
@@ -8,11 +8,17 @@ import { PAGINATION } from "@/config/constants";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageIntro, PageShell } from "@/components/layout/page-shell";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { useInfoUserQuery } from "@/hooks/auth/usePermissionAccess";
+import { useMutationDownloadMiAccesoPdf } from "@/hooks/mi-acceso/useMutationDownloadMiAccesoPdf";
+import { useMutationUpdateMiAccesoRequestStatus } from "@/hooks/mi-acceso/useMutationUpdateMiAccesoRequestStatus";
 import { getSortingStateParser } from "@/lib/parsers";
+import { hasAccess, OAUTH_PERMISSIONS } from "@/lib/permissions";
 import { useQueryAdminMiAccesoRequests } from "@/hooks/mi-acceso/useQueryAdminMiAccesoRequests";
+import type { UpdateAccessRequestStatus } from "@/interfaces/mi-acceso.interfaces";
 
-import { adminMiAccesoColumns } from "./columns";
+import { getAdminMiAccesoColumns } from "./columns";
 import { MiAccesoAdministrationTable } from "./data-table";
+import { MiAccesoStatusChangeDialog } from "./status-change-dialog";
 import type { MiAccesoAdminRequestRow } from "./mi-acceso-administration.types";
 import { getAdminRequestsOrdering, mapAccessRequestDetailToAdminRow } from "./mi-acceso-administration.utils";
 
@@ -40,12 +46,16 @@ function getErrorStatus(error: unknown) {
 }
 
 export default function MiAccesoAdministrationPage() {
+  const [requestToUpdateStatus, setRequestToUpdateStatus] = useState<MiAccesoAdminRequestRow | null>(null);
   const [pageSize] = useQueryState("perPage", parseAsInteger.withDefault(PAGINATION.DEFAULT_PAGE_SIZE));
   const [pageIndex] = useQueryState("page", parseAsInteger.withDefault(1));
   const [globalFilter] = useQueryState("search", parseAsString.withDefault(""));
   const [statusFilter] = useQueryState("status", parseAsArrayOf(parseAsString, ",").withDefault([]));
   const [requestTypeFilter] = useQueryState("type", parseAsArrayOf(parseAsString, ",").withDefault([]));
   const [sorting] = useQueryState("sort", getSortingStateParser<MiAccesoAdminRequestRow>(SORTABLE_COLUMNS).withDefault([]));
+  const userQuery = useInfoUserQuery();
+  const canViewRequestPdf = hasAccess(userQuery.data, OAUTH_PERMISSIONS.VIEW_ACCESS_REQUEST);
+  const canChangeRequestStatus = hasAccess(userQuery.data, OAUTH_PERMISSIONS.CHANGE_ACCESS_REQUEST_STATUS);
 
   const selectedStatus = getSingleSelectValue(statusFilter, STATUS_VALUES);
   const selectedRequestType = getSingleSelectValue(requestTypeFilter, REQUEST_TYPE_VALUES);
@@ -59,8 +69,48 @@ export default function MiAccesoAdministrationPage() {
     request_type: selectedRequestType,
     ordering,
   });
+  const downloadPdfMutation = useMutationDownloadMiAccesoPdf();
+  const updateRequestStatusMutation = useMutationUpdateMiAccesoRequestStatus({
+    onSuccess: () => {
+      setRequestToUpdateStatus(null);
+    },
+  });
 
   const rows = useMemo(() => requestsQuery.data?.results.map(mapAccessRequestDetailToAdminRow) ?? [], [requestsQuery.data]);
+  const handleStatusDialogOpenChange = (open: boolean) => {
+    if (!open && !updateRequestStatusMutation.isPending) {
+      setRequestToUpdateStatus(null);
+    }
+  };
+
+  const handleChangeStatus = (status: UpdateAccessRequestStatus) => {
+    if (!requestToUpdateStatus) {
+      return;
+    }
+
+    updateRequestStatusMutation.mutate({
+      id: requestToUpdateStatus.id,
+      status,
+      comment: "",
+    });
+  };
+
+  const columns = useMemo(
+    () =>
+      getAdminMiAccesoColumns({
+        canViewRequestPdf,
+        canChangeStatus: canChangeRequestStatus,
+        downloadingRequestId: downloadPdfMutation.variables?.id ?? null,
+        isDownloadingPdf: downloadPdfMutation.isPending,
+        onDownloadPdf: (request) => {
+          downloadPdfMutation.mutate({ id: request.id, code: request.code });
+        },
+        onOpenStatusDialog: (request) => {
+          setRequestToUpdateStatus(request);
+        },
+      }),
+    [canViewRequestPdf, canChangeRequestStatus, downloadPdfMutation],
+  );
   const totalItems = requestsQuery.data?.count ?? requestsQuery.data?.total ?? rows.length;
   const hasSearch = globalFilter.trim().length > 0;
   const hasFilters = hasSearch || statusFilter.length > 0 || requestTypeFilter.length > 0;
@@ -108,11 +158,20 @@ export default function MiAccesoAdministrationPage() {
         <MiAccesoAdministrationTable
           data={rows}
           totalItems={totalItems}
-          columns={adminMiAccesoColumns}
+          columns={columns}
           isLoading={requestsQuery.isLoading || requestsQuery.isFetching}
           emptyMessage={hasFilters ? "No se encontraron solicitudes con los filtros actuales." : "No hay solicitudes registradas."}
         />
       )}
+
+      <MiAccesoStatusChangeDialog
+        open={requestToUpdateStatus !== null}
+        onOpenChange={handleStatusDialogOpenChange}
+        request={requestToUpdateStatus}
+        isPending={updateRequestStatusMutation.isPending}
+        pendingStatus={updateRequestStatusMutation.variables?.status ?? null}
+        onChangeStatus={handleChangeStatus}
+      />
     </PageShell>
   );
 }

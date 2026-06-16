@@ -110,6 +110,26 @@ export default function MiAccesoNewRequestPage() {
   const manager = useWatch({ control, name: "manager" });
   const additionalRequirement = useWatch({ control, name: "additionalRequirement", defaultValue: "" });
   const selectedType = useWatch({ control, name: "type" });
+  const selectedSystems = useWatch({ control, name: "systems", defaultValue: [] });
+  const selectedSystemIds = useMemo(
+    () => new Set(selectedSystems.map((system) => system.systemId).filter((systemId): systemId is number => typeof systemId === "number")),
+    [selectedSystems],
+  );
+
+  const getAvailableSystemsForIndex = (index: number) => {
+    const currentSystemId = selectedSystems[index]?.systemId;
+    const selectedSystemsByOtherRows = new Set(
+      selectedSystems
+        .filter((_, itemIndex) => itemIndex !== index)
+        .map((system) => system.systemId)
+        .filter((systemId): systemId is number => typeof systemId === "number"),
+    );
+
+    return availableSystems.filter((system) => system.id === currentSystemId || !selectedSystemsByOtherRows.has(system.id));
+  };
+
+  const hasAvailableSystemsToAppend = selectedSystemIds.size < availableSystems.length;
+
   const onSubmit = async (values: MiAccesoRequestFormValues) => {
     await createRequestMutation.mutateAsync({
       request_type: values.type,
@@ -241,111 +261,120 @@ export default function MiAccesoNewRequestPage() {
                 </div>
               ) : null}
 
-              {fields.map((field, index) => (
-                <Card key={field.id} className="overflow-hidden">
-                  <CardHeader className="border-b pb-2!">
-                    <div className="flex items-center justify-between gap-3">
-                      <CardTitle className="text-base">Sistema {index + 1}</CardTitle>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)} aria-label={`Eliminar sistema ${index + 1}`}>
-                        <Trash2 data-icon="inline-start" aria-hidden="true" />
-                        Eliminar
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="py-3 space-y-3">
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                      <Field data-invalid={errors.systems?.[index]?.systemId ? true : undefined}>
-                        <FieldLabel htmlFor={`system-name-${index}`}>Sistema *</FieldLabel>
-                        <FieldContent>
-                          <Controller
-                            control={control}
-                            name={`systems.${index}.systemId`}
-                            rules={{ required: "Selecciona un sistema." }}
-                            render={({ field }) => (
-                              <Select
-                                value={field.value ? String(field.value) : ""}
-                                onValueChange={(value) => {
-                                  const selectedSystem = availableSystems.find((system) => system.id === Number(value));
-                                  field.onChange(Number(value));
-                                  setValue(`systems.${index}.systemName`, selectedSystem?.name ?? "", {
-                                    shouldDirty: true,
-                                    shouldValidate: false,
-                                  });
-                                }}
-                              >
-                                <SelectTrigger
-                                  id={`system-name-${index}`}
-                                  aria-invalid={!!errors.systems?.[index]?.systemId}
-                                  className={cn(
-                                    "w-full",
-                                    errors.systems?.[index]?.systemId ? "border-destructive focus-visible:ring-destructive/40" : undefined,
-                                  )}
-                                  disabled={!canListAccessSystems || accessSystemsQuery.isLoading || accessSystemsQuery.isError}
+              {fields.map((field, index) => {
+                const rowSystems = getAvailableSystemsForIndex(index);
+
+                return (
+                  <Card key={field.id} className="overflow-hidden">
+                    <CardHeader className="border-b pb-2!">
+                      <div className="flex items-center justify-between gap-3">
+                        <CardTitle className="text-base">Sistema {index + 1}</CardTitle>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)} aria-label={`Eliminar sistema ${index + 1}`}>
+                          <Trash2 data-icon="inline-start" aria-hidden="true" />
+                          Eliminar
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="py-3 space-y-3">
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                        <Field data-invalid={errors.systems?.[index]?.systemId ? true : undefined}>
+                          <FieldLabel htmlFor={`system-name-${index}`}>Sistema *</FieldLabel>
+                          <FieldContent>
+                            <Controller
+                              control={control}
+                              name={`systems.${index}.systemId`}
+                              rules={{ required: "Selecciona un sistema." }}
+                              render={({ field }) => (
+                                <Select
+                                  value={field.value ? String(field.value) : ""}
+                                  onValueChange={(value) => {
+                                    const selectedSystem = availableSystems.find((system) => system.id === Number(value));
+                                    field.onChange(Number(value));
+                                    setValue(`systems.${index}.systemName`, selectedSystem?.name ?? "", {
+                                      shouldDirty: true,
+                                      shouldValidate: false,
+                                    });
+                                  }}
                                 >
-                                  <SelectValue placeholder={canListAccessSystems ? "Seleccionar sistema" : "Sin permiso para listar sistemas"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableSystems.map((system) => (
-                                    <SelectItem key={system.id} value={String(system.id)}>
-                                      {system.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
+                                  <SelectTrigger
+                                    id={`system-name-${index}`}
+                                    aria-invalid={!!errors.systems?.[index]?.systemId}
+                                    className={cn(
+                                      "w-full",
+                                      errors.systems?.[index]?.systemId ? "border-destructive focus-visible:ring-destructive/40" : undefined,
+                                    )}
+                                    disabled={!canListAccessSystems || accessSystemsQuery.isLoading || accessSystemsQuery.isError}
+                                  >
+                                    <SelectValue placeholder={canListAccessSystems ? "Seleccionar sistema" : "Sin permiso para listar sistemas"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {rowSystems.map((system) => (
+                                      <SelectItem key={system.id} value={String(system.id)}>
+                                        {system.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
                               />
-                          {!canListAccessSystems ? (
-                            <FieldDescription className="text-muted-foreground">No tienes permisos para listar sistemas de acceso.</FieldDescription>
-                          ) : accessSystemsQuery.isError ? (
-                            <FieldDescription className="text-destructive">No se pudieron cargar los sistemas disponibles.</FieldDescription>
-                          ) : null}
-                          <FieldError>{errors.systems?.[index]?.systemId?.message}</FieldError>
-                        </FieldContent>
-                      </Field>
+                            {!canListAccessSystems ? (
+                              <FieldDescription className="text-muted-foreground">No tienes permisos para listar sistemas de acceso.</FieldDescription>
+                            ) : accessSystemsQuery.isError ? (
+                              <FieldDescription className="text-destructive">No se pudieron cargar los sistemas disponibles.</FieldDescription>
+                            ) : null}
+                            <FieldError>{errors.systems?.[index]?.systemId?.message}</FieldError>
+                          </FieldContent>
+                        </Field>
 
-                      <Field data-invalid={errors.systems?.[index]?.reference ? true : undefined}>
-                        <FieldLabel htmlFor={`reference-${index}`}>Seleccione colaborador referencia *</FieldLabel>
+                        <Field data-invalid={errors.systems?.[index]?.reference ? true : undefined}>
+                          <FieldLabel htmlFor={`reference-${index}`}>Seleccione colaborador referencia *</FieldLabel>
+                          <FieldContent>
+                            <Controller
+                              control={control}
+                              name={`systems.${index}.reference`}
+                              rules={{ required: "Selecciona un colaborador de referencia." }}
+                              render={({ field }) => (
+                                <MiAccesoCollaboratorSelect
+                                  id={`reference-${index}`}
+                                  ariaLabel={`Seleccionar referencia para sistema ${index + 1}`}
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  className={errors.systems?.[index]?.reference ? "border-destructive focus-visible:ring-destructive/40" : undefined}
+                                />
+                              )}
+                            />
+                            <FieldError>{errors.systems?.[index]?.reference?.message}</FieldError>
+                          </FieldContent>
+                        </Field>
+                      </div>
+
+                      <Field data-invalid={errors.systems?.[index]?.observation ? true : undefined}>
+                        <FieldLabel htmlFor={`observation-${index}`}>Observación *</FieldLabel>
                         <FieldContent>
-                          <Controller
-                            control={control}
-                            name={`systems.${index}.reference`}
-                            rules={{ required: "Selecciona un colaborador de referencia." }}
-                            render={({ field }) => (
-                              <MiAccesoCollaboratorSelect
-                                id={`reference-${index}`}
-                                ariaLabel={`Seleccionar referencia para sistema ${index + 1}`}
-                                value={field.value}
-                                onChange={field.onChange}
-                                className={errors.systems?.[index]?.reference ? "border-destructive focus-visible:ring-destructive/40" : undefined}
-                              />
-                            )}
+                          <Textarea
+                            id={`observation-${index}`}
+                            placeholder="Describe el permiso o aclaración para este sistema."
+                            aria-invalid={!!errors.systems?.[index]?.observation}
+                            {...register(`systems.${index}.observation`, {
+                              required: "Ingresa una observación.",
+                              validate: (value) => value.trim().length > 0 || "Ingresa una observación.",
+                            })}
                           />
-                          <FieldError>{errors.systems?.[index]?.reference?.message}</FieldError>
+                          <FieldError>{errors.systems?.[index]?.observation?.message}</FieldError>
                         </FieldContent>
                       </Field>
-                    </div>
-
-                    <Field data-invalid={errors.systems?.[index]?.observation ? true : undefined}>
-                      <FieldLabel htmlFor={`observation-${index}`}>Observación *</FieldLabel>
-                      <FieldContent>
-                        <Textarea
-                          id={`observation-${index}`}
-                          placeholder="Describe el permiso o aclaración para este sistema."
-                          aria-invalid={!!errors.systems?.[index]?.observation}
-                          {...register(`systems.${index}.observation`, {
-                            required: "Ingresa una observación.",
-                            validate: (value) => value.trim().length > 0 || "Ingresa una observación.",
-                          })}
-                        />
-                        <FieldError>{errors.systems?.[index]?.observation?.message}</FieldError>
-                      </FieldContent>
-                    </Field>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
 
               <div>
-                <Button type="button" variant="outline" onClick={() => append(createEmptySystemAccess())}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => append(createEmptySystemAccess())}
+                  disabled={canListAccessSystems && !hasAvailableSystemsToAppend}
+                >
                   <Plus data-icon="inline-start" aria-hidden="true" />
                   Agregar sistema
                 </Button>

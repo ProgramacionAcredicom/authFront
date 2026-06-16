@@ -22,6 +22,7 @@ export default function MiAccesoPage() {
   const [pageIndex] = useQueryState("page", parseAsInteger.withDefault(1));
   const [globalFilter] = useQueryState("search", parseAsString.withDefault(""));
   const userQuery = useInfoUserQuery();
+  const canAccessMyRequests = hasAccess(userQuery.data, OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS);
   const canCreateRequest = hasAccess(userQuery.data, OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST);
   const canViewRequest = hasAccess(userQuery.data, OAUTH_PERMISSIONS.VIEW_ACCESS_REQUEST);
 
@@ -30,7 +31,7 @@ export default function MiAccesoPage() {
     page_size: pageSize,
     search: globalFilter.trim() || undefined,
   }, {
-    enabled: canViewRequest,
+    enabled: canAccessMyRequests,
   });
   const downloadPdfMutation = useMutationDownloadMiAccesoPdf();
 
@@ -38,6 +39,7 @@ export default function MiAccesoPage() {
   const columns = useMemo(
     () =>
       getMiAccesoColumns({
+        canViewRequestPdf: canViewRequest,
         downloadingRequestId: downloadPdfMutation.variables?.id ?? null,
         isDownloadingPdf: downloadPdfMutation.isPending,
         onDownloadPdf: (request) => {
@@ -48,7 +50,7 @@ export default function MiAccesoPage() {
           downloadPdfMutation.mutate({ id: request.id, code: request.code });
         },
       }),
-    [downloadPdfMutation],
+    [canViewRequest, downloadPdfMutation],
   );
   const totalItems = requestsQuery.data?.count ?? requestsQuery.data?.total ?? requests.length;
   const hasActiveSearch = globalFilter.trim().length > 0;
@@ -88,14 +90,14 @@ export default function MiAccesoPage() {
             <EmptyDescription>Estamos validando qué acciones tenés disponibles en Mi Acceso.</EmptyDescription>
           </EmptyHeader>
         </Empty>
-      ) : !canViewRequest ? (
+      ) : !canAccessMyRequests ? (
         <Empty className="border py-16">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ShieldAlert aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>Sin permisos para consultar solicitudes</EmptyTitle>
-            <EmptyDescription>No tenés permiso para ver el detalle ni descargar los PDF de tus solicitudes de acceso.</EmptyDescription>
+            <EmptyDescription>No tenés permiso para consultar la bandeja de tus solicitudes de acceso.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : requestsQuery.isError ? (

@@ -10,12 +10,13 @@ import { buildMiAccesoRequestDetail } from "./mi-acceso.utils";
 import type { MiAccesoRequest } from "./mi-acceso.types";
 
 interface MiAccesoColumnsOptions {
+  canViewRequestPdf?: boolean;
   downloadingRequestId?: number | null;
   isDownloadingPdf?: boolean;
   onDownloadPdf: (request: MiAccesoRequest) => void;
 }
 
-function MiAccesoRequestDetailsCell({ request }: { request: MiAccesoRequest }) {
+function renderMiAccesoRequestDetailsCell(request: MiAccesoRequest) {
   const systemNames = [...request.systems, ...request.customSystems]
     .map((system) => system.systemName.trim())
     .filter(Boolean);
@@ -45,80 +46,92 @@ function MiAccesoRequestDetailsCell({ request }: { request: MiAccesoRequest }) {
   );
 }
 
-export const getMiAccesoColumns = ({ downloadingRequestId, isDownloadingPdf = false, onDownloadPdf }: MiAccesoColumnsOptions): ColumnDef<MiAccesoRequest>[] => [
-  {
-    id: "search",
-    accessorFn: (request) =>
-      `${request.code} ${request.collaborator.name} ${request.collaborator.position} ${buildMiAccesoRequestDetail(request)}`,
-    header: "Código",
-    cell: ({ row }) => <span className="font-semibold">{row.original.code}</span>,
-    enableColumnFilter: true,
-    meta: {
-      label: "Código",
-      placeholder: "Buscar código o colaborador...",
-      variant: "text",
-      icon: Search,
+export const getMiAccesoColumns = ({
+  canViewRequestPdf = false,
+  downloadingRequestId,
+  isDownloadingPdf = false,
+  onDownloadPdf,
+}: MiAccesoColumnsOptions): ColumnDef<MiAccesoRequest>[] => {
+  const columns: ColumnDef<MiAccesoRequest>[] = [
+    {
+      id: "search",
+      accessorFn: (request) =>
+        `${request.code} ${request.collaborator.name} ${request.collaborator.position} ${buildMiAccesoRequestDetail(request)}`,
+      header: "Código",
+      cell: ({ row }) => <span className="font-semibold">{row.original.code}</span>,
+      enableColumnFilter: true,
+      meta: {
+        label: "Código",
+        placeholder: "Buscar código o colaborador...",
+        variant: "text",
+        icon: Search,
+      },
     },
-  },
-  {
-    accessorKey: "type",
-    header: "Tipo",
-    cell: ({ row }) => <Badge variant="outline">{MI_ACCESO_TYPE_LABELS[row.original.type]}</Badge>,
-    meta: {
-      label: "Tipo",
+    {
+      accessorKey: "type",
+      header: "Tipo",
+      cell: ({ row }) => <Badge variant="outline">{MI_ACCESO_TYPE_LABELS[row.original.type]}</Badge>,
+      meta: {
+        label: "Tipo",
+      },
     },
-  },
-  {
-    id: "collaborator",
-    accessorFn: (request) => `${request.collaborator.name} ${request.collaborator.position}`,
-    header: "Colaborador",
-    cell: ({ row }) => (
-      <div className="flex min-w-0 flex-col">
-        <span className="font-medium">{row.original.collaborator.name}</span>
-        <span className="text-sm text-muted-foreground">{row.original.collaborator.position}</span>
-      </div>
-    ),
-    meta: {
-      label: "Colaborador",
+    {
+      id: "collaborator",
+      accessorFn: (request) => `${request.collaborator.name} ${request.collaborator.position}`,
+      header: "Colaborador",
+      cell: ({ row }) => (
+        <div className="flex min-w-0 flex-col">
+          <span className="font-medium">{row.original.collaborator.name}</span>
+          <span className="text-sm text-muted-foreground">{row.original.collaborator.position}</span>
+        </div>
+      ),
+      meta: {
+        label: "Colaborador",
+      },
     },
-  },
-  {
-    id: "details",
-    accessorFn: (request) => buildMiAccesoRequestDetail(request),
-    header: "Detalles del requerimiento",
-    cell: ({ row }) => <MiAccesoRequestDetailsCell request={row.original} />,
-    meta: {
-      label: "Detalles del requerimiento",
+    {
+      id: "details",
+      accessorFn: (request) => buildMiAccesoRequestDetail(request),
+      header: "Detalles del requerimiento",
+      cell: ({ row }) => renderMiAccesoRequestDetailsCell(row.original),
+      meta: {
+        label: "Detalles del requerimiento",
+      },
     },
-  },
-  {
-    accessorKey: "status",
-    header: "Estado",
-    cell: ({ row }) => <MiAccesoStatusBadge status={row.original.status} />,
-    meta: {
-      label: "Estado",
+    {
+      accessorKey: "status",
+      header: "Estado",
+      cell: ({ row }) => <MiAccesoStatusBadge status={row.original.status} />,
+      meta: {
+        label: "Estado",
+      },
     },
-  },
-  {
-    id: "actions",
-    header: "Acciones",
-    cell: ({ row }) => (
-      <Button
-        type="button"
-        variant="link"
-        onClick={() => onDownloadPdf(row.original)}
-        disabled={isDownloadingPdf && downloadingRequestId === row.original.id}
-      >
-        {isDownloadingPdf && downloadingRequestId === row.original.id ? (
-          <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
-        ) : (
-          <Download data-icon="inline-start" aria-hidden="true" />
-        )}
-        Descargar PDF
-      </Button>
-    ),
-    meta: {
-      label: "Acciones",
-    },
-  },
-];
+  ];
+
+  if (canViewRequestPdf) {
+    columns.push({
+      id: "actions",
+      header: "Acciones",
+      cell: ({ row }) => (
+        <Button
+          type="button"
+          variant="link"
+          onClick={() => onDownloadPdf(row.original)}
+          disabled={isDownloadingPdf && downloadingRequestId === row.original.id}
+        >
+          {isDownloadingPdf && downloadingRequestId === row.original.id ? (
+            <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
+          ) : (
+            <Download data-icon="inline-start" aria-hidden="true" />
+          )}
+          Descargar PDF
+        </Button>
+      ),
+      meta: {
+        label: "Acciones",
+      },
+    });
+  }
+
+  return columns;
+};

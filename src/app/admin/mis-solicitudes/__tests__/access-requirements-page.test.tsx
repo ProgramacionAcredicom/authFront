@@ -166,7 +166,7 @@ describe("AccessRequirementsPage", () => {
     expect(screen.getByRole("tab", { name: /nuevos permisos/i })).toBeInTheDocument();
   });
 
-  it("envía el payload correcto para vacaciones y luego descarga el PDF", async () => {
+  it("envía el payload correcto para vacaciones sin descargar el PDF", async () => {
     const user = userEvent.setup();
 
     renderPage();
@@ -176,7 +176,7 @@ describe("AccessRequirementsPage", () => {
     await user.type(screen.getByLabelText(/fecha inicio/i), "2026-06-10");
     await user.type(screen.getByLabelText(/fecha fin/i), "2026-06-12");
     await user.type(screen.getByLabelText(/motivo de solicitud/i), "Suspensión temporal por proceso interno.");
-    await user.click(screen.getByRole("button", { name: /enviar requerimiento y descargar pdf/i }));
+    await user.click(screen.getByRole("button", { name: /enviar requerimiento/i }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /mis solicitudes/i })).toBeInTheDocument();
@@ -192,19 +192,30 @@ describe("AccessRequirementsPage", () => {
       reason: "Suspensión temporal por proceso interno.",
       systems: [],
     });
-    expect(mutateAsyncDownloadMock).toHaveBeenCalledWith({ id: 901, code: "REQ-2026-901" });
+    expect(mutateAsyncDownloadMock).not.toHaveBeenCalled();
   });
 
-  it("envía el payload correcto para nuevos permisos usando los sistemas del endpoint", async () => {
+  it("envía múltiples nuevos permisos y oculta sistemas ya seleccionados en otros registros", async () => {
     const user = userEvent.setup();
 
     renderPage();
 
     await user.click(screen.getByRole("tab", { name: /nuevos permisos/i }));
-    await user.click(screen.getByRole("combobox", { name: /sistema para nuevo permiso/i }));
+    await user.click(screen.getByRole("button", { name: /agregar sistema/i }));
+
+    const systemComboboxes = screen.getAllByRole("combobox", { name: /sistema para nuevo permiso/i });
+    const observationFields = screen.getAllByLabelText(/observación de acceso/i);
+
+    await user.click(systemComboboxes[0]);
     await user.click(screen.getAllByText("Módulo de Créditos").at(-1)!);
-    await user.type(screen.getByLabelText(/observación de acceso/i), "Necesita permisos de aprobación de alto rango.");
-    await user.click(screen.getByRole("button", { name: /enviar requerimiento y descargar pdf/i }));
+    await user.type(observationFields[0], "Necesita permisos de aprobación de alto rango.");
+
+    await user.click(systemComboboxes[1]);
+    expect(screen.queryByRole("option", { name: "Módulo de Créditos" })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "T24" })).toBeInTheDocument();
+    await user.click(screen.getAllByText("T24").at(-1)!);
+    await user.type(observationFields[1], "Necesita acceso operativo complementario.");
+    await user.click(screen.getByRole("button", { name: /enviar requerimiento/i }));
 
     await waitFor(() => {
       expect(mutateAsyncCreateMock).toHaveBeenCalled();
@@ -222,8 +233,57 @@ describe("AccessRequirementsPage", () => {
           access_observation: "Necesita permisos de aprobación de alto rango.",
           sort_order: 0,
         },
+        {
+          system_id: 502,
+          reference_user_id: null,
+          access_observation: "Necesita acceso operativo complementario.",
+          sort_order: 1,
+        },
       ],
     });
+    expect(mutateAsyncDownloadMock).not.toHaveBeenCalled();
+  });
+
+  it("reindexa el payload de nuevos permisos al eliminar una fila", async () => {
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.click(screen.getByRole("tab", { name: /nuevos permisos/i }));
+    await user.click(screen.getByRole("button", { name: /agregar sistema/i }));
+
+    const initialComboboxes = screen.getAllByRole("combobox", { name: /sistema para nuevo permiso/i });
+    const initialObservationFields = screen.getAllByLabelText(/observación de acceso/i);
+
+    await user.click(initialComboboxes[0]);
+    await user.click(screen.getAllByText("Módulo de Créditos").at(-1)!);
+    await user.type(initialObservationFields[0], "Permiso temporal para validaciones.");
+
+    await user.click(initialComboboxes[1]);
+    await user.click(screen.getAllByText("T24").at(-1)!);
+    await user.type(initialObservationFields[1], "Permiso definitivo para operación.");
+
+    await user.click(screen.getByRole("button", { name: /eliminar sistema 1/i }));
+    await user.click(screen.getByRole("button", { name: /enviar requerimiento/i }));
+
+    await waitFor(() => {
+      expect(mutateAsyncCreateMock).toHaveBeenCalled();
+    });
+
+    expect(mutateAsyncCreateMock).toHaveBeenCalledWith({
+      request_type: "nuevo_permiso",
+      subject_user_id: 24,
+      additional_detail: "",
+      systems: [
+        {
+          system_id: 502,
+          reference_user_id: null,
+          access_observation: "Permiso definitivo para operación.",
+          sort_order: 0,
+        },
+      ],
+    });
+    expect(mutateAsyncDownloadMock).not.toHaveBeenCalled();
   });
 
   it("muestra error si falla la carga de sistemas en el tab de nuevos permisos", async () => {
@@ -274,23 +334,21 @@ describe("AccessRequirementsPage", () => {
     );
   });
 
-  it("vuelve al listado aunque falle la descarga del PDF", async () => {
+  it("vuelve al listado después de crear la solicitud sin descargar PDF", async () => {
     const user = userEvent.setup();
-
-    mutateAsyncDownloadMock.mockRejectedValue(new Error("download failed"));
 
     renderPage();
 
     await user.type(screen.getByLabelText(/fecha inicio/i), "2026-06-10");
     await user.type(screen.getByLabelText(/fecha fin/i), "2026-06-12");
     await user.type(screen.getByLabelText(/motivo de solicitud/i), "Bloqueo por vacaciones programadas.");
-    await user.click(screen.getByRole("button", { name: /enviar requerimiento y descargar pdf/i }));
+    await user.click(screen.getByRole("button", { name: /enviar requerimiento/i }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /mis solicitudes/i })).toBeInTheDocument();
     });
 
     expect(mutateAsyncCreateMock).toHaveBeenCalled();
-    expect(mutateAsyncDownloadMock).toHaveBeenCalled();
+    expect(mutateAsyncDownloadMock).not.toHaveBeenCalled();
   });
 });

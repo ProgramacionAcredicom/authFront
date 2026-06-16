@@ -7,6 +7,7 @@ import type {
   GetAccessSystemsParams,
   GetAdminMiAccesoRequestsParams,
   GetMiAccesoRequestsParams,
+  UpdateAccessRequestStatusPayload,
 } from "@/interfaces/mi-acceso.interfaces";
 
 export const getMiAccesoRequests = async (params: GetMiAccesoRequestsParams): Promise<AccessRequestListResponse> => {
@@ -26,6 +27,14 @@ export const getAccessSystems = async (params: GetAccessSystemsParams): Promise<
 
 export const createMiAccesoRequest = async (payload: CreateAccessRequestPayload): Promise<AccessRequestDetailApi> => {
   const response = await apiServices.post<AccessRequestDetailApi>("/solicitudes/", payload);
+  return response.data;
+};
+
+export const updateMiAccesoRequestStatus = async (
+  id: number,
+  payload: UpdateAccessRequestStatusPayload,
+): Promise<AccessRequestDetailApi> => {
+  const response = await apiServices.patch<AccessRequestDetailApi>(`/solicitudes/${id}/`, payload);
   return response.data;
 };
 

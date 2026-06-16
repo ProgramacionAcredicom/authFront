@@ -125,3 +125,10 @@ export interface CreateAccessRequestPayload {
   reason?: string;
   systems: CreateAccessRequestSystemPayload[];
 }
+
+export type UpdateAccessRequestStatus = Extract<MiAccesoRequestStatus, "en_proceso" | "aprobado" | "rechazado">;
+
+export interface UpdateAccessRequestStatusPayload {
+  status: UpdateAccessRequestStatus;
+  comment?: string;
+}

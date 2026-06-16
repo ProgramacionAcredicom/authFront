@@ -1,12 +1,39 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import MiAccesoAdministrationPage from "../page";
+import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
-const { useQueryAdminMiAccesoRequestsMock } = vi.hoisted(() => ({
+const {
+  mutateMock,
+  mutateStatusMock,
+  useInfoUserQueryMock,
+  useMutationDownloadMiAccesoPdfMock,
+  useMutationUpdateMiAccesoRequestStatusMock,
+  useQueryAdminMiAccesoRequestsMock,
+} = vi.hoisted(() => ({
+  mutateMock: vi.fn(),
+  mutateStatusMock: vi.fn(),
+  useInfoUserQueryMock: vi.fn(),
+  useMutationDownloadMiAccesoPdfMock: vi.fn(),
+  useMutationUpdateMiAccesoRequestStatusMock: vi.fn(),
   useQueryAdminMiAccesoRequestsMock: vi.fn(),
+}));
+
+vi.mock("@/hooks/auth/usePermissionAccess", () => ({
+  useInfoUserQuery: () => useInfoUserQueryMock(),
+}));
+
+vi.mock("@/hooks/mi-acceso/useMutationDownloadMiAccesoPdf", () => ({
+  useMutationDownloadMiAccesoPdf: () => useMutationDownloadMiAccesoPdfMock(),
+}));
+
+vi.mock("@/hooks/mi-acceso/useMutationUpdateMiAccesoRequestStatus", () => ({
+  useMutationUpdateMiAccesoRequestStatus: (options?: { onSuccess?: () => void }) =>
+    useMutationUpdateMiAccesoRequestStatusMock(options),
 }));
 
 vi.mock("@/hooks/mi-acceso/useQueryAdminMiAccesoRequests", () => ({
@@ -27,7 +54,33 @@ function renderPage(initialEntry = "/mi-acceso/administracion-solicitudes") {
 
 describe("MiAccesoAdministrationPage", () => {
   beforeEach(() => {
+    mutateMock.mockReset();
+    mutateStatusMock.mockReset();
+    useInfoUserQueryMock.mockReset();
+    useMutationDownloadMiAccesoPdfMock.mockReset();
+    useMutationUpdateMiAccesoRequestStatusMock.mockReset();
     useQueryAdminMiAccesoRequestsMock.mockReset();
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [
+          OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS,
+          OAUTH_PERMISSIONS.VIEW_ACCESS_REQUEST,
+          OAUTH_PERMISSIONS.CHANGE_ACCESS_REQUEST_STATUS,
+        ],
+      },
+      isLoading: false,
+    });
+    useMutationDownloadMiAccesoPdfMock.mockReturnValue({
+      mutate: mutateMock,
+      variables: undefined,
+      isPending: false,
+    });
+    useMutationUpdateMiAccesoRequestStatusMock.mockImplementation(() => ({
+      mutate: mutateStatusMock,
+      variables: undefined,
+      isPending: false,
+    }));
     useQueryAdminMiAccesoRequestsMock.mockReturnValue({
       data: {
         count: 1,
@@ -95,6 +148,8 @@ describe("MiAccesoAdministrationPage", () => {
     expect(screen.getByText("Ana Solís")).toBeInTheDocument();
     expect(screen.getByText("Luis Pérez")).toBeInTheDocument();
     expect(screen.getByText("Requiere acceso inicial")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /descargar pdf/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cambiar estado/i })).toBeInTheDocument();
   });
 
   it("traduce query params del URL a parámetros de API", () => {
@@ -153,6 +208,277 @@ describe("MiAccesoAdministrationPage", () => {
     renderPage();
 
     expect(screen.getByText(/no hay solicitudes registradas/i)).toBeInTheDocument();
+  });
+
+  it("mantiene cambiar estado cuando falta ver_solicitud", () => {
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS, OAUTH_PERMISSIONS.CHANGE_ACCESS_REQUEST_STATUS],
+      },
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(screen.queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cambiar estado/i })).toBeInTheDocument();
+    expect(screen.getByText("Acciones")).toBeInTheDocument();
+  });
+
+  it("oculta toda la columna de acciones cuando faltan ver_solicitud y cambiar_estado_solicitud", () => {
+    useInfoUserQueryMock.mockReturnValue({
+      data: {
+        is_staff: false,
+        oauth_perms: [OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS],
+      },
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(screen.queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cambiar estado/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("Acciones")).not.toBeInTheDocument();
+  });
+
+  it("descarga el PDF desde la tabla administrativa cuando tiene permiso", async () => {
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /descargar pdf/i }));
+
+    expect(mutateMock).toHaveBeenCalledWith({ id: 201, code: "REQ-2026-010" });
+  });
+
+  it("abre el modal para cambiar estado y muestra las opciones esperadas", async () => {
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /cambiar estado/i }));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/seleccioná el nuevo estado para req-2026-010/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /en proceso/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /rechazado/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /aprobado/i })).toBeInTheDocument();
+  });
+
+  it("deshabilita el botón del estado actual dentro del modal", async () => {
+    const user = userEvent.setup();
+
+    useQueryAdminMiAccesoRequestsMock.mockReturnValue({
+      data: {
+        count: 1,
+        results: [
+          {
+            id: 201,
+            code: "REQ-2026-010",
+            request_type: "alta",
+            request_type_display: "Alta",
+            status: "en_proceso",
+            status_display: "En proceso",
+            requester: {
+              id: 1,
+              name: "Ana Solís",
+              username: "asolis",
+              email: "ana@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-010",
+              role_name: "Jefe de agencia",
+              agency_name: "Central",
+              area_name: "Operaciones",
+            },
+            subject: {
+              id: 2,
+              name: "Luis Pérez",
+              username: "lperez",
+              email: "luis@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-011",
+              role_name: "Analista",
+              agency_name: "Norte",
+              area_name: "Crédito",
+            },
+            detail_summary: "Sistema: T24",
+            created_at: "2026-06-06T10:30:00.000Z",
+            updated_at: "2026-06-06T10:30:00.000Z",
+            boss: null,
+            absence_type: null,
+            start_date: null,
+            end_date: null,
+            reason: null,
+            additional_detail: "Requiere acceso inicial",
+            status_changed_by: null,
+            status_changed_at: null,
+            system_lines: [],
+            status_history: [],
+            pdf_download_url: "/solicitudes/201/pdf/",
+          },
+        ],
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+    });
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /cambiar estado/i }));
+
+    expect(screen.getByRole("button", { name: /en proceso/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /rechazado/i })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /aprobado/i })).not.toBeDisabled();
+  });
+
+  it("envía el nuevo estado y cierra el modal al completar la actualización", async () => {
+    const user = userEvent.setup();
+
+    useMutationUpdateMiAccesoRequestStatusMock.mockImplementation((options?: { onSuccess?: () => void }) => ({
+      mutate: (variables: unknown) => {
+        mutateStatusMock(variables);
+        options?.onSuccess?.();
+      },
+      variables: undefined,
+      isPending: false,
+    }));
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /cambiar estado/i }));
+    await user.click(screen.getByRole("button", { name: /aprobado/i }));
+
+    expect(mutateStatusMock).toHaveBeenCalledWith({
+      id: 201,
+      status: "aprobado",
+      comment: "",
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  it("solo bloquea el botón de la fila que se está descargando en administración", () => {
+    useMutationDownloadMiAccesoPdfMock.mockReturnValue({
+      mutate: mutateMock,
+      variables: { id: 201, code: "REQ-2026-010" },
+      isPending: true,
+    });
+    useQueryAdminMiAccesoRequestsMock.mockReturnValue({
+      data: {
+        count: 2,
+        results: [
+          {
+            id: 201,
+            code: "REQ-2026-010",
+            request_type: "alta",
+            request_type_display: "Alta",
+            status: "registrado",
+            status_display: "Registrado",
+            requester: {
+              id: 1,
+              name: "Ana Solís",
+              username: "asolis",
+              email: "ana@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-010",
+              role_name: "Jefe de agencia",
+              agency_name: "Central",
+              area_name: "Operaciones",
+            },
+            subject: {
+              id: 2,
+              name: "Luis Pérez",
+              username: "lperez",
+              email: "luis@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-011",
+              role_name: "Analista",
+              agency_name: "Norte",
+              area_name: "Crédito",
+            },
+            detail_summary: "Sistema: T24",
+            created_at: "2026-06-06T10:30:00.000Z",
+            updated_at: "2026-06-06T10:30:00.000Z",
+            boss: null,
+            absence_type: null,
+            start_date: null,
+            end_date: null,
+            reason: null,
+            additional_detail: "Requiere acceso inicial",
+            status_changed_by: null,
+            status_changed_at: null,
+            system_lines: [],
+            status_history: [],
+            pdf_download_url: "/solicitudes/201/pdf/",
+          },
+          {
+            id: 202,
+            code: "REQ-2026-011",
+            request_type: "baja",
+            request_type_display: "Baja",
+            status: "registrado",
+            status_display: "Registrado",
+            requester: {
+              id: 3,
+              name: "Mario León",
+              username: "mleon",
+              email: "mario@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-012",
+              role_name: "Supervisor",
+              agency_name: "Sur",
+              area_name: "Operaciones",
+            },
+            subject: {
+              id: 4,
+              name: "Carmen Díaz",
+              username: "cdiaz",
+              email: "carmen@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-013",
+              role_name: "Oficial",
+              agency_name: "Occidente",
+              area_name: "Crédito",
+            },
+            detail_summary: "Sistema: Seguros",
+            created_at: "2026-06-07T10:30:00.000Z",
+            updated_at: "2026-06-07T10:30:00.000Z",
+            boss: null,
+            absence_type: null,
+            start_date: null,
+            end_date: null,
+            reason: null,
+            additional_detail: "",
+            status_changed_by: null,
+            status_changed_at: null,
+            system_lines: [],
+            status_history: [],
+            pdf_download_url: "/solicitudes/202/pdf/",
+          },
+        ],
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+    });
+
+    renderPage();
+
+    const pdfButtons = screen.getAllByRole("button", { name: /descargar pdf/i });
+    expect(pdfButtons[0]).toBeDisabled();
+    expect(pdfButtons[1]).not.toBeDisabled();
   });
 
   it("mantiene visible la búsqueda cuando no hay resultados por filtros", async () => {

@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft, Loader2, ShieldAlert } from "lucide-react";
+import { AlertCircle, ArrowLeft, CalendarRange, KeyRound, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -19,7 +19,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutationCreateMiAccesoRequest } from "@/hooks/mi-acceso/useMutationCreateMiAccesoRequest";
-import { useMutationDownloadMiAccesoPdf } from "@/hooks/mi-acceso/useMutationDownloadMiAccesoPdf";
 import { useQueryAccessSystems } from "@/hooks/mi-acceso/useQueryAccessSystems";
 import { hasAccess, OAUTH_PERMISSIONS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -33,14 +32,21 @@ interface AccessRequirementsFormValues {
   startDate: string;
   endDate: string;
   reason: string;
-  systemId: string;
-  accessObservation: string;
+  systems: Array<{
+    systemId: string;
+    accessObservation: string;
+  }>;
 }
 
 const ABSENCE_TYPE_OPTIONS: Array<{ value: AccessRequirementAbsenceType; label: string }> = [
   { value: "bloqueo_vacaciones", label: "Bloqueo por Vacaciones" },
   { value: "suspension", label: "Suspensión" },
 ];
+
+const createEmptyAccessRequirementSystem = () => ({
+  systemId: "",
+  accessObservation: "",
+});
 
 function RequesterSummaryCard({
   isLoading,
@@ -104,7 +110,6 @@ export default function MiAccesoAccessRequirementsPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AccessRequirementTab>("vacaciones");
   const createRequestMutation = useMutationCreateMiAccesoRequest();
-  const downloadPdfMutation = useMutationDownloadMiAccesoPdf();
   const currentUserQuery = useQuery({
     queryKey: ["info_user"],
     queryFn: getProfile,
@@ -131,13 +136,25 @@ export default function MiAccesoAccessRequirementsPage() {
       startDate: "",
       endDate: "",
       reason: "",
-      systemId: "",
-      accessObservation: "",
+      systems: [createEmptyAccessRequirementSystem()],
     },
+  });
+  const { fields, append, remove, replace } = useFieldArray({
+    control,
+    name: "systems",
+  });
+  const requestedSystems = useWatch({
+    control,
+    name: "systems",
+    defaultValue: [createEmptyAccessRequirementSystem()],
   });
 
   const availableSystems = useMemo(() => accessSystemsQuery.data?.results ?? [], [accessSystemsQuery.data]);
-  const isSubmitting = createRequestMutation.isPending || downloadPdfMutation.isPending;
+  const selectedSystemIds = useMemo(
+    () => requestedSystems.map((system) => system.systemId).filter((systemId) => systemId.trim().length > 0),
+    [requestedSystems],
+  );
+  const isSubmitting = createRequestMutation.isPending;
   const isUserUnavailable = currentUserQuery.isError || !currentUserQuery.data;
   const isSubmitDisabled =
     isSubmitting ||
@@ -148,6 +165,26 @@ export default function MiAccesoAccessRequirementsPage() {
   const handleTabChange = (nextTab: string) => {
     setActiveTab(nextTab as AccessRequirementTab);
     clearErrors();
+  };
+
+  const getAvailableSystemsForIndex = (index: number) => {
+    const selectedSystemsByOtherRows = new Set(
+      requestedSystems
+        .filter((_, itemIndex) => itemIndex !== index)
+        .map((system) => system.systemId)
+        .filter((systemId) => systemId.trim().length > 0),
+    );
+
+    return availableSystems.filter((system) => !selectedSystemsByOtherRows.has(String(system.id)));
+  };
+
+  const handleRemoveSystemRow = (index: number) => {
+    if (fields.length === 1) {
+      replace([createEmptyAccessRequirementSystem()]);
+      return;
+    }
+
+    remove(index);
   };
 
   const onSubmit = async (values: AccessRequirementsFormValues) => {
@@ -174,30 +211,20 @@ export default function MiAccesoAccessRequirementsPage() {
             request_type: "nuevo_permiso" as const,
             subject_user_id: currentUser.id,
             additional_detail: "",
-            systems: [
-              {
-                system_id: Number(values.systemId),
-                reference_user_id: null,
-                access_observation: values.accessObservation.trim(),
-                sort_order: 0,
-              },
-            ],
+            systems: values.systems.map((system, index) => ({
+              system_id: Number(system.systemId),
+              reference_user_id: null,
+              access_observation: system.accessObservation.trim(),
+              sort_order: index,
+            })),
           };
 
     try {
-      const createdRequest = await createRequestMutation.mutateAsync(payload);
+      await createRequestMutation.mutateAsync(payload);
 
       toast.success("Requerimiento enviado", {
-        description: "La solicitud fue registrada correctamente. Se intentará descargar el PDF.",
+        description: "La solicitud fue registrada correctamente.",
       });
-
-      if (typeof createdRequest.id === "number") {
-        try {
-          await downloadPdfMutation.mutateAsync({ id: createdRequest.id, code: createdRequest.code });
-        } catch {
-          // El hook ya maneja el toast de error; la solicitud ya fue creada.
-        }
-      }
 
       navigate("/mi-acceso");
     } catch {
@@ -234,18 +261,22 @@ export default function MiAccesoAccessRequirementsPage() {
             <RequesterSummaryCard isLoading={currentUserQuery.isLoading} user={currentUserQuery.data} />
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid h-auto w-full grid-cols-1 rounded-xl bg-muted/20 p-1 sm:grid-cols-2">
+              <TabsList variant="line" className="grid h-auto w-full grid-cols-1 p-0 sm:grid-cols-2">
                 <TabsTrigger
                   value="vacaciones"
-                  className="min-h-12 rounded-lg px-4 py-3 text-center text-sm font-semibold whitespace-normal sm:text-base data-[state=active]:shadow-none"
+                  className="px-4 py-4 text-left text-sm whitespace-normal sm:text-base data-[state=active]:bg-custom-green/50! bg-linear-to-l from-custom-green/30 to-custom-gray/30"
                 >
-                  Vacaciones / Suspensión
+                  <span className="flex flex-col items-start gap-1.5">
+                    <span className="font-semibold">Vacaciones / Suspensión</span>
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="nuevo_permiso"
-                  className="min-h-12 rounded-lg px-4 py-3 text-center text-sm font-semibold whitespace-normal sm:text-base data-[state=active]:shadow-none"
+                  className="px-4 py-4 text-left text-sm whitespace-normal sm:text-base data-[state=active]:bg-custom-green/50! bg-linear-to-l from-custom-green/30 to-custom-gray/30"
                 >
-                  Nuevos Permisos
+                  <span className="flex flex-col items-start gap-1.5">
+                    <span className="font-semibold">Nuevos Permisos</span>
+                  </span>
                 </TabsTrigger>
               </TabsList>
 
@@ -389,59 +420,95 @@ export default function MiAccesoAccessRequirementsPage() {
                   </div>
                 ) : (
                   <FieldGroup className="gap-6">
-                    <div className="grid gap-4 xl:grid-cols-2">
-                      <Field data-invalid={errors.systemId ? true : undefined}>
-                        <FieldLabel htmlFor="access-requirements-system">Selección de sistema *</FieldLabel>
-                        <FieldContent>
-                          <Controller
-                            control={control}
-                            name="systemId"
-                            rules={{
-                              validate: (value) =>
-                                activeTab !== "nuevo_permiso" || value.trim().length > 0 ? true : "Selecciona un sistema.",
-                            }}
-                            render={({ field }) => (
-                              <Select value={field.value} onValueChange={field.onChange}>
-                                <SelectTrigger
-                                  id="access-requirements-system"
-                                  aria-label="Sistema para nuevo permiso"
-                                  className={cn("w-full", errors.systemId && "border-destructive focus-visible:ring-destructive/40")}
-                                  disabled={!canListAccessSystems}
-                                >
-                                  <SelectValue placeholder={canListAccessSystems ? "Selecciona un sistema" : "Sin permiso para listar sistemas"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    {availableSystems.map((system) => (
-                                      <SelectItem key={system.id} value={String(system.id)}>
-                                        {system.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
-                          <FieldError>{errors.systemId?.message}</FieldError>
-                        </FieldContent>
-                      </Field>
+                    {fields.map((field, index) => {
+                      const rowSystems = getAvailableSystemsForIndex(index);
+                      const systemError = errors.systems?.[index]?.systemId;
+                      const observationError = errors.systems?.[index]?.accessObservation;
 
-                      <Field data-invalid={errors.accessObservation ? true : undefined}>
-                        <FieldLabel htmlFor="access-requirements-observation">Observación de acceso *</FieldLabel>
-                        <FieldContent>
-                          <Textarea
-                            id="access-requirements-observation"
-                            aria-invalid={errors.accessObservation ? true : undefined}
-                            placeholder="Ej. Necesita permisos de aprobación de alto rango."
-                            className={cn("min-h-24", errors.accessObservation && "border-destructive focus-visible:ring-destructive/40")}
-                            {...register("accessObservation", {
-                              validate: (value) =>
-                                activeTab !== "nuevo_permiso" || value.trim().length > 0 ? true : "Ingresa la observación del acceso.",
-                            })}
-                          />
-                          <FieldError>{errors.accessObservation?.message}</FieldError>
-                        </FieldContent>
-                      </Field>
+                      return (
+                        <div key={field.id} className="rounded-2xl border bg-muted/10 p-4">
+                          <div className="mb-4 flex items-center justify-between gap-3">
+                            <p className="text-sm font-semibold">Sistema {index + 1}</p>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveSystemRow(index)}
+                              aria-label={`Eliminar sistema ${index + 1}`}
+                            >
+                              <Trash2 data-icon="inline-start" aria-hidden="true" />
+                              Eliminar
+                            </Button>
+                          </div>
+
+                          <div className="grid gap-4 xl:grid-cols-2">
+                            <Field data-invalid={systemError ? true : undefined}>
+                              <FieldLabel htmlFor={`access-requirements-system-${index}`}>Selección de sistema *</FieldLabel>
+                              <FieldContent>
+                                <Controller
+                                  control={control}
+                                  name={`systems.${index}.systemId`}
+                                  rules={{
+                                    validate: (value) =>
+                                      activeTab !== "nuevo_permiso" || value.trim().length > 0 ? true : "Selecciona un sistema.",
+                                  }}
+                                  render={({ field: systemField }) => (
+                                    <Select value={systemField.value} onValueChange={systemField.onChange}>
+                                      <SelectTrigger
+                                        id={`access-requirements-system-${index}`}
+                                        aria-label="Sistema para nuevo permiso"
+                                        className={cn("w-full", systemError && "border-destructive focus-visible:ring-destructive/40")}
+                                        disabled={!canListAccessSystems}
+                                      >
+                                        <SelectValue placeholder={canListAccessSystems ? "Selecciona un sistema" : "Sin permiso para listar sistemas"} />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectGroup>
+                                          {rowSystems.map((system) => (
+                                            <SelectItem key={system.id} value={String(system.id)}>
+                                              {system.name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectGroup>
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                />
+                                <FieldError>{systemError?.message}</FieldError>
+                              </FieldContent>
+                            </Field>
+
+                            <Field data-invalid={observationError ? true : undefined}>
+                              <FieldLabel htmlFor={`access-requirements-observation-${index}`}>Observación de acceso *</FieldLabel>
+                              <FieldContent>
+                                <Textarea
+                                  id={`access-requirements-observation-${index}`}
+                                  aria-invalid={observationError ? true : undefined}
+                                  placeholder="Ej. Necesita permisos de aprobación de alto rango."
+                                  className={cn("min-h-24", observationError && "border-destructive focus-visible:ring-destructive/40")}
+                                  {...register(`systems.${index}.accessObservation`, {
+                                    validate: (value) =>
+                                      activeTab !== "nuevo_permiso" || value.trim().length > 0 ? true : "Ingresa la observación del acceso.",
+                                  })}
+                                />
+                                <FieldError>{observationError?.message}</FieldError>
+                              </FieldContent>
+                            </Field>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => append(createEmptyAccessRequirementSystem())}
+                        disabled={!canListAccessSystems || selectedSystemIds.length >= availableSystems.length}
+                      >
+                        <Plus data-icon="inline-start" aria-hidden="true" />
+                        Agregar sistema
+                      </Button>
                     </div>
                   </FieldGroup>
                 )}
@@ -453,7 +520,7 @@ export default function MiAccesoAccessRequirementsPage() {
               </Button>
               <Button type="submit" variant="custom2" disabled={isSubmitDisabled}>
                 {isSubmitting ? <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" /> : <ShieldAlert data-icon="inline-start" aria-hidden="true" />}
-                Enviar requerimiento y descargar PDF
+                Enviar requerimiento
               </Button>
             </div>
           </CardContent>
