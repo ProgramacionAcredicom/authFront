@@ -13,12 +13,26 @@ const ADMIN_REQUEST_ORDERING_MAP: Record<MiAccesoAdminSortableColumnId, string> 
   createdAt: "created_at",
 };
 
+function getAdminRequestTypeLabel(request: AccessRequestDetailApi) {
+  if (request.request_type === "vacaciones") {
+    if (request.absence_type === "suspension") {
+      return "Suspensión";
+    }
+
+    if (request.absence_type === "bloqueo_vacaciones") {
+      return MI_ACCESO_TYPE_LABELS.vacaciones;
+    }
+  }
+
+  return request.request_type_display || MI_ACCESO_TYPE_LABELS[request.request_type];
+}
+
 export function mapAccessRequestDetailToAdminRow(request: AccessRequestDetailApi): MiAccesoAdminRequestRow {
   return {
     id: request.id,
     code: request.code,
     type: request.request_type,
-    typeLabel: request.request_type_display || MI_ACCESO_TYPE_LABELS[request.request_type],
+    typeLabel: getAdminRequestTypeLabel(request),
     requesterName: request.requester?.name || "Sin solicitante",
     requesterUsername: request.requester?.username || "",
     subjectName: request.subject.name,

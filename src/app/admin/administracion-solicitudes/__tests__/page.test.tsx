@@ -152,6 +152,71 @@ describe("MiAccesoAdministrationPage", () => {
     expect(screen.getByRole("button", { name: /cambiar estado/i })).toBeInTheDocument();
   });
 
+  it("muestra suspensión en tipo cuando la solicitud de vacaciones viene con absence_type suspension", () => {
+    useQueryAdminMiAccesoRequestsMock.mockReturnValue({
+      data: {
+        count: 1,
+        results: [
+          {
+            id: 203,
+            code: "REQ-2026-012",
+            request_type: "vacaciones",
+            request_type_display: "Vacaciones",
+            status: "registrado",
+            status_display: "Registrado",
+            requester: {
+              id: 1,
+              name: "Ana Solís",
+              username: "asolis",
+              email: "ana@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-010",
+              role_name: "Jefe de agencia",
+              agency_name: "Central",
+              area_name: "Operaciones",
+            },
+            subject: {
+              id: 2,
+              name: "Luis Pérez",
+              username: "lperez",
+              email: "luis@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-011",
+              role_name: "Analista",
+              agency_name: "Norte",
+              area_name: "Crédito",
+            },
+            detail_summary: "Bloqueo rango: 16/06/2026 al 24/06/2026",
+            created_at: "2026-06-06T10:30:00.000Z",
+            updated_at: "2026-06-06T10:30:00.000Z",
+            boss: null,
+            absence_type: "suspension",
+            start_date: "2026-06-16",
+            end_date: "2026-06-24",
+            reason: "Proceso interno",
+            additional_detail: "",
+            status_changed_by: null,
+            status_changed_at: null,
+            system_lines: [],
+            status_history: [],
+            pdf_download_url: "/solicitudes/203/pdf/",
+          },
+        ],
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+    });
+
+    renderPage();
+
+    expect(screen.getByText("Suspensión")).toBeInTheDocument();
+    expect(screen.queryByText("Vacaciones")).not.toBeInTheDocument();
+  });
+
   it("traduce query params del URL a parámetros de API", () => {
     const sorting = encodeURIComponent(JSON.stringify([{ id: "createdAt", desc: true }]));
 
