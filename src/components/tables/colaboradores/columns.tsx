@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Result } from "@/interfaces/colaboradores.interfaces";
 import { ColumnDef } from "@tanstack/react-table";
-import { Crown, Search, UserRound } from "lucide-react";
+import { Crown, Lock, LockOpen, Search, UserRound } from "lucide-react";
 import { ActionsCell } from "./actions-cell";
 import { Badge } from "@/components/ui/badge";
 
@@ -73,13 +73,21 @@ export const columns: ColumnDef<Result>[] = [
     accessorKey: "name",
     header: "Nombre",
     cell: ({ row }) => {
-      const { name, username, is_active, is_staff, is_superuser } = row.original;
+      const { name, username, is_active, is_blocked, is_staff, is_superuser } = row.original;
       return (
         <div className={`flex flex-col ${!is_active ? "opacity-50" : ""}`}>
           <span className="font-medium">{name || "N/A"}</span>
           <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
             {!is_active && <span className="size-2 rounded-full bg-red-500" />}
-            <span>{username || "N/A"}</span>
+            <div className="flex items-center gap-1.5">
+              <span>{username || "N/A"}</span>
+              <span
+                aria-label={is_blocked ? "Usuario bloqueado" : "Usuario desbloqueado"}
+                className={is_blocked ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"}
+              >
+                {is_blocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+              </span>
+            </div>
             {is_staff && (
               <Badge
                 variant="secondary"

@@ -100,6 +100,7 @@ export const colaboradorSchema = z
     is_active: z.boolean({
       required_error: "El estado es requerido",
     }),
+    is_blocked: z.boolean().optional().default(false),
     is_staff: z.boolean().optional().default(false),
     is_superuser: z.boolean().optional().default(false),
   })

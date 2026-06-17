@@ -11,14 +11,24 @@ import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
 // Lazy load de páginas admin
 const AdminPage = lazy(() => import("@/app/admin/page").then((m) => ({ default: m.default })));
-const MiAccesoPage = lazy(() => import("@/app/admin/mi-acceso/page").then((m) => ({ default: m.default })));
-const MovimientosPage = lazy(() => import("@/app/admin/movimientos/page").then((m) => ({ default: m.default })));
+const MovementRequestsPage = lazy(() => import("@/app/admin/movimientos-registro/page").then((m) => ({ default: m.default })));
+const MiAccesoPage = lazy(() => import("@/app/admin/mis-solicitudes/page").then((m) => ({ default: m.default })));
+const MiAccesoNewRequestPage = lazy(() => import("@/app/admin/mis-solicitudes/new-request-page").then((m) => ({ default: m.default })));
+const MiAccesoAccessRequirementsPage = lazy(
+  () => import("@/app/admin/mis-solicitudes/access-requirements-page").then((m) => ({ default: m.default })),
+);
+const MiAccesoAdministrationPage = lazy(
+  () => import("@/app/admin/administracion-solicitudes/page").then((m) => ({ default: m.default })),
+);
+const AuditoriaPage = lazy(() => import("@/app/admin/auditoria/page").then((m) => ({ default: m.default })));
+const MovimientosPage = lazy(() => import("@/app/admin/movimientos-reporteria/page").then((m) => ({ default: m.default })));
 const ColaboradoresPage = lazy(() => import("@/app/admin/colaboradores/page").then((m) => ({ default: m.ColaboradoresPage })));
 const AgenciasPage = lazy(() => import("@/app/admin/agencias/page").then((m) => ({ default: m.AgenciasPage })));
 const AreasPage = lazy(() => import("@/app/admin/areas/page").then((m) => ({ default: m.default })));
 const GruposPage = lazy(() => import("@/app/admin/grupos-permisos/grupos/page").then((m) => ({ default: m.GruposPage })));
 const PermisosPage = lazy(() => import("@/app/admin/grupos-permisos/permisos/page").then((m) => ({ default: m.default })));
 const AplicativosPage = lazy(() => import("@/app/admin/grupos-permisos/aplicativos/page").then((m) => ({ default: m.AplicativosPage })));
+const PuestosPage = lazy(() => import("@/app/admin/puestos/page").then((m) => ({ default: m.PuestosPage })));
 const AgregarColaboradorPage = lazy(() => import("@/app/admin/colaboradores/agregarColaborador/page").then((m) => ({ default: m.AgregarColaboradorPage })));
 const EditarColaboradorPage = lazy(() => import("@/app/admin/colaboradores/editarColaborador/page").then((m) => ({ default: m.EditarColaboradorPage })));
 const ModalAsignarAplicativo = lazy(() => import("@/components/modal/aplicativos/modal-asignar-aplicativo").then((m) => ({ default: m.ModalAsignarAplicativo })));
@@ -56,7 +66,59 @@ export const adminRoutes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: <MiAccesoPage />,
+        element: <MovementRequestsPage />,
+      },
+    ],
+  },
+  {
+    path: "mi-acceso",
+    element: <LayoutAdmin />,
+    children: [
+      {
+        index: true,
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS}>
+            <MiAccesoPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "nueva",
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST}>
+            <MiAccesoNewRequestPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "requerimiento-accesos",
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST}>
+            <MiAccesoAccessRequirementsPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "administracion-solicitudes",
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS}>
+            <MiAccesoAdministrationPage />
+          </PermissionRoute>
+        ),
+      },
+    ],
+  },
+  {
+    path: "auditoria",
+    element: (
+      <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.AUDIT_LOG_ACCESS}>
+        <LayoutAdmin />
+      </PermissionRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <AuditoriaPage />,
       },
     ],
   },
@@ -156,6 +218,21 @@ export const adminRoutes: RouteObject[] = [
             loader: PermisoLoader,
           },
         ],
+      },
+    ],
+  },
+  // Puestos
+  {
+    path: "puestos",
+    element: (
+      <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.VIEW_POSITION}>
+        <LayoutAdmin />
+      </PermissionRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <PuestosPage />,
       },
     ],
   },

@@ -24,4 +24,49 @@ describe("hasAccess", () => {
       ),
     ).toBe(false);
   });
+
+  it("permite acceso a auditoria cuando el usuario tiene el permiso correspondiente", () => {
+    expect(
+      hasAccess(
+        { is_staff: false, oauth_perms: [OAUTH_PERMISSIONS.AUDIT_LOG_ACCESS] },
+        OAUTH_PERMISSIONS.AUDIT_LOG_ACCESS,
+      ),
+    ).toBe(true);
+  });
+
+  it("permite acceso a Mis solicitudes cuando el usuario tiene el permiso del módulo", () => {
+    expect(
+      hasAccess(
+        { is_staff: false, oauth_perms: [OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS] },
+        OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS,
+      ),
+    ).toBe(true);
+  });
+
+  it("permite listar sistemas de acceso cuando el usuario tiene el permiso correspondiente", () => {
+    expect(
+      hasAccess(
+        { is_staff: false, oauth_perms: [OAUTH_PERMISSIONS.LIST_ACCESS_SYSTEMS] },
+        OAUTH_PERMISSIONS.LIST_ACCESS_SYSTEMS,
+      ),
+    ).toBe(true);
+  });
+
+  it("permite ver el módulo de puestos cuando el usuario tiene ver_puesto", () => {
+    expect(
+      hasAccess(
+        { is_staff: false, oauth_perms: [OAUTH_PERMISSIONS.VIEW_POSITION] },
+        OAUTH_PERMISSIONS.VIEW_POSITION,
+      ),
+    ).toBe(true);
+  });
+
+  it("permite listar cards de puestos cuando el usuario tiene listar_puestos", () => {
+    expect(
+      hasAccess(
+        { is_staff: false, oauth_perms: [OAUTH_PERMISSIONS.LIST_POSITIONS] },
+        OAUTH_PERMISSIONS.LIST_POSITIONS,
+      ),
+    ).toBe(true);
+  });
 });

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { colaboradorSchema } from "@/schemas/colaboradores/colaborador.schema";
 import { Input } from "@/components/ui/input";
-import { Check, ChevronsUpDown, Crown, Eye, EyeOff, IdCard, Loader2, LockKeyhole, Mail, Save, Upload, User, UserCircle, X } from "lucide-react";
+import { Check, ChevronsUpDown, Crown, Eye, EyeOff, IdCard, Loader2, Lock, LockKeyhole, LockOpen, Mail, Save, Upload, User, UserCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState, useEffect } from "react";
 import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
@@ -124,6 +124,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
         ? (user?.user_type ? user.user_type.toUpperCase() : "")
         : "USUARIO",
       is_active: user?.is_active ?? true,
+      is_blocked: user?.is_blocked ?? false,
       is_staff: user?.is_staff ?? false,
       is_superuser: user?.is_superuser ?? false,
       dpi: user?.dpi ?? "",
@@ -166,6 +167,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
         ? (user?.user_type ? user.user_type.toUpperCase() : "")
         : "USUARIO",
       is_active: user?.is_active ?? true,
+      is_blocked: user?.is_blocked ?? false,
       is_staff: user?.is_staff ?? false,
       is_superuser: user?.is_superuser ?? false,
       dpi: user?.dpi ?? "",
@@ -242,6 +244,7 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
     formData.append("role", data.role);
     formData.append("user_type", data.user_type);
     formData.append("is_active", String(data.is_active));
+    formData.append("is_blocked", String(data.is_blocked ?? false));
     formData.append("is_staff", String(data.is_staff ?? false));
     formData.append("is_superuser", String(data.is_superuser ?? false));
     if (data.area) {
@@ -457,6 +460,24 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                                       }}
                                     >
                                       {form.watch("is_active") ? "Activo" : "Inactivo"}
+                                    </Badge>
+                                    <Badge
+                                      variant="secondary"
+                                      className={`transition-all flex items-center gap-1 ${
+                                        form.watch("is_blocked")
+                                          ? "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800 hover:bg-rose-200 dark:hover:bg-rose-900/40 cursor-pointer font-medium"
+                                          : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/30 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-900/40 cursor-pointer"
+                                      }`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newStatus = !form.watch("is_blocked");
+                                        form.setValue("is_blocked", newStatus);
+                                        toast.success(newStatus ? "Usuario bloqueado" : "Usuario desbloqueado", {
+                                          duration: 2000,
+                                        });
+                                      }}
+                                    >
+                                      {form.watch("is_blocked") ? <Lock className="h-3 w-3" /> : <LockOpen className="h-3 w-3" />}
                                     </Badge>
                                     <Badge
                                       variant="secondary"

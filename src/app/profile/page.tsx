@@ -11,11 +11,6 @@ import { PageIntro, PageShell } from "@/components/layout/page-shell";
 export default function ProfilePage() {
   return (
     <PageShell>
-      <PageIntro
-        title={<Title />}
-        description="Administra tu información personal, seguridad de acceso y sesiones activas desde una sola vista."
-      />
-
       <article className="space-y-4 sm:space-y-6 md:space-y-8">
         <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
           <ProfileInfo />

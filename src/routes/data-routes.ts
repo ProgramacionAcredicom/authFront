@@ -1,4 +1,4 @@
-import { type LucideIcon, Group, HomeIcon, Users2, Briefcase, User } from "lucide-react";
+import { type LucideIcon, Group, HomeIcon, Users2, Briefcase, User, KeyRound, ClipboardList } from "lucide-react";
 import type { OAuthPermission } from "@/lib/permissions";
 import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 
@@ -34,7 +34,7 @@ export const dataRoutes: Props = {
     {
       title: "Talento Humano",
       icon: Users2,
-      url: "/mi-acceso",
+      url: "/talento-humano",
       items: [
         {
           title: "Movimientos",
@@ -49,6 +49,23 @@ export const dataRoutes: Props = {
       ],
     },
     {
+      title: "Mi acceso",
+      icon: KeyRound,
+      url: "/mi-acceso",
+      items: [
+        {
+          title: "Mis solicitudes",
+          url: "/mi-acceso",
+          requiredPermission: OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS,
+        },
+        {
+          title: "Administracion solicitudes",
+          url: "/mi-acceso/administracion-solicitudes",
+          requiredPermission: OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS,
+        },
+      ],
+    },
+    {
       title: "Colaboradores",
       url: "/colaboradores",
       icon: Users2,
@@ -58,16 +75,21 @@ export const dataRoutes: Props = {
       title: "Unidades de trabajo",
       url: "/agencias",
       icon: Briefcase,
-      requiresStaff: true,
       items: [
         {
           title: "Gestionar agencias",
           url: "/agencias",
+          requiresStaff: true,
         },
         {
           title: "Gestionar áreas",
           url: "/areas",
           requiresStaff: true,
+        },
+        {
+          title: "Puestos",
+          url: "/puestos",
+          requiredPermission: OAUTH_PERMISSIONS.VIEW_POSITION,
         },
       ],
     },
@@ -92,6 +114,12 @@ export const dataRoutes: Props = {
       url: "/aplicativos",
       icon: Group,
       requiresStaff: true,
+    },
+    {
+      title: "Auditoria",
+      url: "/auditoria",
+      icon: ClipboardList,
+      requiredPermission: OAUTH_PERMISSIONS.AUDIT_LOG_ACCESS,
     },
   ],
 };

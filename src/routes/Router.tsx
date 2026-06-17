@@ -1,5 +1,5 @@
-import { Suspense, lazy } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Suspense, lazy, type ReactNode } from "react";
+import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router-dom";
 import { ProtectedRoute } from "@/components/protected-route/ProtectedRoute";
 import Page404 from "@/app/404/page404";
 import LayoutAdmin from "@/app/admin/layout";
@@ -13,14 +13,32 @@ const ProfilePage = lazy(() => import("@/app/profile/page").then((m) => ({ defau
 // Componente de carga para lazy loading
 const LoadingFallback = () => (
   <div className="flex h-screen items-center justify-center">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <Loader2 className="text-primary h-8 w-8 animate-spin" />
   </div>
 );
 
 // Wrapper para Suspense
-const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
-);
+const SuspenseWrapper = ({ children }: { children: ReactNode }) => <Suspense fallback={<LoadingFallback />}>{children}</Suspense>;
+
+const wrapRouteElement = (element: RouteObject["element"]) => {
+  if (element == null) return element;
+  return <SuspenseWrapper>{element}</SuspenseWrapper>;
+};
+
+const withSuspense = (route: RouteObject): RouteObject => {
+  if (route.index) {
+    return {
+      ...route,
+      element: wrapRouteElement(route.element),
+    };
+  }
+
+  return {
+    ...route,
+    element: wrapRouteElement(route.element),
+    children: route.children?.map(withSuspense),
+  };
+};
 
 const routes = createBrowserRouter([
   {
@@ -34,36 +52,18 @@ const routes = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper>,
+            element: (
+              <SuspenseWrapper>
+                <ProfilePage />
+              </SuspenseWrapper>
+            ),
           },
         ],
       },
-      ...adminRoutes.map((route) => ({
-        ...route,
-        element: route.element ? <SuspenseWrapper>{route.element}</SuspenseWrapper> : route.element,
-        children: route.children?.map((child) => ({
-          ...child,
-          element: child.element ? <SuspenseWrapper>{child.element}</SuspenseWrapper> : child.element,
-          children: child.children?.map((grandchild) => ({
-            ...grandchild,
-            element: grandchild.element ? <SuspenseWrapper>{grandchild.element}</SuspenseWrapper> : grandchild.element,
-          })),
-        })),
-      })),
+      ...adminRoutes.map(withSuspense),
     ],
   },
-  ...authRoutes.map((route) => ({
-    ...route,
-    element: route.element ? <SuspenseWrapper>{route.element}</SuspenseWrapper> : route.element,
-    children: route.children?.map((child) => ({
-      ...child,
-      element: child.element ? <SuspenseWrapper>{child.element}</SuspenseWrapper> : child.element,
-      children: child.children?.map((grandchild) => ({
-        ...grandchild,
-        element: grandchild.element ? <SuspenseWrapper>{grandchild.element}</SuspenseWrapper> : grandchild.element,
-      })),
-    })),
-  })),
+  ...authRoutes.map(withSuspense),
 ]);
 
 export const RouterApp = () => <RouterProvider router={routes} />;
