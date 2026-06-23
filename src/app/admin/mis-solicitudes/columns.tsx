@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { MiAccesoStatusBadge } from "./mi-acceso-status-badge";
-import { MI_ACCESO_TYPE_LABELS } from "./mi-acceso.constants";
+import { canDownloadMiAccesoRequestPdf, MI_ACCESO_TYPE_LABELS } from "./mi-acceso.constants";
 import { buildMiAccesoRequestDetail } from "./mi-acceso.utils";
 import type { MiAccesoRequest } from "./mi-acceso.types";
 
@@ -112,21 +112,22 @@ export const getMiAccesoColumns = ({
     columns.push({
       id: "actions",
       header: "Acciones",
-      cell: ({ row }) => (
-        <Button
-          type="button"
-          variant="link"
-          onClick={() => onDownloadPdf(row.original)}
-          disabled={isDownloadingPdf && downloadingRequestId === row.original.id}
-        >
-          {isDownloadingPdf && downloadingRequestId === row.original.id ? (
-            <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
-          ) : (
-            <Download data-icon="inline-start" aria-hidden="true" />
-          )}
-          Descargar PDF
-        </Button>
-      ),
+      cell: ({ row }) =>
+        canDownloadMiAccesoRequestPdf(row.original.type) ? (
+          <Button
+            type="button"
+            variant="link"
+            onClick={() => onDownloadPdf(row.original)}
+            disabled={isDownloadingPdf && downloadingRequestId === row.original.id}
+          >
+            {isDownloadingPdf && downloadingRequestId === row.original.id ? (
+              <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Download data-icon="inline-start" aria-hidden="true" />
+            )}
+            Descargar PDF
+          </Button>
+        ) : null,
       meta: {
         label: "Acciones",
       },

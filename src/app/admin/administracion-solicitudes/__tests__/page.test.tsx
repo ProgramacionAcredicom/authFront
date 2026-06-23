@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
@@ -147,7 +147,6 @@ describe("MiAccesoAdministrationPage", () => {
     expect(screen.getByText("REQ-2026-010")).toBeInTheDocument();
     expect(screen.getByText("Ana Solís")).toBeInTheDocument();
     expect(screen.getByText("Luis Pérez")).toBeInTheDocument();
-    expect(screen.getByText("Requiere acceso inicial")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /descargar pdf/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /cambiar estado/i })).toBeInTheDocument();
   });
@@ -215,6 +214,215 @@ describe("MiAccesoAdministrationPage", () => {
 
     expect(screen.getByText("Suspensión")).toBeInTheDocument();
     expect(screen.queryByText("Vacaciones")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cambiar estado/i })).toBeInTheDocument();
+  });
+
+  it("solo muestra descargar pdf para altas y bajas en administración", () => {
+    useQueryAdminMiAccesoRequestsMock.mockReturnValue({
+      data: {
+        count: 4,
+        results: [
+          {
+            id: 201,
+            code: "REQ-2026-010",
+            request_type: "alta",
+            request_type_display: "Alta",
+            status: "registrado",
+            status_display: "Registrado",
+            requester: {
+              id: 1,
+              name: "Ana Solís",
+              username: "asolis",
+              email: "ana@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-010",
+              role_name: "Jefe de agencia",
+              agency_name: "Central",
+              area_name: "Operaciones",
+            },
+            subject: {
+              id: 2,
+              name: "Luis Pérez",
+              username: "lperez",
+              email: "luis@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-011",
+              role_name: "Analista",
+              agency_name: "Norte",
+              area_name: "Crédito",
+            },
+            detail_summary: "Sistema: T24",
+            created_at: "2026-06-06T10:30:00.000Z",
+            updated_at: "2026-06-06T10:30:00.000Z",
+            boss: null,
+            absence_type: null,
+            start_date: null,
+            end_date: null,
+            reason: null,
+            additional_detail: "Requiere acceso inicial",
+            status_changed_by: null,
+            status_changed_at: null,
+            system_lines: [],
+            status_history: [],
+            pdf_download_url: "/solicitudes/201/pdf/",
+          },
+          {
+            id: 202,
+            code: "REQ-2026-011",
+            request_type: "baja",
+            request_type_display: "Baja",
+            status: "registrado",
+            status_display: "Registrado",
+            requester: {
+              id: 3,
+              name: "Mario León",
+              username: "mleon",
+              email: "mario@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-012",
+              role_name: "Supervisor",
+              agency_name: "Sur",
+              area_name: "Operaciones",
+            },
+            subject: {
+              id: 4,
+              name: "Carmen Díaz",
+              username: "cdiaz",
+              email: "carmen@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-013",
+              role_name: "Oficial",
+              agency_name: "Occidente",
+              area_name: "Crédito",
+            },
+            detail_summary: "Sistema: Seguros",
+            created_at: "2026-06-07T10:30:00.000Z",
+            updated_at: "2026-06-07T10:30:00.000Z",
+            boss: null,
+            absence_type: null,
+            start_date: null,
+            end_date: null,
+            reason: null,
+            additional_detail: "",
+            status_changed_by: null,
+            status_changed_at: null,
+            system_lines: [],
+            status_history: [],
+            pdf_download_url: "/solicitudes/202/pdf/",
+          },
+          {
+            id: 203,
+            code: "REQ-2026-012",
+            request_type: "nuevo_permiso",
+            request_type_display: "Nuevo permiso",
+            status: "rechazado",
+            status_display: "Rechazado",
+            requester: {
+              id: 5,
+              name: "Carla Soto",
+              username: "csoto",
+              email: "carla@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-014",
+              role_name: "Supervisor",
+              agency_name: "Central",
+              area_name: "Tecnología",
+            },
+            subject: {
+              id: 6,
+              name: "Pedro Cruz",
+              username: "pcruz",
+              email: "pedro@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-015",
+              role_name: "Programador",
+              agency_name: "Central",
+              area_name: "Tecnología",
+            },
+            detail_summary: "Sistema: MCENLINEA",
+            created_at: "2026-06-08T10:30:00.000Z",
+            updated_at: "2026-06-08T10:30:00.000Z",
+            boss: null,
+            absence_type: null,
+            start_date: null,
+            end_date: null,
+            reason: null,
+            additional_detail: "",
+            status_changed_by: null,
+            status_changed_at: null,
+            system_lines: [],
+            status_history: [],
+            pdf_download_url: "/solicitudes/203/pdf/",
+          },
+          {
+            id: 204,
+            code: "REQ-2026-013",
+            request_type: "vacaciones",
+            request_type_display: "Vacaciones",
+            status: "registrado",
+            status_display: "Registrado",
+            requester: {
+              id: 7,
+              name: "Julia Rivas",
+              username: "jrivas",
+              email: "julia@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-016",
+              role_name: "Jefe",
+              agency_name: "Norte",
+              area_name: "Operaciones",
+            },
+            subject: {
+              id: 8,
+              name: "Diego Morales",
+              username: "dmorales",
+              email: "diego@example.com",
+              cif: null,
+              executive_number: null,
+              employee_id: "E-017",
+              role_name: "Analista",
+              agency_name: "Norte",
+              area_name: "Operaciones",
+            },
+            detail_summary: "Bloqueo rango: 16/06/2026 al 24/06/2026",
+            created_at: "2026-06-09T10:30:00.000Z",
+            updated_at: "2026-06-09T10:30:00.000Z",
+            boss: null,
+            absence_type: "suspension",
+            start_date: "2026-06-16",
+            end_date: "2026-06-24",
+            reason: "Proceso interno",
+            additional_detail: "",
+            status_changed_by: null,
+            status_changed_at: null,
+            system_lines: [],
+            status_history: [],
+            pdf_download_url: "/solicitudes/204/pdf/",
+          },
+        ],
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+    });
+
+    renderPage();
+
+    expect(screen.getAllByRole("button", { name: /descargar pdf/i })).toHaveLength(2);
+    expect(within(screen.getByText("REQ-2026-010").closest("tr")!).getByRole("button", { name: /descargar pdf/i })).toBeInTheDocument();
+    expect(within(screen.getByText("REQ-2026-011").closest("tr")!).getByRole("button", { name: /descargar pdf/i })).toBeInTheDocument();
+    expect(within(screen.getByText("REQ-2026-012").closest("tr")!).queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
+    expect(within(screen.getByText("REQ-2026-013").closest("tr")!).queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /cambiar estado/i })).toHaveLength(4);
   });
 
   it("traduce query params del URL a parámetros de API", () => {

@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Download, Loader2, RefreshCcw, Search } from "lucide-react";
 
-import { MI_ACCESO_STATUS_LABELS, MI_ACCESO_TYPE_LABELS } from "@/app/admin/mis-solicitudes/mi-acceso.constants";
+import { canDownloadMiAccesoRequestPdf, MI_ACCESO_STATUS_LABELS, MI_ACCESO_TYPE_LABELS } from "@/app/admin/mis-solicitudes/mi-acceso.constants";
 import { MiAccesoStatusBadge } from "@/app/admin/mis-solicitudes/mi-acceso-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,15 +95,15 @@ export const getAdminMiAccesoColumns = ({
         label: "Colaborador",
       },
     },
-    {
-      id: "details",
-      accessorFn: (row) => `${row.detailSummary} ${row.additionalDetail}`.trim(),
-      header: "Detalle",
-      cell: ({ row }) => renderDetailCell({ detailSummary: row.original.detailSummary, additionalDetail: row.original.additionalDetail }),
-      meta: {
-        label: "Detalle",
-      },
-    },
+    // {
+    //   id: "details",
+    //   accessorFn: (row) => `${row.detailSummary} ${row.additionalDetail}`.trim(),
+    //   header: "Detalle",
+    //   cell: ({ row }) => renderDetailCell({ detailSummary: row.original.detailSummary, additionalDetail: row.original.additionalDetail }),
+    //   meta: {
+    //     label: "Detalle",
+    //   },
+    // },
     {
       id: "status",
       accessorKey: "status",
@@ -133,7 +133,7 @@ export const getAdminMiAccesoColumns = ({
       header: "Acciones",
       cell: ({ row }) => (
         <div className="flex flex-col items-start gap-1">
-          {canViewRequestPdf ? (
+          {canViewRequestPdf && canDownloadMiAccesoRequestPdf(row.original.type) ? (
             <Button
               type="button"
               variant="link"

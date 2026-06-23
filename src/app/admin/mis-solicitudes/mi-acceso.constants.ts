@@ -20,6 +20,10 @@ export const MI_ACCESO_TYPE_LABELS: Record<MiAccesoRequestType, string> = {
   nuevo_permiso: "Nuevo permiso",
 };
 
+export function canDownloadMiAccesoRequestPdf(type: MiAccesoRequestType) {
+  return type === "alta" || type === "baja";
+}
+
 export const MI_ACCESO_STATUS_LABELS: Record<MiAccesoRequestStatus, string> = {
   registrado: "Registrado",
   en_proceso: "En proceso",
