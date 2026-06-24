@@ -1,5 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Download, Loader2, RefreshCcw, Search } from "lucide-react";
+import { Download, Eye, Loader2, RefreshCcw, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { canDownloadMiAccesoRequestPdf, MI_ACCESO_STATUS_LABELS, MI_ACCESO_TYPE_LABELS } from "@/app/admin/mis-solicitudes/mi-acceso.constants";
 import { MiAccesoStatusBadge } from "@/app/admin/mis-solicitudes/mi-acceso-status-badge";
@@ -11,10 +12,11 @@ import type { MiAccesoAdminRequestRow } from "./mi-acceso-administration.types";
 import { formatAdminRequestDate } from "./mi-acceso-administration.utils";
 
 interface AdminMiAccesoColumnsOptions {
-  canViewRequestPdf?: boolean;
+  canViewRequest?: boolean;
   canChangeStatus?: boolean;
   downloadingRequestId?: number | null;
   isDownloadingPdf?: boolean;
+  getDetailHref: (request: MiAccesoAdminRequestRow) => string | null;
   onDownloadPdf: (request: MiAccesoAdminRequestRow) => void;
   onOpenStatusDialog: (request: MiAccesoAdminRequestRow) => void;
 }
@@ -28,28 +30,12 @@ function renderUserCell({ name, secondary }: { name: string; secondary?: string 
   );
 }
 
-function renderDetailCell({ detailSummary, additionalDetail }: { detailSummary: string; additionalDetail: string }) {
-  return (
-    <div className="flex max-w-md flex-col gap-2 whitespace-normal">
-      <div className="flex flex-col">
-        <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Resumen</span>
-        <span className="text-sm font-medium wrap-break-word">{detailSummary}</span>
-      </div>
-      {additionalDetail ? (
-        <div className="flex flex-col">
-          <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Detalle adicional</span>
-          <span className="text-sm font-medium wrap-break-word">{additionalDetail}</span>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export const getAdminMiAccesoColumns = ({
-  canViewRequestPdf = false,
+  canViewRequest = false,
   canChangeStatus = false,
   downloadingRequestId,
   isDownloadingPdf = false,
+  getDetailHref,
   onDownloadPdf,
   onOpenStatusDialog,
 }: AdminMiAccesoColumnsOptions): ColumnDef<MiAccesoAdminRequestRow>[] => {
@@ -127,42 +113,55 @@ export const getAdminMiAccesoColumns = ({
     },
   ];
 
-  if (canViewRequestPdf || canChangeStatus) {
+  if (canViewRequest || canChangeStatus) {
     columns.push({
       id: "actions",
       header: "Acciones",
-      cell: ({ row }) => (
-        <div className="flex flex-col items-start gap-1">
-          {canViewRequestPdf && canDownloadMiAccesoRequestPdf(row.original.type) ? (
-            <Button
-              type="button"
-              variant="link"
-              className="h-auto px-0 py-0"
-              onClick={() => onDownloadPdf(row.original)}
-              disabled={isDownloadingPdf && downloadingRequestId === row.original.id}
-            >
-              {isDownloadingPdf && downloadingRequestId === row.original.id ? (
-                <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
-              ) : (
-                <Download data-icon="inline-start" aria-hidden="true" />
-              )}
-              Descargar PDF
-            </Button>
-          ) : null}
+      cell: ({ row }) => {
+        const detailHref = getDetailHref(row.original);
 
-          {canChangeStatus ? (
-            <Button
-              type="button"
-              variant="link"
-              className="h-auto px-0 py-0"
-              onClick={() => onOpenStatusDialog(row.original)}
-            >
-              <RefreshCcw data-icon="inline-start" aria-hidden="true" />
-              Cambiar estado
-            </Button>
-          ) : null}
-        </div>
-      ),
+        return (
+          <div className="flex flex-col items-start gap-1">
+            {canViewRequest && detailHref ? (
+              <Button asChild variant="link" className="h-auto px-0 py-0">
+                <Link to={detailHref}>
+                  <Eye data-icon="inline-start" aria-hidden="true" />
+                  Ver detalle
+                </Link>
+              </Button>
+            ) : null}
+
+            {canViewRequest && canDownloadMiAccesoRequestPdf(row.original.type) ? (
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto px-0 py-0"
+                onClick={() => onDownloadPdf(row.original)}
+                disabled={isDownloadingPdf && downloadingRequestId === row.original.id}
+              >
+                {isDownloadingPdf && downloadingRequestId === row.original.id ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
+                ) : (
+                  <Download data-icon="inline-start" aria-hidden="true" />
+                )}
+                Descargar PDF
+              </Button>
+            ) : null}
+
+            {canChangeStatus ? (
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto px-0 py-0"
+                onClick={() => onOpenStatusDialog(row.original)}
+              >
+                <RefreshCcw data-icon="inline-start" aria-hidden="true" />
+                Cambiar estado
+              </Button>
+            ) : null}
+          </div>
+        );
+      },
       meta: {
         label: "Acciones",
       },

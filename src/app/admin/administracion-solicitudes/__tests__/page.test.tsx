@@ -147,6 +147,7 @@ describe("MiAccesoAdministrationPage", () => {
     expect(screen.getByText("REQ-2026-010")).toBeInTheDocument();
     expect(screen.getByText("Ana Solís")).toBeInTheDocument();
     expect(screen.getByText("Luis Pérez")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ver detalle/i })).toHaveAttribute("href", "/mi-acceso/administracion-solicitudes/detalle/201");
     expect(screen.getByRole("button", { name: /descargar pdf/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /cambiar estado/i })).toBeInTheDocument();
   });

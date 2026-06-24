@@ -116,6 +116,22 @@ export function getMiAccesoRequestTypeLabel(type: MiAccesoRequest["type"]) {
   return MI_ACCESO_TYPE_LABELS[type];
 }
 
+export function getAccessRequestTypeDisplay(
+  request: Pick<AccessRequestDetailApi, "request_type" | "request_type_display" | "absence_type">,
+) {
+  if (request.request_type === "vacaciones") {
+    if (request.absence_type === "suspension") {
+      return "Suspensión";
+    }
+
+    if (request.absence_type === "bloqueo_vacaciones") {
+      return MI_ACCESO_TYPE_LABELS.vacaciones;
+    }
+  }
+
+  return request.request_type_display || MI_ACCESO_TYPE_LABELS[request.request_type];
+}
+
 export function getMiAccesoStatusLabel(status: MiAccesoRequestStatus) {
   return MI_ACCESO_STATUS_LABELS[status];
 }

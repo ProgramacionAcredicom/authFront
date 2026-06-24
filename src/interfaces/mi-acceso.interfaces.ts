@@ -35,6 +35,15 @@ export interface AccessRequestSystemLineApi {
   created_at: string;
 }
 
+export interface AccessRequestStatusHistoryApi {
+  id: number;
+  previous_status: MiAccesoRequestStatus | null;
+  new_status: MiAccesoRequestStatus;
+  comment: string | null;
+  changed_by: UserBriefApi | null;
+  changed_at: string;
+}
+
 export interface AccessRequestDetailApi {
   id: number;
   code: string;
@@ -56,7 +65,7 @@ export interface AccessRequestDetailApi {
   status_changed_by: UserBriefApi | null;
   status_changed_at: string | null;
   system_lines?: AccessRequestSystemLineApi[];
-  status_history?: unknown[];
+  status_history?: AccessRequestStatusHistoryApi[];
   pdf_download_url?: string | null;
 }
 

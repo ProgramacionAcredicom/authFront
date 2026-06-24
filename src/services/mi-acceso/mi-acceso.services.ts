@@ -20,6 +20,11 @@ export const getAdminMiAccesoRequests = async (params: GetAdminMiAccesoRequestsP
   return response.data;
 };
 
+export const getMiAccesoRequestById = async (id: number): Promise<AccessRequestDetailApi> => {
+  const response = await apiServices.get<AccessRequestDetailApi>(`/solicitudes/${id}/`);
+  return response.data;
+};
+
 export const getAccessSystems = async (params: GetAccessSystemsParams): Promise<AccessSystemListResponse> => {
   const response = await apiServices.get<AccessSystemListResponse>("/sistemas-acceso/", { params });
   return response.data;

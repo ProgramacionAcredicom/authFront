@@ -68,15 +68,19 @@ describe("talento humano navigation", () => {
     const miAccesoRoute = adminRoutes.find((route) => route.path === "mi-acceso");
 
     expect(miAccesoRoute).toBeDefined();
-    expect(miAccesoRoute?.children).toHaveLength(4);
+    expect(miAccesoRoute?.children).toHaveLength(6);
     expect(miAccesoRoute?.children?.[0]?.index).toBe(true);
     expect(miAccesoRoute?.children?.[1]?.path).toBe("nueva");
     expect(miAccesoRoute?.children?.[2]?.path).toBe("requerimiento-accesos");
-    expect(miAccesoRoute?.children?.[3]?.path).toBe("administracion-solicitudes");
+    expect(miAccesoRoute?.children?.[3]?.path).toBe("detalle/:id");
+    expect(miAccesoRoute?.children?.[4]?.path).toBe("administracion-solicitudes");
+    expect(miAccesoRoute?.children?.[5]?.path).toBe("administracion-solicitudes/detalle/:id");
     expectPermissionRoute(miAccesoRoute?.children?.[0]?.element, OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS);
     expectPermissionRoute(miAccesoRoute?.children?.[1]?.element, OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST);
     expectPermissionRoute(miAccesoRoute?.children?.[2]?.element, OAUTH_PERMISSIONS.CREATE_ACCESS_REQUEST);
-    expectPermissionRoute(miAccesoRoute?.children?.[3]?.element, OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS);
+    expectPermissionRoute(miAccesoRoute?.children?.[3]?.element, OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS);
+    expectPermissionRoute(miAccesoRoute?.children?.[4]?.element, OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS);
+    expectPermissionRoute(miAccesoRoute?.children?.[5]?.element, OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS);
   });
 
   it("expone Auditoria como módulo principal y mantiene su ruta admin", () => {

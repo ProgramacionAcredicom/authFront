@@ -39,9 +39,10 @@ export default function MiAccesoPage() {
   const columns = useMemo(
     () =>
       getMiAccesoColumns({
-        canViewRequestPdf: canViewRequest,
+        canViewRequest,
         downloadingRequestId: downloadPdfMutation.variables?.id ?? null,
         isDownloadingPdf: downloadPdfMutation.isPending,
+        getDetailHref: (request) => (typeof request.id === "number" ? `/mi-acceso/detalle/${request.id}` : null),
         onDownloadPdf: (request) => {
           if (typeof request.id !== "number") {
             return;

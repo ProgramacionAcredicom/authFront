@@ -204,6 +204,9 @@ describe("MiAccesoPage", () => {
     expect(screen.getByText("T24")).toBeInTheDocument();
     expect(screen.getAllByText("Detalle adicional")).toHaveLength(2);
     expect(screen.getByText("Crear accesos iniciales para inducción.")).toBeInTheDocument();
+    const detailLinks = screen.getAllByRole("link", { name: /ver detalle/i });
+    expect(detailLinks).toHaveLength(2);
+    expect(detailLinks[0]).toHaveAttribute("href", "/mi-acceso/detalle/101");
     expect(screen.getAllByRole("button", { name: /descargar pdf/i })).toHaveLength(2);
   });
 
@@ -235,6 +238,7 @@ describe("MiAccesoPage", () => {
 
     expect(screen.getByText("REQ-2026-001")).toBeInTheDocument();
     expect(screen.getByText("REQ-2026-002")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /ver detalle/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /descargar pdf/i })).not.toBeInTheDocument();
   });
 
