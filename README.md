@@ -114,7 +114,7 @@ Sistema web moderno para la gestión de autenticación, usuarios, permisos y ses
 ## 📦 Requisitos Previos
 
 - **Node.js** >= 18.x
-- **npm** >= 9.x o **pnpm** >= 8.x
+- **npm** >= 9.x
 - Acceso al backend de autenticación de Acredicom
 
 ## 🚀 Instalación
@@ -128,8 +128,6 @@ cd authFront
 2. **Instalar dependencias**
 ```bash
 npm install
-# o
-pnpm install
 ```
 
 3. **Configurar variables de entorno**
