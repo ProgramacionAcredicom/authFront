@@ -31,7 +31,7 @@ export const localPuestoDetailMapper = (puesto: PuestoDetailResponse): PuestoDet
   id: puesto.id,
   role: puesto.role,
   state: puesto.state,
-  grupos: puesto.grupos?.map((grupo) => grupo.id) ?? [],
+  grupos: puesto.grupos?.map((grupo: any) => typeof grupo === 'number' ? grupo : grupo?.id).filter(Boolean) ?? [],
   created_on: puesto.created_on ?? undefined,
   update_at: puesto.update_at ?? undefined,
 });

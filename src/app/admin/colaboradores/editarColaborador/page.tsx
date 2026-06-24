@@ -3,7 +3,7 @@ import { FormColaborador } from "@/components/form/colaboradores/form-colaborado
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GruposTypeModel } from "@/interfaces/grupos.interfaces";
 import { ColaboradorListPanel } from "@/components/colaboradores/editor/colaborador-list-panel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -17,6 +17,7 @@ export const EditarColaboradorPage = () => {
   const [isMobileListOpen, setIsMobileListOpen] = useState(false);
   const [isDesktopListHidden, setIsDesktopListHidden] = useState(false);
   const activeId = Number(params.id ?? user?.id);
+
   return (
     <div className="flex h-[calc(100svh-6rem)] max-h-[calc(100svh-6rem)] min-h-0 flex-col gap-4 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,7 +93,7 @@ export const EditarColaboradorPage = () => {
           </div>
 
           <div className="min-h-0 flex-1 overflow-hidden">
-            <FormColaborador selectedGroups={selectedGroups} setSelectedGroups={setSelectedGroups} user={user ?? undefined} />
+            <FormColaborador key={user?.id || 'new'} selectedGroups={selectedGroups} setSelectedGroups={setSelectedGroups} user={user ?? undefined} />
           </div>
         </div>
         </div>
