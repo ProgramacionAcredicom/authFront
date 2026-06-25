@@ -1,6 +1,6 @@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ColaboradorSchema } from "@/schemas/colaboradores/colaborador.schema";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { colaboradorSchema } from "@/schemas/colaboradores/colaborador.schema";
 import { Input } from "@/components/ui/input";
@@ -32,12 +32,15 @@ import { splitName } from "@/lib/splitName";
 import { logger } from "@/lib/logger";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQueryPuestos } from "@/hooks/puestos/useQueryPuestos";
+import { buildColaboradorFormData } from "./form-colaborador.utils";
 export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { selectedGroups: GruposTypeModel[]; setSelectedGroups: (groups: GruposTypeModel[]) => void; user?: ColaboradorIDType }) => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
   const [scrollContainerEl, setScrollContainerEl] = useState<HTMLDivElement | null>(null);
+  const [hasModifiedGroups, setHasModifiedGroups] = useState(false);
   const isEdit = Boolean(user);
 
   const [activeTab, setActiveTab] = useState("personal");
@@ -144,6 +147,32 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
   const { queryRoles } = useQueryRoles();
   const queryClient = useQueryClient();
   const { mutation } = useMutationUpdateColaborador();
+  const initialRoleId = user?.role ? user.role.id.toString() : "";
+  const initialUserGroupIds = user?.grupos?.map((group) => group.id) ?? [];
+  const selectedRoleId = useWatch({
+    control: form.control,
+    name: "role",
+    defaultValue: initialRoleId,
+  });
+  const syncedGroupIds = useWatch({
+    control: form.control,
+    name: "grup",
+    defaultValue: initialUserGroupIds,
+  });
+  const roleChanged = isEdit && selectedRoleId !== initialRoleId;
+  const { queryPuestoById } = useQueryPuestos(selectedRoleId, {
+    enabled: Boolean(selectedRoleId) && (!isEdit || roleChanged),
+  });
+  const effectiveGroupIds = (!isEdit || roleChanged) ? (queryPuestoById.data?.grupos ?? []) : initialUserGroupIds;
+  const fallbackUserGroups: GruposTypeModel[] = (user?.grupos ?? []).map((group) => ({
+    id: group.id,
+    nombre: group.nombre,
+    aplicativos: [],
+    permisos: group.permisos ?? [],
+    users: [],
+    users_count: 0,
+    state: true,
+  }));
 
   // Observar cambios en el nombre para generar automáticamente email y username (solo en creación)
   const watchedName = form.watch("name");
@@ -180,6 +209,20 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
     setShowPassword(false);
     setShowConfirmPassword(false);
   }, [user?.id, isEdit, form, user]);
+
+  useEffect(() => {
+    const selectedIds = selectedGroups.map((group) => group.id);
+
+    if (JSON.stringify(selectedIds) === JSON.stringify(syncedGroupIds ?? [])) {
+      return;
+    }
+
+    form.setValue("grup", selectedIds, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  }, [form, selectedGroups, syncedGroupIds]);
 
   // Normalizar caracteres especiales (quitar tildes y convertir ñ a n)
   const normalizeString = (str: string): string => {
@@ -234,45 +277,12 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
       return;
     }
 
-    const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("dpi", data.dpi);
-    formData.append("cif", data.cif);
-    formData.append("username", data.username);
-    formData.append("email", data.email);
-    formData.append("agency", data.agency);
-    formData.append("role", data.role);
-    formData.append("user_type", data.user_type);
-    formData.append("is_active", String(data.is_active));
-    formData.append("is_blocked", String(data.is_blocked ?? false));
-    formData.append("is_staff", String(data.is_staff ?? false));
-    formData.append("is_superuser", String(data.is_superuser ?? false));
-    if (data.area) {
-      formData.append("area", data.area);
-    } else {
-      formData.append("area", "");
-    }
-    if (data.executive_number != null) {
-      formData.append("executive_number", String(data.executive_number));
-    }
-
-    // Contraseña (solo si aplica)
-    if (!isEdit || (data.password && data.confirm_password)) {
-      formData.append("password", data.password!);
-      formData.append("confirm_password", data.confirm_password!);
-    }
-
-    // Grupos
-    selectedGroups.forEach((g) => {
-      formData.append("grup", String(g.id));
+    const formData = buildColaboradorFormData({
+      data,
+      isEdit,
+      selectedGroups,
+      hasModifiedGroups,
     });
-
-    // Imagen
-    if (data.picture instanceof File) {
-      formData.append("picture", data.picture);
-    } else if (data.picture === null) {
-      formData.append("picture", "");
-    }
 
     try {
       const config = { headers: { "Content-Type": "multipart/form-data" } };
@@ -468,7 +478,20 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                                           ? "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800 hover:bg-rose-200 dark:hover:bg-rose-900/40 cursor-pointer font-medium"
                                           : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/30 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-900/40 cursor-pointer"
                                       }`}
+                                      role="button"
+                                      tabIndex={0}
+                                      aria-label={form.watch("is_blocked") ? "Bloqueado" : "Desbloqueado"}
                                       onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newStatus = !form.watch("is_blocked");
+                                        form.setValue("is_blocked", newStatus);
+                                        toast.success(newStatus ? "Usuario bloqueado" : "Usuario desbloqueado", {
+                                          duration: 2000,
+                                        });
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key !== "Enter" && e.key !== " ") return;
+                                        e.preventDefault();
                                         e.stopPropagation();
                                         const newStatus = !form.watch("is_blocked");
                                         form.setValue("is_blocked", newStatus);
@@ -983,7 +1006,10 @@ export const FormColaborador = ({ selectedGroups, setSelectedGroups, user }: { s
                   <GruposSeleccionados
                     selectedGroups={selectedGroups}
                     setSelectedGroups={setSelectedGroups}
-                    groupIds={user?.grupos?.map((g) => g.id) ?? []}
+                    collaboratorKey={user?.id ?? "new-collaborator"}
+                    groupIds={effectiveGroupIds}
+                    fallbackGroups={isEdit ? fallbackUserGroups : []}
+                    onManualSelectionChange={setHasModifiedGroups}
                   />
                 </div>
                 </div>

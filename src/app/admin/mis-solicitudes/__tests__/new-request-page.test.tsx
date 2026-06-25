@@ -212,7 +212,7 @@ describe("MiAccesoNewRequestPage", () => {
     expect(screen.getByText("Selecciona un jefe inmediato.")).toBeInTheDocument();
     expect(screen.getByText("Selecciona un sistema.")).toBeInTheDocument();
     expect(screen.getByText("Selecciona un colaborador de referencia.")).toBeInTheDocument();
-    expect(screen.getByText("Ingresa una observación.")).toBeInTheDocument();
+    expect(screen.queryByText("Ingresa una observación.")).not.toBeInTheDocument();
   });
 
   it("oculta en la siguiente fila los sistemas que ya fueron seleccionados", async () => {
@@ -233,7 +233,7 @@ describe("MiAccesoNewRequestPage", () => {
     expect(secondSystemOptions.getByRole("option", { name: "Seguros" })).toBeInTheDocument();
   });
 
-  it("crea la solicitud en backend y regresa al listado", async () => {
+  it("crea la solicitud en backend con observación opcional y regresa al listado", async () => {
     const user = userEvent.setup();
 
     renderPage();
@@ -252,8 +252,6 @@ describe("MiAccesoNewRequestPage", () => {
     await user.click(screen.getByRole("combobox", { name: /referencia para sistema 1/i }));
     await user.click(screen.getAllByText("Ana Pérez").at(-1)!);
 
-    await user.type(screen.getByLabelText("Observación *"), "Tomar permisos base del usuario de referencia.");
-
     await user.type(screen.getByLabelText("Detalle adicional"), "Acceso inicial para incorporación.");
     await user.click(screen.getByRole("button", { name: /guardar solicitud/i }));
 
@@ -271,7 +269,7 @@ describe("MiAccesoNewRequestPage", () => {
         {
           system_id: 501,
           reference_user_id: 12,
-          access_observation: "Tomar permisos base del usuario de referencia.",
+          access_observation: "",
           sort_order: 0,
         },
       ],

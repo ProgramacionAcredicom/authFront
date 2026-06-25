@@ -82,7 +82,7 @@ function RequesterSummaryCard({
     return null;
   }
 
-  const identifier = user.cif?.trim() ? `CIF: ${user.cif}` : `ID: ${user.id}`;
+  const identifier = user.cif?.trim() ? `ID: ${user.cif}` : 'SIN ID';
 
   return (
     <div className="grid gap-4 rounded-2xl border bg-muted/20 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">

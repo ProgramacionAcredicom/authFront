@@ -349,16 +349,13 @@ export default function MiAccesoNewRequestPage() {
                       </div>
 
                       <Field data-invalid={errors.systems?.[index]?.observation ? true : undefined}>
-                        <FieldLabel htmlFor={`observation-${index}`}>Observación *</FieldLabel>
+                        <FieldLabel htmlFor={`observation-${index}`}>Observación</FieldLabel>
                         <FieldContent>
                           <Textarea
                             id={`observation-${index}`}
                             placeholder="Describe el permiso o aclaración para este sistema."
                             aria-invalid={!!errors.systems?.[index]?.observation}
-                            {...register(`systems.${index}.observation`, {
-                              required: "Ingresa una observación.",
-                              validate: (value) => value.trim().length > 0 || "Ingresa una observación.",
-                            })}
+                            {...register(`systems.${index}.observation`)}
                           />
                           <FieldError>{errors.systems?.[index]?.observation?.message}</FieldError>
                         </FieldContent>

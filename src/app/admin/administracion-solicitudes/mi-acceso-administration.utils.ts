@@ -1,7 +1,8 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
-import { MI_ACCESO_STATUS_LABELS, MI_ACCESO_TYPE_LABELS } from "@/app/admin/mis-solicitudes/mi-acceso.constants";
+import { MI_ACCESO_STATUS_LABELS } from "@/app/admin/mis-solicitudes/mi-acceso.constants";
+import { getAccessRequestTypeDisplay } from "@/app/admin/mis-solicitudes/mi-acceso.utils";
 import type { AccessRequestDetailApi } from "@/interfaces/mi-acceso.interfaces";
 
 import type { MiAccesoAdminRequestRow, MiAccesoAdminSortableColumnId } from "./mi-acceso-administration.types";
@@ -13,26 +14,12 @@ const ADMIN_REQUEST_ORDERING_MAP: Record<MiAccesoAdminSortableColumnId, string> 
   createdAt: "created_at",
 };
 
-function getAdminRequestTypeLabel(request: AccessRequestDetailApi) {
-  if (request.request_type === "vacaciones") {
-    if (request.absence_type === "suspension") {
-      return "Suspensión";
-    }
-
-    if (request.absence_type === "bloqueo_vacaciones") {
-      return MI_ACCESO_TYPE_LABELS.vacaciones;
-    }
-  }
-
-  return request.request_type_display || MI_ACCESO_TYPE_LABELS[request.request_type];
-}
-
 export function mapAccessRequestDetailToAdminRow(request: AccessRequestDetailApi): MiAccesoAdminRequestRow {
   return {
     id: request.id,
     code: request.code,
     type: request.request_type,
-    typeLabel: getAdminRequestTypeLabel(request),
+    typeLabel: getAccessRequestTypeDisplay(request),
     requesterName: request.requester?.name || "Sin solicitante",
     requesterUsername: request.requester?.username || "",
     subjectName: request.subject.name,

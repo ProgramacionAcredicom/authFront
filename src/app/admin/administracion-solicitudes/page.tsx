@@ -98,10 +98,11 @@ export default function MiAccesoAdministrationPage() {
   const columns = useMemo(
     () =>
       getAdminMiAccesoColumns({
-        canViewRequestPdf,
+        canViewRequest: canViewRequestPdf,
         canChangeStatus: canChangeRequestStatus,
         downloadingRequestId: downloadPdfMutation.variables?.id ?? null,
         isDownloadingPdf: downloadPdfMutation.isPending,
+        getDetailHref: (request) => `/mi-acceso/administracion-solicitudes/detalle/${request.id}`,
         onDownloadPdf: (request) => {
           downloadPdfMutation.mutate({ id: request.id, code: request.code });
         },

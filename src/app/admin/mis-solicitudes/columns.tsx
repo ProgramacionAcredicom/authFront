@@ -1,18 +1,20 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Download, Loader2, Search } from "lucide-react";
+import { Download, Eye, Loader2, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { MiAccesoStatusBadge } from "./mi-acceso-status-badge";
-import { MI_ACCESO_TYPE_LABELS } from "./mi-acceso.constants";
+import { canDownloadMiAccesoRequestPdf, MI_ACCESO_TYPE_LABELS } from "./mi-acceso.constants";
 import { buildMiAccesoRequestDetail } from "./mi-acceso.utils";
 import type { MiAccesoRequest } from "./mi-acceso.types";
 
 interface MiAccesoColumnsOptions {
-  canViewRequestPdf?: boolean;
+  canViewRequest?: boolean;
   downloadingRequestId?: number | null;
   isDownloadingPdf?: boolean;
+  getDetailHref: (request: MiAccesoRequest) => string | null;
   onDownloadPdf: (request: MiAccesoRequest) => void;
 }
 
@@ -47,9 +49,10 @@ function renderMiAccesoRequestDetailsCell(request: MiAccesoRequest) {
 }
 
 export const getMiAccesoColumns = ({
-  canViewRequestPdf = false,
+  canViewRequest = false,
   downloadingRequestId,
   isDownloadingPdf = false,
+  getDetailHref,
   onDownloadPdf,
 }: MiAccesoColumnsOptions): ColumnDef<MiAccesoRequest>[] => {
   const columns: ColumnDef<MiAccesoRequest>[] = [
@@ -108,25 +111,43 @@ export const getMiAccesoColumns = ({
     },
   ];
 
-  if (canViewRequestPdf) {
+  if (canViewRequest) {
     columns.push({
       id: "actions",
       header: "Acciones",
-      cell: ({ row }) => (
-        <Button
-          type="button"
-          variant="link"
-          onClick={() => onDownloadPdf(row.original)}
-          disabled={isDownloadingPdf && downloadingRequestId === row.original.id}
-        >
-          {isDownloadingPdf && downloadingRequestId === row.original.id ? (
-            <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
-          ) : (
-            <Download data-icon="inline-start" aria-hidden="true" />
-          )}
-          Descargar PDF
-        </Button>
-      ),
+      cell: ({ row }) => {
+        const detailHref = getDetailHref(row.original);
+
+        return (
+          <div className="flex flex-col items-start gap-1">
+            {detailHref ? (
+              <Button asChild variant="link" className="h-auto px-0 py-0">
+                <Link to={detailHref}>
+                  <Eye data-icon="inline-start" aria-hidden="true" />
+                  Ver detalle
+                </Link>
+              </Button>
+            ) : null}
+
+            {canDownloadMiAccesoRequestPdf(row.original.type) ? (
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto px-0 py-0"
+                onClick={() => onDownloadPdf(row.original)}
+                disabled={isDownloadingPdf && downloadingRequestId === row.original.id}
+              >
+                {isDownloadingPdf && downloadingRequestId === row.original.id ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" aria-hidden="true" />
+                ) : (
+                  <Download data-icon="inline-start" aria-hidden="true" />
+                )}
+                Descargar PDF
+              </Button>
+            ) : null}
+          </div>
+        );
+      },
       meta: {
         label: "Acciones",
       },

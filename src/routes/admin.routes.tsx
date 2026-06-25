@@ -13,12 +13,16 @@ import { OAUTH_PERMISSIONS } from "@/lib/permissions";
 const AdminPage = lazy(() => import("@/app/admin/page").then((m) => ({ default: m.default })));
 const MovementRequestsPage = lazy(() => import("@/app/admin/movimientos-registro/page").then((m) => ({ default: m.default })));
 const MiAccesoPage = lazy(() => import("@/app/admin/mis-solicitudes/page").then((m) => ({ default: m.default })));
+const MiAccesoDetailPage = lazy(() => import("@/app/admin/mis-solicitudes/detail-page").then((m) => ({ default: m.default })));
 const MiAccesoNewRequestPage = lazy(() => import("@/app/admin/mis-solicitudes/new-request-page").then((m) => ({ default: m.default })));
 const MiAccesoAccessRequirementsPage = lazy(
   () => import("@/app/admin/mis-solicitudes/access-requirements-page").then((m) => ({ default: m.default })),
 );
 const MiAccesoAdministrationPage = lazy(
   () => import("@/app/admin/administracion-solicitudes/page").then((m) => ({ default: m.default })),
+);
+const MiAccesoAdministrationDetailPage = lazy(
+  () => import("@/app/admin/administracion-solicitudes/detail-page").then((m) => ({ default: m.default })),
 );
 const AuditoriaPage = lazy(() => import("@/app/admin/auditoria/page").then((m) => ({ default: m.default })));
 const MovimientosPage = lazy(() => import("@/app/admin/movimientos-reporteria/page").then((m) => ({ default: m.default })));
@@ -99,10 +103,26 @@ export const adminRoutes: RouteObject[] = [
         ),
       },
       {
+        path: "detalle/:id",
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.ACCESS_MY_REQUESTS}>
+            <MiAccesoDetailPage />
+          </PermissionRoute>
+        ),
+      },
+      {
         path: "administracion-solicitudes",
         element: (
           <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS}>
             <MiAccesoAdministrationPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "administracion-solicitudes/detalle/:id",
+        element: (
+          <PermissionRoute requiredPermission={OAUTH_PERMISSIONS.MANAGE_ACCESS_REQUESTS}>
+            <MiAccesoAdministrationDetailPage />
           </PermissionRoute>
         ),
       },

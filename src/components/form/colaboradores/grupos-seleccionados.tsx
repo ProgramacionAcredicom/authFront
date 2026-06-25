@@ -16,15 +16,26 @@ interface GruposSeleccionadosProps {
   selectedGroups: GruposTypeModel[];
   setSelectedGroups: (groups: GruposTypeModel[]) => void;
   groupIds?: number[];
+  fallbackGroups?: GruposTypeModel[];
+  collaboratorKey?: number | string;
+  onManualSelectionChange?: (hasModified: boolean) => void;
 }
 
-export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupIds }: GruposSeleccionadosProps) => {
+export const GruposSeleccionados = ({
+  selectedGroups,
+  setSelectedGroups,
+  groupIds,
+  fallbackGroups = [],
+  collaboratorKey,
+  onManualSelectionChange,
+}: GruposSeleccionadosProps) => {
   const { queryGruposSinPaginacion } = useQueryGruposSinPaginacion();
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [expandedAplicativos, setExpandedAplicativos] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const initializedRef = useRef(false);
-  const previousGroupIdsRef = useRef<number[] | undefined>(undefined);
+  const previousGroupIdsRef = useRef("[]");
+  const previousCollaboratorKeyRef = useRef<number | string | undefined>(collaboratorKey);
   const userHasModifiedRef = useRef(false);
   const keyStateRef = useRef({ metaKey: false, ctrlKey: false });
 
@@ -97,6 +108,11 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
     return selectedGroups.some((g) => g.id === groupId);
   };
 
+  const markManualSelectionChange = () => {
+    userHasModifiedRef.current = true;
+    onManualSelectionChange?.(true);
+  };
+
   // Manejar selección múltiple con Cmd/Ctrl
   const handleGroupToggle = (groupId: number, event?: React.MouseEvent | KeyboardEvent) => {
     if (event) {
@@ -113,7 +129,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
       : (keyStateRef.current.metaKey || keyStateRef.current.ctrlKey);
 
     // Marcar que el usuario ha modificado los grupos
-    userHasModifiedRef.current = true;
+    markManualSelectionChange();
 
     if (isSelected) {
       // Si está seleccionado, quitarlo (siempre se puede quitar)
@@ -154,62 +170,58 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
 
   // Inicializar grupos seleccionados desde groupIds solo cuando cambian los groupIds (nuevo usuario)
   useEffect(() => {
-    // Si el usuario ya ha modificado los grupos manualmente, no sobrescribir
-    if (userHasModifiedRef.current && initializedRef.current) {
+    const normalizedGroupIds = [...(groupIds ?? [])].sort((a, b) => a - b);
+    const groupIdsString = JSON.stringify(normalizedGroupIds);
+    const collaboratorChanged = previousCollaboratorKeyRef.current !== collaboratorKey;
+    const groupIdsChanged = groupIdsString !== previousGroupIdsRef.current;
+    const shouldForceHydrate = collaboratorChanged || groupIdsChanged || !initializedRef.current;
+
+    if (!shouldForceHydrate && userHasModifiedRef.current && initializedRef.current) {
       return;
     }
 
-    // Verificar si los groupIds han cambiado (nuevo usuario cargado)
-    const groupIdsString = JSON.stringify(groupIds?.sort() || []);
-    const previousGroupIdsString = JSON.stringify(previousGroupIdsRef.current?.sort() || []);
-    const groupIdsChanged = groupIdsString !== previousGroupIdsString;
-
-    // Si los groupIds no han cambiado y ya se inicializó, no hacer nada (evitar sobrescribir cambios del usuario)
-    if (!groupIdsChanged && initializedRef.current) {
+    if (!shouldForceHydrate) {
       return;
     }
 
-    if (!groupIds || groupIds.length === 0) {
-      // Si no hay groupIds y cambiaron, limpiar
-      if (groupIdsChanged) {
-        setExpandedAplicativos(new Set());
-      }
-      previousGroupIdsRef.current = groupIds;
+    if (normalizedGroupIds.length === 0) {
+      setSelectedGroups([]);
+      setExpandedAplicativos(new Set());
+      previousGroupIdsRef.current = groupIdsString;
+      previousCollaboratorKeyRef.current = collaboratorKey;
+      userHasModifiedRef.current = false;
+      onManualSelectionChange?.(false);
       initializedRef.current = true;
       return;
     }
 
-    if (queryGruposSinPaginacion.data && queryGruposSinPaginacion.data.length > 0) {
-      // Solo inicializar si los groupIds cambiaron (nuevo usuario) o es la primera carga
-      if (groupIdsChanged || !initializedRef.current) {
-        const initialSelected = queryGruposSinPaginacion.data.filter((g: GruposTypeModel) => groupIds.includes(g.id));
+    const catalogGroups = queryGruposSinPaginacion.data ?? [];
+    const catalogById = new Map(catalogGroups.map((group) => [group.id, group] as const));
+    const fallbackById = new Map(fallbackGroups.map((group) => [group.id, group] as const));
 
-        // Solo actualizar si:
-        // 1. Los groupIds cambiaron (nuevo usuario) - siempre actualizar
-        // 2. Es la primera carga Y el usuario no ha modificado los grupos
-        if (groupIdsChanged) {
-          // Cambio de usuario: siempre actualizar y resetear la bandera de modificación
-          setSelectedGroups(initialSelected);
-          userHasModifiedRef.current = false;
-        } else if (!initializedRef.current && !userHasModifiedRef.current) {
-          // Primera carga: solo actualizar si el usuario no ha modificado los grupos
-          setSelectedGroups(initialSelected);
-        }
+    const initialSelected = normalizedGroupIds
+      .map((groupId) => catalogById.get(groupId) ?? fallbackById.get(groupId))
+      .filter((group): group is GruposTypeModel => Boolean(group));
 
-        // Expandir automáticamente los aplicativos que tienen grupos seleccionados
-        const aplicativosWithGroups = new Set<string>();
-        initialSelected.forEach((group: GruposTypeModel) => {
-          const aplicativoKey = group.aplicativos?.[0]?.nombre || "Sin aplicativo";
-          aplicativosWithGroups.add(aplicativoKey);
-        });
-        setExpandedAplicativos(aplicativosWithGroups);
-
-        initializedRef.current = true;
-      }
-
-      previousGroupIdsRef.current = groupIds;
+    if (initialSelected.length === 0 && catalogGroups.length === 0 && fallbackGroups.length === 0) {
+      return;
     }
-  }, [groupIds, queryGruposSinPaginacion.data, setSelectedGroups]);
+
+    setSelectedGroups(initialSelected);
+
+    const aplicativosWithGroups = new Set<string>();
+    initialSelected.forEach((group: GruposTypeModel) => {
+      const aplicativoKey = group.aplicativos?.[0]?.nombre || "Sin aplicativo";
+      aplicativosWithGroups.add(aplicativoKey);
+    });
+    setExpandedAplicativos(aplicativosWithGroups);
+
+    previousGroupIdsRef.current = groupIdsString;
+    previousCollaboratorKeyRef.current = collaboratorKey;
+    userHasModifiedRef.current = false;
+    onManualSelectionChange?.(false);
+    initializedRef.current = true;
+  }, [collaboratorKey, fallbackGroups, groupIds, queryGruposSinPaginacion.data, setSelectedGroups]);
 
   // Agrupar grupos por aplicativo para el Command
   const groupedByAplicativo = useMemo(() => {
@@ -414,6 +426,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
                   <Button type="button" variant="ghost" size="sm" onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    markManualSelectionChange();
                     const newGroups = selectedGroups.filter((g: GruposTypeModel) => !groups.includes(g));
                     setSelectedGroups(newGroups);
                     toast.success(`Grupos del aplicativo "${aplicativo}" eliminados`, {
@@ -439,8 +452,7 @@ export const GruposSeleccionados = ({ selectedGroups, setSelectedGroups, groupId
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            // Marcar que el usuario ha modificado los grupos
-                            userHasModifiedRef.current = true;
+                            markManualSelectionChange();
                             const newGroups = selectedGroups.filter((g: GruposTypeModel) => g.id !== group.id);
                             setSelectedGroups(newGroups);
                             toast.success(`Grupo "${group.nombre}" eliminado`, {
